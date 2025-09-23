@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [branchFilter, setBranchFilter] = useState('');
   const [subgroupFilter, setSubgroupFilter] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
+  const [colorMode, setColorMode] = useState<'family' | 'branch' | 'subgroup'>('family');
   const countryOfficialSet = useMemo(() => {
     if (!countryFilter) return new Set<string>();
     const entry = (countryOfficialMap as Record<string, { official_languages: string[] }>)[countryFilter];
@@ -92,6 +93,8 @@ const App: React.FC = () => {
         onSearchChange={setSearchQuery}
         onToggleSidebar={toggleSidebar}
         sidebarVisible={sidebarVisible}
+        colorMode={colorMode}
+        onChangeColorMode={setColorMode}
       />
       
       <div className="flex-1 flex min-h-0">
@@ -118,6 +121,10 @@ const App: React.FC = () => {
           languages={visibleLanguages}
           selectedLanguage={selectedLanguage}
           onLanguageClick={handleLanguageSelect}
+          colorMode={colorMode}
+          familyFilter={familyFilter}
+          branchFilter={branchFilter}
+          subgroupFilter={subgroupFilter}
         />
       </div>
       

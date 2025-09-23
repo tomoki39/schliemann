@@ -6,9 +6,11 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   onToggleSidebar: () => void;
   sidebarVisible: boolean;
+  colorMode: 'family' | 'branch' | 'subgroup';
+  onChangeColorMode: (m: 'family' | 'branch' | 'subgroup') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, sidebarVisible }) => {
+const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, sidebarVisible, colorMode, onChangeColorMode }) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -39,6 +41,16 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
             onChange={(e) => onSearchChange(e.target.value)}
             className="px-3 py-2 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
+          <select
+            value={colorMode}
+            onChange={(e) => onChangeColorMode(e.target.value as any)}
+            className="px-2 py-2 rounded text-gray-900"
+            aria-label="色分けモード"
+          >
+            <option value="family">Family</option>
+            <option value="branch">Branch</option>
+            <option value="subgroup">Subgroup</option>
+          </select>
           <button
             onClick={toggleMenu}
             className="p-2 hover:bg-blue-700 rounded"

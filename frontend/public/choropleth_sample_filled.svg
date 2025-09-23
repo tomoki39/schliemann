@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820">
+  <defs>
+    <style>
+      .title { font: 600 20px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+      .label { font: 12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; fill:#111 }
+      .note { font: 12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; fill:#444 }
+      .land { fill:#e6edd9; stroke:#98a390; stroke-width:1 }
+      .sea { fill:#bfe4ff }
+      .country { fill:#1f77b4; fill-opacity:.78; stroke:#244f6a; stroke-width:1.4 }
+      .other { fill:#dcdcdc; stroke:#9a9a9a; stroke-width:1 }
+    </style>
+  </defs>
+
+  <!-- Ocean -->
+  <rect x="0" y="0" width="1400" height="820" class="sea"/>
+
+  <!-- Very simplified world landmasses (rough silhouettes for context) -->
+  <!-- North America silhouette -->
+  <path class="land" d="M120,220 L420,220 L460,260 L440,310 L420,340 L380,360 L320,390 L280,420 L220,430 L170,420 L140,380 L120,330 Z"/>
+  <!-- South America silhouette -->
+  <path class="land" d="M350,440 L420,470 L440,520 L430,600 L400,660 L370,700 L350,690 L340,640 L330,560 L330,500 Z"/>
+  <!-- Europe + small part of west Asia silhouette -->
+  <path class="land" d="M720,240 L860,240 L930,270 L980,300 L980,340 L950,360 L900,360 L850,350 L820,330 L760,330 L730,310 L710,290 Z"/>
+  <!-- Africa silhouette -->
+  <path class="land" d="M780,360 L860,370 L900,420 L900,520 L880,600 L840,660 L780,640 L760,560 L760,480 L750,410 Z"/>
+  <!-- Middle East/central Asia block -->
+  <path class="land" d="M980,330 L1060,340 L1100,360 L1120,390 L1100,420 L1040,420 L1000,400 L980,360 Z"/>
+  <!-- South Asia block -->
+  <path class="land" d="M1020,460 L1100,470 L1140,520 L1120,560 L1060,560 L1020,520 Z"/>
+  <!-- East Asia block -->
+  <path class="land" d="M1120,360 L1220,360 L1280,380 L1300,420 L1270,460 L1200,460 L1140,430 Z"/>
+  <!-- Australia block -->
+  <path class="land" d="M1180,640 L1280,640 L1320,680 L1300,720 L1220,720 L1180,690 Z"/>
+
+  <!-- FOCUSED COUNTRIES (filled) -->
+  <!-- US (very rough polygon placed on North America) -->
+  <path class="country" d="M190,300 L360,300 L380,320 L360,340 L320,350 L260,360 L210,350 L190,330 Z">
+    <title>United States (US)</title>
+  </path>
+  <!-- Canada (strip above US) -->
+  <path class="country" d="M180,270 L370,270 L390,290 L180,290 Z">
+    <title>Canada (CA)</title>
+  </path>
+
+  <!-- EUROPE FILLS -->
+  <!-- United Kingdom -->
+  <path class="country" d="M690,270 L710,270 L710,300 L690,300 Z">
+    <title>United Kingdom (GB)</title>
+  </path>
+  <!-- Netherlands -->
+  <path class="country" d="M760,300 L774,300 L774,315 L760,315 Z">
+    <title>Netherlands (NL)</title>
+  </path>
+  <!-- Germany -->
+  <path class="country" d="M780,300 L810,300 L810,330 L780,330 Z">
+    <title>Germany (DE)</title>
+  </path>
+
+  <!-- Other European countries (non-target) lightly grey to show contrast) -->
+  <path class="other" d="M820,300 L850,300 L860,320 L840,330 L820,320 Z"/>
+  <path class="other" d="M740,320 L760,320 L760,340 L740,340 Z"/>
+  <path class="other" d="M800,340 L820,340 L820,360 L800,360 Z"/>
+
+  <!-- Title and notes -->
+  <text x="20" y="36" class="title">Choropleth Sample — On-map country fills (US, CA, GB, NL, DE)</text>
+  <text x="20" y="62" class="note">濃い青が「インド・ヨーロッパ / ゲルマン / 西ゲルマン」例。その他は淡い灰（未該当/データなし）。</text>
+  <text x="20" y="82" class="note">実装では Google Maps Data Layer + GeoJSON で国境ポリゴン自体を fill します（この図は簡略モック）。</text>
+</svg>
+
+
