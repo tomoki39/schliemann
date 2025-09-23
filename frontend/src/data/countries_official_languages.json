@@ -1,0 +1,1045 @@
+{
+  "PS": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "BI": {
+    "official_languages": [
+      "fra",
+      "eng",
+      "run"
+    ]
+  },
+  "KM": {
+    "official_languages": [
+      "fra",
+      "ara"
+    ]
+  },
+  "CG": {
+    "official_languages": [
+      "fra"
+    ]
+  },
+  "CD": {
+    "official_languages": [
+      "fra"
+    ]
+  },
+  "DJ": {
+    "official_languages": [
+      "fra",
+      "ara"
+    ]
+  },
+  "ER": {
+    "official_languages": [
+      "eng",
+      "ara",
+      "tir"
+    ]
+  },
+  "GA": {
+    "official_languages": [
+      "fra"
+    ]
+  },
+  "GN": {
+    "official_languages": [
+      "fra"
+    ]
+  },
+  "GM": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "CV": {
+    "official_languages": [
+      "por",
+      "kea"
+    ]
+  },
+  "NA": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "NE": {
+    "official_languages": [
+      "hau"
+    ]
+  },
+  "NG": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "ST": {
+    "official_languages": [
+      "por"
+    ]
+  },
+  "UG": {
+    "official_languages": [
+      "eng",
+      "swa"
+    ]
+  },
+  "RW": {
+    "official_languages": [
+      "fra",
+      "eng",
+      "swa",
+      "kin"
+    ]
+  },
+  "SC": {
+    "official_languages": [
+      "fra",
+      "eng",
+      "crs"
+    ]
+  },
+  "SN": {
+    "official_languages": [
+      "fra",
+      "wol",
+      "pbp"
+    ]
+  },
+  "SL": {
+    "official_languages": [
+      "eng",
+      "kri"
+    ]
+  },
+  "SO": {
+    "official_languages": [
+      "som",
+      "ara"
+    ]
+  },
+  "SD": {
+    "official_languages": [
+      "eng",
+      "ara"
+    ]
+  },
+  "XK": {
+    "official_languages": [
+      "sqi",
+      "srp"
+    ]
+  },
+  "AW": {
+    "official_languages": [
+      "nld",
+      "pap"
+    ]
+  },
+  "SX": {
+    "official_languages": [
+      "eng",
+      "nld"
+    ]
+  },
+  "CK": {
+    "official_languages": [
+      "eng",
+      "rar"
+    ]
+  },
+  "NL": {
+    "official_languages": [
+      "nld"
+    ]
+  },
+  "NU": {
+    "official_languages": [
+      "eng",
+      "niu"
+    ]
+  },
+  "MY": {
+    "official_languages": [
+      "msa"
+    ]
+  },
+  "MM": {
+    "official_languages": [
+      "mya"
+    ]
+  },
+  "NP": {
+    "official_languages": [
+      "nep"
+    ]
+  },
+  "OM": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "PK": {
+    "official_languages": [
+      "urd",
+      "eng"
+    ]
+  },
+  "QA": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "SA": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "LK": {
+    "official_languages": [
+      "tam",
+      "sin"
+    ]
+  },
+  "SY": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "TJ": {
+    "official_languages": [
+      "rus",
+      "tgk"
+    ]
+  },
+  "TW": {
+    "official_languages": [
+      "tss",
+      "ami",
+      "dru",
+      "bnn",
+      "xnb",
+      "pwn",
+      "tao",
+      "tay",
+      "sxr",
+      "ckv",
+      "tsu",
+      "trv",
+      "pyu",
+      "xsy",
+      "szy"
+    ]
+  },
+  "TH": {
+    "official_languages": [
+      "tha"
+    ]
+  },
+  "TM": {
+    "official_languages": [
+      "tuk"
+    ]
+  },
+  "AE": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "VN": {
+    "official_languages": [
+      "vie"
+    ]
+  },
+  "KR": {
+    "official_languages": [
+      "kor",
+      "kvk"
+    ]
+  },
+  "AF": {
+    "official_languages": [
+      "uzb",
+      "tuk",
+      "ara",
+      "bal",
+      "pus",
+      "prs"
+    ]
+  },
+  "BD": {
+    "official_languages": [
+      "ben"
+    ]
+  },
+  "ML": {
+    "official_languages": [
+      "bam",
+      "ful",
+      "myq",
+      "myk",
+      "snk",
+      "kao",
+      "mey",
+      "taq"
+    ]
+  },
+  "AO": {
+    "official_languages": [
+      "por"
+    ]
+  },
+  "BT": {
+    "official_languages": [
+      "dzo"
+    ]
+  },
+  "BN": {
+    "official_languages": [
+      "msa"
+    ]
+  },
+  "TZ": {
+    "official_languages": [
+      "eng",
+      "swa"
+    ]
+  },
+  "PH": {
+    "official_languages": [
+      "eng",
+      "fil"
+    ]
+  },
+  "CF": {
+    "official_languages": [
+      "fra",
+      "sag"
+    ]
+  },
+  "TG": {
+    "official_languages": [
+      "fra"
+    ]
+  },
+  "TN": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "ZW": {
+    "official_languages": [
+      "eng",
+      "xho",
+      "ndc",
+      "ven",
+      "nya",
+      "kck",
+      "sna",
+      "toi",
+      "tsn",
+      "tso",
+      "sot",
+      "nde",
+      "nmq",
+      "zib",
+      "bwg"
+    ]
+  },
+  "ZM": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "SS": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "BJ": {
+    "official_languages": [
+      "fra"
+    ]
+  },
+  "BW": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "BF": {
+    "official_languages": [
+      "dyu",
+      "bib",
+      "mos"
+    ]
+  },
+  "ZA": {
+    "official_languages": [
+      "eng",
+      "zul",
+      "xho",
+      "afr",
+      "ven",
+      "nso",
+      "ssw",
+      "tsn",
+      "tso",
+      "sot",
+      "nbl",
+      "sfs"
+    ]
+  },
+  "DZ": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "UZ": {
+    "official_languages": [
+      "uzb"
+    ]
+  },
+  "CL": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "SG": {
+    "official_languages": [
+      "eng",
+      "tam",
+      "msa",
+      "cmn"
+    ]
+  },
+  "LI": {
+    "official_languages": [
+      "deu"
+    ]
+  },
+  "BH": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "AM": {
+    "official_languages": [
+      "hye"
+    ]
+  },
+  "AU": {
+    "official_languages": [
+      "asf"
+    ]
+  },
+  "AR": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "KP": {
+    "official_languages": [
+      "kor"
+    ]
+  },
+  "KH": {
+    "official_languages": [
+      "khm"
+    ]
+  },
+  "TL": {
+    "official_languages": [
+      "por",
+      "tet"
+    ]
+  },
+  "TD": {
+    "official_languages": [
+      "fra",
+      "ara"
+    ]
+  },
+  "NZ": {
+    "official_languages": [
+      "eng",
+      "nzs",
+      "mri"
+    ]
+  },
+  "IN": {
+    "official_languages": [
+      "hin",
+      "eng"
+    ]
+  },
+  "TV": {
+    "official_languages": [
+      "eng",
+      "tvl"
+    ]
+  },
+  "WS": {
+    "official_languages": [
+      "eng",
+      "smo"
+    ]
+  },
+  "VU": {
+    "official_languages": [
+      "fra",
+      "eng",
+      "bis"
+    ]
+  },
+  "SB": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "PG": {
+    "official_languages": [
+      "eng",
+      "hmo",
+      "tpi",
+      "pgz"
+    ]
+  },
+  "PW": {
+    "official_languages": [
+      "eng",
+      "jpn",
+      "pau"
+    ]
+  },
+  "NR": {
+    "official_languages": [
+      "eng",
+      "nau"
+    ]
+  },
+  "FM": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "MN": {
+    "official_languages": [
+      "mon"
+    ]
+  },
+  "FJ": {
+    "official_languages": [
+      "eng",
+      "fij",
+      "hif"
+    ]
+  },
+  "VE": {
+    "official_languages": [
+      "spa",
+      "vsl"
+    ]
+  },
+  "GY": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "PY": {
+    "official_languages": [
+      "spa",
+      "grn"
+    ]
+  },
+  "CO": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "EC": {
+    "official_languages": [
+      "spa",
+      "jiv"
+    ]
+  },
+  "BO": {
+    "official_languages": [
+      "spa",
+      "aym",
+      "que",
+      "grn"
+    ]
+  },
+  "TT": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "VC": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "KN": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "LC": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "JM": {
+    "official_languages": [
+      "eng",
+      "jam"
+    ]
+  },
+  "GD": {
+    "official_languages": [
+      "eng",
+      "gcl"
+    ]
+  },
+  "GT": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "BS": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "HN": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "AG": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "DO": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "DM": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "IR": {
+    "official_languages": [
+      "fas"
+    ]
+  },
+  "SV": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "IQ": {
+    "official_languages": [
+      "ara",
+      "kur"
+    ]
+  },
+  "CR": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "IL": {
+    "official_languages": [
+      "heb"
+    ]
+  },
+  "YE": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "JO": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "NI": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "KG": {
+    "official_languages": [
+      "kir"
+    ]
+  },
+  "LA": {
+    "official_languages": [
+      "lao"
+    ]
+  },
+  "LB": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "MV": {
+    "official_languages": [
+      "div"
+    ]
+  },
+  "CI": {
+    "official_languages": [
+      "fra"
+    ]
+  },
+  "CM": {
+    "official_languages": [
+      "fra",
+      "eng"
+    ]
+  },
+  "LR": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "LS": {
+    "official_languages": [
+      "eng",
+      "sot"
+    ]
+  },
+  "LY": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "MW": {
+    "official_languages": [
+      "eng",
+      "nya",
+      "tum"
+    ]
+  },
+  "MU": {
+    "official_languages": [
+      "fra",
+      "eng"
+    ]
+  },
+  "MR": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "MA": {
+    "official_languages": [
+      "ara",
+      "zgh"
+    ]
+  },
+  "CA": {
+    "official_languages": [
+      "fra",
+      "eng"
+    ]
+  },
+  "JP": {
+    "official_languages": [
+      "jpn"
+    ]
+  },
+  "NO": {
+    "official_languages": [
+      "nor",
+      "nno",
+      "nob"
+    ]
+  },
+  "IE": {
+    "official_languages": [
+      "eng",
+      "gle"
+    ]
+  },
+  "US": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "BE": {
+    "official_languages": [
+      "fra",
+      "deu",
+      "nld"
+    ]
+  },
+  "HU": {
+    "official_languages": [
+      "hun"
+    ]
+  },
+  "ES": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "SE": {
+    "official_languages": [
+      "swe"
+    ]
+  },
+  "DK": {
+    "official_languages": [
+      "dan"
+    ]
+  },
+  "LU": {
+    "official_languages": [
+      "fra",
+      "deu",
+      "ltz"
+    ]
+  },
+  "FI": {
+    "official_languages": [
+      "fin",
+      "swe"
+    ]
+  },
+  "IT": {
+    "official_languages": [
+      "ita"
+    ]
+  },
+  "CH": {
+    "official_languages": [
+      "fra",
+      "deu",
+      "ita",
+      "roh"
+    ]
+  },
+  "PL": {
+    "official_languages": [
+      "pol"
+    ]
+  },
+  "LT": {
+    "official_languages": [
+      "lit"
+    ]
+  },
+  "TR": {
+    "official_languages": [
+      "tur"
+    ]
+  },
+  "AT": {
+    "official_languages": [
+      "deu",
+      "asq"
+    ]
+  },
+  "GR": {
+    "official_languages": [
+      "ell"
+    ]
+  },
+  "PT": {
+    "official_languages": [
+      "por",
+      "mwl"
+    ]
+  },
+  "EG": {
+    "official_languages": [
+      "ara"
+    ]
+  },
+  "UY": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "MX": {
+    "official_languages": [
+      "spa",
+      "yua"
+    ]
+  },
+  "KE": {
+    "official_languages": [
+      "eng",
+      "swa"
+    ]
+  },
+  "ET": {
+    "official_languages": [
+      "amh"
+    ]
+  },
+  "GH": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "FR": {
+    "official_languages": [
+      "fra"
+    ]
+  },
+  "GB": {
+    "official_languages": [
+      "eng"
+    ]
+  },
+  "CN": {
+    "official_languages": [
+      "cmn"
+    ]
+  },
+  "BR": {
+    "official_languages": [
+      "por"
+    ]
+  },
+  "RU": {
+    "official_languages": [
+      "rus"
+    ]
+  },
+  "DE": {
+    "official_languages": [
+      "deu"
+    ]
+  },
+  "BY": {
+    "official_languages": [
+      "rus",
+      "bel"
+    ]
+  },
+  "EE": {
+    "official_languages": [
+      "est"
+    ]
+  },
+  "IS": {
+    "official_languages": [
+      "isl"
+    ]
+  },
+  "LV": {
+    "official_languages": [
+      "lav"
+    ]
+  },
+  "SK": {
+    "official_languages": [
+      "slk"
+    ]
+  },
+  "SI": {
+    "official_languages": [
+      "slv"
+    ]
+  },
+  "CZ": {
+    "official_languages": [
+      "ces"
+    ]
+  },
+  "RO": {
+    "official_languages": [
+      "ron"
+    ]
+  },
+  "BG": {
+    "official_languages": [
+      "bul"
+    ]
+  },
+  "AL": {
+    "official_languages": [
+      "sqi"
+    ]
+  },
+  "MK": {
+    "official_languages": [
+      "sqi",
+      "mkd"
+    ]
+  },
+  "AZ": {
+    "official_languages": [
+      "aze"
+    ]
+  },
+  "HR": {
+    "official_languages": [
+      "hrv"
+    ]
+  },
+  "BA": {
+    "official_languages": [
+      "hrv",
+      "srp",
+      "bos"
+    ]
+  },
+  "AD": {
+    "official_languages": [
+      "cat"
+    ]
+  },
+  "CY": {
+    "official_languages": [
+      "tur",
+      "ell"
+    ]
+  },
+  "KZ": {
+    "official_languages": [
+      "rus",
+      "kaz"
+    ]
+  },
+  "MT": {
+    "official_languages": [
+      "eng",
+      "mlt"
+    ]
+  },
+  "ME": {
+    "official_languages": [
+      "cnr"
+    ]
+  },
+  "VA": {
+    "official_languages": [
+      "fra",
+      "lat",
+      "ita"
+    ]
+  },
+  "CU": {
+    "official_languages": [
+      "spa"
+    ]
+  },
+  "ID": {
+    "official_languages": [
+      "ind"
+    ]
+  }
+}

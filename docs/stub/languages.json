@@ -1,0 +1,12 @@
+[
+  {"id":"jpn","name_ja":"日本語","family":"日本語族","total_speakers":125000000,"center":{"lat":35.68,"lng":139.76}},
+  {"id":"eng","name_ja":"英語","family":"インド・ヨーロッパ","total_speakers":1500000000,"center":{"lat":51.50,"lng":-0.12}},
+  {"id":"cmn","name_ja":"中国語(官話)","family":"シナ・チベット","total_speakers":1100000000,"center":{"lat":39.90,"lng":116.40}},
+  {"id":"spa","name_ja":"スペイン語","family":"インド・ヨーロッパ","total_speakers":500000000,"center":{"lat":40.42,"lng":-3.70}},
+  {"id":"fra","name_ja":"フランス語","family":"インド・ヨーロッパ","total_speakers":300000000,"center":{"lat":48.85,"lng":2.35}},
+  {"id":"hin","name_ja":"ヒンディー語","family":"インド・ヨーロッパ","total_speakers":600000000,"center":{"lat":28.61,"lng":77.20}},
+  {"id":"arb","name_ja":"アラビア語","family":"アフロ・アジア","total_speakers":420000000,"center":{"lat":24.71,"lng":46.67}},
+  {"id":"rus","name_ja":"ロシア語","family":"インド・ヨーロッパ","total_speakers":260000000,"center":{"lat":55.75,"lng":37.62}},
+  {"id":"por","name_ja":"ポルトガル語","family":"インド・ヨーロッパ","total_speakers":260000000,"center":{"lat":-23.55,"lng":-46.63}},
+  {"id":"deu","name_ja":"ドイツ語","family":"インド・ヨーロッパ","total_speakers":130000000,"center":{"lat":52.52,"lng":13.41}}
+]

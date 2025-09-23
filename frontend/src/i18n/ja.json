@@ -1,0 +1,21 @@
+{
+  "app.title": "Rinzo",
+  "nav.search.placeholder": "言語名を検索",
+  "nav.language": "言語",
+  "sidebar.title": "言語一覧",
+  "filter.family": "言語ファミリー",
+  "filter.branch": "枝（Branch）",
+  "filter.subgroup": "下位群（Subgroup）",
+  "filter.country": "国",
+  "detail.title": "言語詳細",
+  "detail.family": "ファミリー",
+  "detail.branch": "枝（Branch）",
+  "detail.subgroup": "下位群（Subgroup）",
+  "detail.lineage": "系統",
+  "detail.countries": "公用国",
+  "detail.speakers": "話者数",
+  "detail.center": "中心地点",
+  "compare.title": "比較",
+  "bookmark.add": "ブックマーク",
+  "bookmark.remove": "ブックマーク解除"
+}
