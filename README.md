@@ -10,7 +10,8 @@ Rinzo（リンゾー）は、全世界の言語分布を都市・村落レベル
 Rinzoは言語学から始まり、将来的には**人類学、宗教学、地理学、社会学、歴史学**など、あらゆる人文・社会科学分野の知識を地理的コンテキストで統合し、人類の知識全体を探索できるプラットフォームを目指します。
 
 **詳細なビジョン・戦略**: [docs/vision_and_strategy.md](docs/vision_and_strategy.md)  
-**多分野展開ロードマップ**: [docs/multi_domain_roadmap.md](docs/multi_domain_roadmap.md)
+**多分野展開ロードマップ**: [docs/multi_domain_roadmap.md](docs/multi_domain_roadmap.md)  
+**全体ロードマップ**: [docs/overall_roadmap.md](docs/overall_roadmap.md)
 
 ## 名前の由来
 
@@ -102,6 +103,11 @@ Rinzoは言語学から始まり、将来的には**人類学、宗教学、地�
 - **セキュリティ・コンプライアンス**: [docs/security_compliance.md](docs/security_compliance.md)
 - **パフォーマンス・スケーラビリティ**: [docs/performance_scalability.md](docs/performance_scalability.md)
 - **アクセシビリティ詳細**: [docs/accessibility_spec.md](docs/accessibility_spec.md)
+
+## 開発ガイド
+- **開発ロードマップ**: [docs/development_roadmap.md](docs/development_roadmap.md)
+- **開発環境セットアップ**: [docs/dev_setup_guide.md](docs/dev_setup_guide.md)
+- **MVPタスクリスト**: [docs/mvp_task_list.md](docs/mvp_task_list.md)
 
 ## ライセンス
 
