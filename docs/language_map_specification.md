@@ -1,10 +1,10 @@
-# Rinzo アプリケーション仕様書
+# Rinzo（リンゾー）アプリケーション仕様書
 ## 全世界言語マップ
 
 ## 1. プロジェクト概要
 
 ### 1.1 サービス名
-**Rinzo** - "Explore the world's knowledge territories"
+**Rinzo（リンゾー）** - "Explore the world's knowledge territories"
 
 **名前の由来**: 間宮林蔵（1780-1844）江戸時代の探検家・地理学者から命名
 
