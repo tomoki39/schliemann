@@ -9,6 +9,7 @@ import JapaneseDialectMap from './components/JapaneseDialectMap';
 import DetailPanel from './components/DetailPanel';
 import ComparePanel from './components/ComparePanel';
 import DialectPlayer from './components/DialectPlayer';
+import DialectDetailPanel from './components/DialectDetailPanel';
 import { useBookmarks } from './hooks/useBookmarks';
 import { Language } from './types/Language';
 import languagesData from './data/languages.json';
@@ -52,6 +53,7 @@ const App: React.FC = () => {
   const [selectedDialect, setSelectedDialect] = useState<string | null>(null);
   const [customText, setCustomText] = useState('');
   const [dialectSearchQuery, setDialectSearchQuery] = useState('');
+  const [showDialectDetail, setShowDialectDetail] = useState(false);
   
   const { isBookmarked, toggleBookmark } = useBookmarks();
 
@@ -116,6 +118,31 @@ const App: React.FC = () => {
     setIsJapaneseDialectMode(false);
     setSelectedDialect(null);
     setCustomText('');
+    setShowDialectDetail(false);
+  };
+
+  const handleDialectDetailOpen = () => {
+    setShowDialectDetail(true);
+  };
+
+  const handleDialectDetailClose = () => {
+    setShowDialectDetail(false);
+  };
+
+  const handlePlaySample = (text: string) => {
+    // サンプル音声を再生する処理（既存の音声再生機能を使用）
+    if (selectedDialectData) {
+      // 一時的にカスタムテキストを変更して音声再生
+      const originalText = customText;
+      setCustomText(text);
+      // 音声再生はDialectPlayerコンポーネントで処理される
+    }
+  };
+
+  const handlePlayCustom = (text: string) => {
+    // カスタム音声を再生する処理
+    setCustomText(text);
+    // 音声再生はDialectPlayerコンポーネントで処理される
   };
 
   // 日本語の方言データを取得
@@ -154,16 +181,17 @@ const App: React.FC = () => {
           />
         )}
         
-        {sidebarVisible && isJapaneseDialectMode && (
-          <JapaneseDialectSidebar
-            dialects={japaneseDialects}
-            selectedDialect={selectedDialect}
-            onDialectSelect={handleDialectSelect}
-            searchQuery={dialectSearchQuery}
-            onSearchChange={setDialectSearchQuery}
-            onBackToWorld={handleBackToWorld}
-          />
-        )}
+               {sidebarVisible && isJapaneseDialectMode && (
+                 <JapaneseDialectSidebar
+                   dialects={japaneseDialects}
+                   selectedDialect={selectedDialect}
+                   onDialectSelect={handleDialectSelect}
+                   searchQuery={dialectSearchQuery}
+                   onSearchChange={setDialectSearchQuery}
+                   onBackToWorld={handleBackToWorld}
+                   onDialectDetailOpen={handleDialectDetailOpen}
+                 />
+               )}
         
         {isJapaneseDialectMode ? (
           <div className="flex-1 relative">
@@ -205,30 +233,79 @@ const App: React.FC = () => {
         />
       )}
       
-      {/* 方言選択時の音声パネル */}
-      {isJapaneseDialectMode && selectedDialect && selectedDialectData && (
-        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md z-50">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-semibold text-gray-800">
-              {selectedDialectData.name}
-            </h3>
-            <button
-              onClick={() => setSelectedDialect(null)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          
-          <DialectPlayer
-            dialect={selectedDialectData}
-            customText={customText}
-            onCustomTextChange={setCustomText}
-          />
-        </div>
-      )}
+             {/* 方言選択時の音声パネル */}
+             {isJapaneseDialectMode && selectedDialect && selectedDialectData && !showDialectDetail && (
+               <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md z-50">
+                 <div className="flex justify-between items-center mb-3">
+                   <h3 className="text-lg font-semibold text-gray-800">
+                     {selectedDialectData.name}
+                   </h3>
+                   <div className="flex items-center space-x-2">
+                     <button
+                       onClick={handleDialectDetailOpen}
+                       className="text-blue-600 hover:text-blue-800 text-sm"
+                     >
+                       詳細
+                     </button>
+                     <button
+                       onClick={() => setSelectedDialect(null)}
+                       className="text-gray-500 hover:text-gray-700"
+                     >
+                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                       </svg>
+                     </button>
+                   </div>
+                 </div>
+                 
+                 <div className="space-y-4">
+                   <DialectPlayer
+                     dialect={selectedDialectData}
+                     customText={customText}
+                     onCustomTextChange={setCustomText}
+                   />
+                   
+                   {/* カスタム文章入力欄 */}
+                   <div className="bg-gray-50 rounded-lg p-3">
+                     <h4 className="text-sm font-medium text-gray-700 mb-2">カスタム文章</h4>
+                     <textarea
+                       value={customText}
+                       onChange={(e) => setCustomText(e.target.value)}
+                       placeholder="ここにテキストを入力してください..."
+                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                       rows={2}
+                     />
+                     <button
+                       onClick={() => {
+                         if (customText.trim()) {
+                           // カスタム音声を再生
+                           console.log('Playing custom:', customText);
+                         }
+                       }}
+                       disabled={!customText.trim()}
+                       className="mt-2 w-full bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm flex items-center justify-center space-x-2"
+                     >
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m-6-8h8a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                       </svg>
+                       <span>カスタム音声を再生</span>
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             )}
+
+             {/* 方言詳細パネル */}
+             {isJapaneseDialectMode && selectedDialect && selectedDialectData && showDialectDetail && (
+               <DialectDetailPanel
+                 dialect={selectedDialectData}
+                 onClose={handleDialectDetailClose}
+                 onPlaySample={handlePlaySample}
+                 onPlayCustom={handlePlayCustom}
+                 customText={customText}
+                 onCustomTextChange={setCustomText}
+               />
+             )}
       
       {showCompare && (
         <ComparePanel

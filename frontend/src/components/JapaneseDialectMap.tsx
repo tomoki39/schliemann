@@ -153,20 +153,12 @@ const MapComponent: React.FC<JapaneseDialectMapProps> = ({
 
     const map = new google.maps.Map(mapRef.current, {
       center: { lat: 36.0, lng: 138.0 },
-      zoom: 6,
+      zoom: 6, // 適切なサイズに調整
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       streetViewControl: false,
       fullscreenControl: false,
-      mapTypeControl: false,
-      restriction: {
-        latLngBounds: {
-          north: 45.5,
-          south: 24.0,
-          west: 129.0,
-          east: 146.0
-        },
-        strictBounds: true
-      }
+      mapTypeControl: false
+      // restrictionを削除して制限を完全に解除
     });
 
     mapInstanceRef.current = map;
@@ -191,6 +183,9 @@ const MapComponent: React.FC<JapaneseDialectMapProps> = ({
       // クリックイベント
       marker.addListener('click', () => {
         onDialectSelect(region.id);
+        // 方言をクリックした時に日本全体を表示
+        map.setCenter(region.center);
+        map.setZoom(6); // 適切なサイズに調整
         if (infoWindowRef.current) {
           infoWindowRef.current.setContent(`
             <div style="padding: 8px; min-width: 200px;">
