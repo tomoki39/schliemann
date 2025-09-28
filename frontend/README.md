@@ -1,4 +1,4 @@
-# Rinzo Frontend (Demo)
+# Schliemann Frontend (Demo)
 
 ## セットアップ
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AI音声変換APIのモックサーバー
+Schliemann AI音声変換APIのモックサーバー
 実際のAI音声変換サービスが利用できない場合のテスト用
 """
 
