@@ -83,6 +83,7 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
         };
         
         audio.onended = () => {
+          console.log('Audio playback ended');
           if (isCustom) {
             setIsPlayingCustom(false);
           } else {
@@ -90,7 +91,8 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
           }
         };
         
-        audio.onerror = () => {
+        audio.onerror = (e) => {
+          console.error('Audio playback error:', e);
           setError('AI音声再生エラー');
           setIsLoading(false);
           if (isCustom) {
@@ -100,14 +102,21 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
           }
         };
         
+        console.log('Starting audio playback...');
         await audio.play();
+        console.log('Audio playback started successfully');
       } else {
         setError(response.error || 'AI音声変換に失敗しました');
         setIsLoading(false);
       }
     } catch (error) {
       console.error('AI voice conversion error:', error);
-      setError('AI音声変換エラー');
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+      setError(`AI音声変換エラー: ${error.message}`);
       setIsLoading(false);
     }
   };
@@ -176,7 +185,6 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
             </div>
             {aiServiceAvailable && (
               <div className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded">
-                AI音声
               </div>
             )}
           </div>

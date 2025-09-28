@@ -8,9 +8,11 @@ interface HeaderProps {
   sidebarVisible: boolean;
   colorMode: 'family' | 'branch' | 'subgroup';
   onChangeColorMode: (m: 'family' | 'branch' | 'subgroup') => void;
+  viewMode: 'world' | 'japan';
+  onChangeViewMode: (mode: 'world' | 'japan') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, sidebarVisible, colorMode, onChangeColorMode }) => {
+const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, sidebarVisible, colorMode, onChangeColorMode, viewMode, onChangeViewMode }) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -34,23 +36,51 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
           <h1 className="text-xl font-bold">{t('app.title')}</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder={t('nav.search.placeholder')}
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="px-3 py-2 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
-          />
-          <select
-            value={colorMode}
-            onChange={(e) => onChangeColorMode(e.target.value as any)}
-            className="px-2 py-2 rounded text-gray-900"
-            aria-label="色分けモード"
-          >
-            <option value="family">Family</option>
-            <option value="branch">Branch</option>
-            <option value="subgroup">Subgroup</option>
-          </select>
+          {/* ビューモード切り替え */}
+          <div className="flex bg-blue-700 rounded-lg p-1">
+            <button
+              onClick={() => onChangeViewMode('japan')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                viewMode === 'japan' 
+                  ? 'bg-white text-blue-600' 
+                  : 'text-white hover:bg-blue-600'
+              }`}
+            >
+              日本方言
+            </button>
+            <button
+              onClick={() => onChangeViewMode('world')}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                viewMode === 'world' 
+                  ? 'bg-white text-blue-600' 
+                  : 'text-white hover:bg-blue-600'
+              }`}
+            >
+              世界言語
+            </button>
+          </div>
+          
+          {viewMode === 'world' && (
+            <>
+              <input
+                type="text"
+                placeholder={t('nav.search.placeholder')}
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="px-3 py-2 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+              <select
+                value={colorMode}
+                onChange={(e) => onChangeColorMode(e.target.value as any)}
+                className="px-2 py-2 rounded text-gray-900"
+                aria-label="色分けモード"
+              >
+                <option value="family">Family</option>
+                <option value="branch">Branch</option>
+                <option value="subgroup">Subgroup</option>
+              </select>
+            </>
+          )}
           <button
             onClick={toggleMenu}
             className="p-2 hover:bg-blue-700 rounded"

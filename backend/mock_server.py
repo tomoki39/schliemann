@@ -29,6 +29,81 @@ AVAILABLE_DIALECTS = [
     'kansai', 'hakata', 'tsugaru'
 ]
 
+def improve_kanji_reading(text: str) -> str:
+    """漢字の読み方を改善するための前処理"""
+    # よく間違えられる漢字の読み方を修正
+    replacements = {
+        # 数字の読み方
+        '1': 'いち',
+        '2': 'に',
+        '3': 'さん',
+        '4': 'よん',
+        '5': 'ご',
+        '6': 'ろく',
+        '7': 'なな',
+        '8': 'はち',
+        '9': 'きゅう',
+        '0': 'ゼロ',
+        
+        # よく使われる漢字の読み方修正
+        '今日': 'きょう',
+        '明日': 'あした',
+        '昨日': 'きのう',
+        '今': 'いま',
+        '時': 'とき',
+        '分': 'ふん',
+        '秒': 'びょう',
+        '年': 'ねん',
+        '月': 'がつ',
+        '日': 'にち',
+        '曜日': 'ようび',
+        '時間': 'じかん',
+        '分間': 'ふんかん',
+        '秒間': 'びょうかん',
+        '年間': 'ねんかん',
+        '月間': 'げっかん',
+        '日間': 'にちかん',
+        
+        # 天気関連
+        '天気': 'てんき',
+        '晴れ': 'はれ',
+        '雨': 'あめ',
+        '雪': 'ゆき',
+        '曇り': 'くもり',
+        '風': 'かぜ',
+        '暑い': 'あつい',
+        '寒い': 'さむい',
+        '暖かい': 'あたたかい',
+        '涼しい': 'すずしい',
+        
+        # 挨拶
+        'おはよう': 'おはよう',
+        'こんにちは': 'こんにちは',
+        'こんばんは': 'こんばんは',
+        'ありがとう': 'ありがとう',
+        'すみません': 'すみません',
+        'ごめんなさい': 'ごめんなさい',
+        
+        # 場所
+        '東京': 'とうきょう',
+        '大阪': 'おおさか',
+        '京都': 'きょうと',
+        '名古屋': 'なごや',
+        '福岡': 'ふくおか',
+        '札幌': 'さっぽろ',
+        '仙台': 'せんだい',
+        '広島': 'ひろしま',
+        '鹿児島': 'かごしま',
+        '沖縄': 'おきなわ',
+    }
+    
+    # 置換を実行
+    result = text
+    for kanji, reading in replacements.items():
+        result = result.replace(kanji, reading)
+    
+    return result
+
 def convert_to_browser_compatible_wav(audio_data: bytes) -> bytes:
     """WAVファイルをブラウザ互換形式に変換"""
     try:
@@ -96,16 +171,16 @@ def generate_real_tts_audio(text: str, dialect: str) -> bytes:
 async def generate_edge_tts_audio(text: str, dialect: str) -> bytes:
     """Microsoft Edge TTSを使用して高品質な音声を生成"""
     try:
-        # 方言に応じた音声設定
+        # 方言に応じた音声設定（より自然な読み方をする音声を選択）
         voice_mapping = {
-            'standard': 'ja-JP-NanamiNeural',  # 女性声（標準的）
-            'tokyo': 'ja-JP-NanamiNeural',     # 女性声（東京）
+            'standard': 'ja-JP-MayuNeural',    # 女性声（より自然な読み方）
+            'tokyo': 'ja-JP-MayuNeural',       # 女性声（東京）
             'osaka': 'ja-JP-KeitaNeural',      # 男性声（関西弁）
             'kyoto': 'ja-JP-AoiNeural',        # 女性声（京都弁）
             'hiroshima': 'ja-JP-KeitaNeural',  # 男性声（広島弁）
             'fukuoka': 'ja-JP-KeitaNeural',    # 男性声（博多弁）
             'sendai': 'ja-JP-AoiNeural',       # 女性声（仙台弁）
-            'nagoya': 'ja-JP-NanamiNeural',    # 女性声（名古屋弁）
+            'nagoya': 'ja-JP-MayuNeural',      # 女性声（名古屋弁）
             'sapporo': 'ja-JP-AoiNeural',      # 女性声（札幌弁）
             'okinawa': 'ja-JP-KeitaNeural',    # 男性声（沖縄弁）
             'kagoshima': 'ja-JP-KeitaNeural',  # 男性声（鹿児島弁）
@@ -136,11 +211,11 @@ async def generate_edge_tts_audio(text: str, dialect: str) -> bytes:
         
         settings = style_settings.get(dialect, {'rate': '+0%', 'pitch': '+0Hz'})
         
-        # シンプルなテキストで音声を生成（SSMLを使わない）
-        # SSMLが問題を引き起こしている可能性があるため
+        # 漢字の読み方を改善するための前処理
+        processed_text = improve_kanji_reading(text)
         
         # Edge TTSで音声を生成
-        communicate = edge_tts.Communicate(text, voice)
+        communicate = edge_tts.Communicate(processed_text, voice)
         
         # 一時ファイルに音声を保存
         with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as temp_file:

@@ -3,9 +3,12 @@ import { useTranslation } from 'react-i18next';
 import './i18n';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import JapaneseDialectSidebar from './components/JapaneseDialectSidebar';
 import GoogleMapView from './components/GoogleMapView';
+import JapaneseDialectMap from './components/JapaneseDialectMap';
 import DetailPanel from './components/DetailPanel';
 import ComparePanel from './components/ComparePanel';
+import DialectPlayer from './components/DialectPlayer';
 import { useBookmarks } from './hooks/useBookmarks';
 import { Language } from './types/Language';
 import languagesData from './data/languages.json';
@@ -43,6 +46,12 @@ const App: React.FC = () => {
   const [leftLanguage, setLeftLanguage] = useState<Language | null>(null);
   const [rightLanguage, setRightLanguage] = useState<Language | null>(null);
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  
+  // 方言地図用の状態
+  const [viewMode, setViewMode] = useState<'world' | 'japan'>('japan');
+  const [selectedDialect, setSelectedDialect] = useState<string | null>(null);
+  const [customText, setCustomText] = useState('');
+  const [dialectSearchQuery, setDialectSearchQuery] = useState('');
   
   const { isBookmarked, toggleBookmark } = useBookmarks();
 
@@ -86,6 +95,19 @@ const App: React.FC = () => {
     setSidebarVisible(!sidebarVisible);
   };
 
+  const handleDialectSelect = (dialectId: string) => {
+    setSelectedDialect(dialectId);
+  };
+
+  const handleDialectHover = (dialectId: string | null) => {
+    // ホバー時の処理（必要に応じて実装）
+  };
+
+  // 日本語の方言データを取得
+  const japaneseLanguage = languages.find(lang => lang.id === 'jpn');
+  const japaneseDialects = japaneseLanguage?.dialects || [];
+  const selectedDialectData = selectedDialect && japaneseDialects.find(d => d.conversion_model === selectedDialect);
+
   return (
     <div className="h-screen flex flex-col">
       <Header 
@@ -95,10 +117,12 @@ const App: React.FC = () => {
         sidebarVisible={sidebarVisible}
         colorMode={colorMode}
         onChangeColorMode={setColorMode}
+        viewMode={viewMode}
+        onChangeViewMode={setViewMode}
       />
       
       <div className="flex-1 flex min-h-0">
-        {sidebarVisible && (
+        {sidebarVisible && viewMode === 'world' && (
           <Sidebar
             languages={visibleLanguages}
             selectedLanguage={selectedLanguage}
@@ -117,15 +141,33 @@ const App: React.FC = () => {
           />
         )}
         
-        <GoogleMapView
-          languages={visibleLanguages}
-          selectedLanguage={selectedLanguage}
-          onLanguageClick={handleLanguageSelect}
-          colorMode={colorMode}
-          familyFilter={familyFilter}
-          branchFilter={branchFilter}
-          subgroupFilter={subgroupFilter}
-        />
+        {sidebarVisible && viewMode === 'japan' && (
+          <JapaneseDialectSidebar
+            dialects={japaneseDialects}
+            selectedDialect={selectedDialect}
+            onDialectSelect={handleDialectSelect}
+            searchQuery={dialectSearchQuery}
+            onSearchChange={setDialectSearchQuery}
+          />
+        )}
+        
+        {viewMode === 'world' ? (
+          <GoogleMapView
+            languages={visibleLanguages}
+            selectedLanguage={selectedLanguage}
+            onLanguageClick={handleLanguageSelect}
+            colorMode={colorMode}
+            familyFilter={familyFilter}
+            branchFilter={branchFilter}
+            subgroupFilter={subgroupFilter}
+          />
+        ) : (
+          <JapaneseDialectMap
+            selectedDialect={selectedDialect}
+            onDialectSelect={handleDialectSelect}
+            onDialectHover={handleDialectHover}
+          />
+        )}
       </div>
       
       {showDetail && selectedLanguage && (
@@ -135,6 +177,31 @@ const App: React.FC = () => {
           isBookmarked={isBookmarked(selectedLanguage.id)}
           onToggleBookmark={toggleBookmark}
         />
+      )}
+      
+      {/* 方言選択時の音声パネル */}
+      {viewMode === 'japan' && selectedDialect && selectedDialectData && (
+        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md z-50">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold text-gray-800">
+              {selectedDialectData.name}
+            </h3>
+            <button
+              onClick={() => setSelectedDialect(null)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <DialectPlayer
+            dialect={selectedDialectData}
+            customText={customText}
+            onCustomTextChange={setCustomText}
+          />
+        </div>
       )}
       
       {showCompare && (
