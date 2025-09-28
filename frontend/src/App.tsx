@@ -48,7 +48,7 @@ const App: React.FC = () => {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   
   // 方言地図用の状態
-  const [viewMode, setViewMode] = useState<'world' | 'japan'>('japan');
+  const [isJapaneseDialectMode, setIsJapaneseDialectMode] = useState(false);
   const [selectedDialect, setSelectedDialect] = useState<string | null>(null);
   const [customText, setCustomText] = useState('');
   const [dialectSearchQuery, setDialectSearchQuery] = useState('');
@@ -60,8 +60,17 @@ const App: React.FC = () => {
   }, []);
 
   const handleLanguageSelect = (language: Language) => {
-    setSelectedLanguage(language);
-    setShowDetail(true);
+    // 日本を選択した場合は方言モードに切り替え
+    if (language.id === 'jpn') {
+      setIsJapaneseDialectMode(true);
+      setSelectedLanguage(null);
+      setShowDetail(false);
+    } else {
+      // その他の国は従来通り言語詳細表示
+      setSelectedLanguage(language);
+      setShowDetail(true);
+      setIsJapaneseDialectMode(false);
+    }
   };
 
   const handleDetailClose = () => {
@@ -103,6 +112,12 @@ const App: React.FC = () => {
     // ホバー時の処理（必要に応じて実装）
   };
 
+  const handleBackToWorld = () => {
+    setIsJapaneseDialectMode(false);
+    setSelectedDialect(null);
+    setCustomText('');
+  };
+
   // 日本語の方言データを取得
   const japaneseLanguage = languages.find(lang => lang.id === 'jpn');
   const japaneseDialects = japaneseLanguage?.dialects || [];
@@ -117,12 +132,10 @@ const App: React.FC = () => {
         sidebarVisible={sidebarVisible}
         colorMode={colorMode}
         onChangeColorMode={setColorMode}
-        viewMode={viewMode}
-        onChangeViewMode={setViewMode}
       />
       
       <div className="flex-1 flex min-h-0">
-        {sidebarVisible && viewMode === 'world' && (
+        {sidebarVisible && !isJapaneseDialectMode && (
           <Sidebar
             languages={visibleLanguages}
             selectedLanguage={selectedLanguage}
@@ -141,17 +154,36 @@ const App: React.FC = () => {
           />
         )}
         
-        {sidebarVisible && viewMode === 'japan' && (
+        {sidebarVisible && isJapaneseDialectMode && (
           <JapaneseDialectSidebar
             dialects={japaneseDialects}
             selectedDialect={selectedDialect}
             onDialectSelect={handleDialectSelect}
             searchQuery={dialectSearchQuery}
             onSearchChange={setDialectSearchQuery}
+            onBackToWorld={handleBackToWorld}
           />
         )}
         
-        {viewMode === 'world' ? (
+        {isJapaneseDialectMode ? (
+          <div className="flex-1 relative">
+            <JapaneseDialectMap
+              selectedDialect={selectedDialect}
+              onDialectSelect={handleDialectSelect}
+              onDialectHover={handleDialectHover}
+            />
+            {/* 戻るボタン */}
+            <button
+              onClick={handleBackToWorld}
+              className="absolute top-4 left-4 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg shadow-lg border border-gray-200 flex items-center space-x-2 z-10"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>世界地図に戻る</span>
+            </button>
+          </div>
+        ) : (
           <GoogleMapView
             languages={visibleLanguages}
             selectedLanguage={selectedLanguage}
@@ -160,12 +192,6 @@ const App: React.FC = () => {
             familyFilter={familyFilter}
             branchFilter={branchFilter}
             subgroupFilter={subgroupFilter}
-          />
-        ) : (
-          <JapaneseDialectMap
-            selectedDialect={selectedDialect}
-            onDialectSelect={handleDialectSelect}
-            onDialectHover={handleDialectHover}
           />
         )}
       </div>
@@ -180,7 +206,7 @@ const App: React.FC = () => {
       )}
       
       {/* 方言選択時の音声パネル */}
-      {viewMode === 'japan' && selectedDialect && selectedDialectData && (
+      {isJapaneseDialectMode && selectedDialect && selectedDialectData && (
         <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md z-50">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-lg font-semibold text-gray-800">

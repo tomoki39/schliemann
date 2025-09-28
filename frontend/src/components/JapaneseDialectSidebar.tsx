@@ -15,6 +15,7 @@ interface JapaneseDialectSidebarProps {
   onDialectSelect: (dialectId: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onBackToWorld: () => void;
 }
 
 const JapaneseDialectSidebar: React.FC<JapaneseDialectSidebarProps> = ({
@@ -22,7 +23,8 @@ const JapaneseDialectSidebar: React.FC<JapaneseDialectSidebarProps> = ({
   selectedDialect,
   onDialectSelect,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  onBackToWorld
 }) => {
   const filteredDialects = dialects.filter(dialect =>
     dialect.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -32,7 +34,18 @@ const JapaneseDialectSidebar: React.FC<JapaneseDialectSidebarProps> = ({
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
       <div className="p-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-800 mb-3">日本方言</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-gray-800">日本方言</h2>
+          <button
+            onClick={onBackToWorld}
+            className="text-sm text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>戻る</span>
+          </button>
+        </div>
         <input
           type="text"
           placeholder="方言を検索..."
