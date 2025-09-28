@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Language } from '../types/Language';
 import BookmarkButton from './BookmarkButton';
+import AudioPlayer from './AudioPlayer';
+import DialectPlayer from './DialectPlayer';
+import { convertTextToDialect } from '../utils/dialectConverter';
 
 interface DetailPanelProps {
   language: Language | null;
@@ -17,6 +20,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   onToggleBookmark 
 }) => {
   const { t } = useTranslation();
+  const [customText, setCustomText] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   if (!language) return null;
 
@@ -54,6 +59,66 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
               {language.subgroup ? ` > ${language.subgroup}` : ''}
             </p>
           </div>
+
+          {language.audio && (
+            <div>
+              <h4 className="font-medium mb-2">音声サンプル</h4>
+              <AudioPlayer
+                languageName={language.name_ja}
+                text={language.audio.text}
+                className="w-full"
+              />
+              {language.audio.source && (
+                <p className="text-xs text-gray-500 mt-1">
+                  出典: {language.audio.source}
+                </p>
+              )}
+            </div>
+          )}
+
+          {language.dialects && language.dialects.length > 0 && (
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium">方言</h4>
+                <button
+                  onClick={() => setShowCustomInput(!showCustomInput)}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  {showCustomInput ? 'カスタム入力を閉じる' : 'カスタムテキストを入力'}
+                </button>
+              </div>
+
+              {/* グローバルカスタム入力 */}
+              {showCustomInput && (
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <textarea
+                    value={customText}
+                    onChange={(e) => setCustomText(e.target.value)}
+                    placeholder="ここにテキストを入力してください..."
+                    className="w-full p-2 text-sm border rounded resize-none mb-2"
+                    rows={3}
+                  />
+                  {customText && (
+                    <div className="text-xs text-gray-600 mb-2">
+                      変換結果プレビュー:
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {language.dialects.map((dialect, index) => (
+                  <DialectPlayer
+                    key={index}
+                    dialect={dialect}
+                    className="w-full"
+                    customText={showCustomInput ? customText : ''}
+                    showCustomInput={showCustomInput}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           
           {language.total_speakers && (
             <div>

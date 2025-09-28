@@ -10,6 +10,18 @@ export interface Language {
     lat: number;
     lng: number;
   };
+  audio?: {
+    text?: string; // 音声の内容（例：「こんにちは」）
+    source?: string; // 音声の出典（例：「音声合成」）
+  };
+  dialects?: {
+    name: string;
+    region: string;
+    sample_text: string;
+    description?: string;
+    conversion_model: string;
+    custom_input_enabled: boolean;
+  }[];
 }
 
 export interface LanguageArea {

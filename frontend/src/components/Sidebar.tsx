@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Language } from '../types/Language';
+import { LANGUAGE_TAXONOMY } from '../types/Taxonomy';
 
 interface SidebarProps {
   languages: Language[];
@@ -54,15 +55,31 @@ const Sidebar: React.FC<SidebarProps> = ({
     return matchesSearch && matchesFamily && matchesBranch && matchesSubgroup && matchesCountry;
   });
 
-  const families = Array.from(new Set(languages.map(lang => lang.family)));
-  const branches = Array.from(new Set(languages
-    .filter(l => !familyFilter || l.family === familyFilter)
-    .map(l => l.branch)
-    .filter(Boolean))) as string[];
-  const subgroups = Array.from(new Set(languages
-    .filter(l => (!familyFilter || l.family === familyFilter) && (!branchFilter || l.branch === branchFilter))
-    .map(l => l.subgroup)
-    .filter(Boolean))) as string[];
+  // 仕様に合わせた固定のファミリー一覧（重複無し・順序固定）
+  const families = [
+    'インド・ヨーロッパ',
+    'シナ・チベット',
+    'ニジェール・コンゴ',
+    'アフロ・アジア',
+    'オーストロネシア',
+    'アルタイ',
+    'ドラヴィダ',
+    'その他'
+  ];
+  // Family が選択されていれば、定義済みの枝を優先表示。未選択時はデータから集約
+  const branches = familyFilter
+    ? Object.keys(LANGUAGE_TAXONOMY[familyFilter]?.branches || {})
+    : Array.from(new Set(languages.map(l => l.branch).filter(Boolean))) as string[];
+  const subgroupFromTaxonomy = (family: string, branch: string): string[] => {
+    const sg = LANGUAGE_TAXONOMY[family]?.branches?.[branch] || [];
+    return sg;
+  };
+  const subgroups = (familyFilter && branchFilter)
+    ? subgroupFromTaxonomy(familyFilter, branchFilter)
+    : Array.from(new Set(languages
+        .filter(l => (!familyFilter || l.family === familyFilter) && (!branchFilter || l.branch === branchFilter))
+        .map(l => l.subgroup)
+        .filter(Boolean))) as string[];
   const countries = Array.from(new Set(
     languages
       .filter(l => (

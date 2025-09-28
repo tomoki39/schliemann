@@ -16,6 +16,18 @@ interface GoogleMapViewProps {
 // 国境GeoJSON（将来は自前CDNへ移行）
 const WORLD_GEOJSON_URL = 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
 
+// 固定カラー（仕様: docs/language_map_specification.md 3.2.1）
+const FAMILY_COLORS: Record<string, string> = {
+  'インド・ヨーロッパ': '#3B82F6',
+  'シナ・チベット': '#EF4444',
+  'ニジェール・コンゴ': '#10B981',
+  'アフロ・アジア': '#F59E0B',
+  'オーストロネシア': '#8B5CF6',
+  'アルタイ': '#F97316',
+  'ドラヴィダ': '#EC4899',
+  'その他': '#6B7280'
+};
+
 const COLOR_PALETTE = [
   '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
   '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
@@ -25,6 +37,7 @@ const COLOR_PALETTE = [
 
 function colorForKey(key: string | undefined): string {
   if (!key) return '#cccccc';
+  if (FAMILY_COLORS[key]) return FAMILY_COLORS[key];
   let hash = 0;
   for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
   return COLOR_PALETTE[hash % COLOR_PALETTE.length];
@@ -36,6 +49,21 @@ const ISO_A3_TO_A2: Record<string, string> = {
   CHN: 'CN', TWN: 'TW', ESP: 'ES', MEX: 'MX', ARG: 'AR', BRA: 'BR', PRT: 'PT',
   FRA: 'FR', BEL: 'BE', CHE: 'CH', ITA: 'IT', DEU: 'DE', AUT: 'AT', RUS: 'RU',
   IND: 'IN', SAU: 'SA', JPN: 'JP', NLD: 'NL'
+};
+
+// 国コード単位の最終フォールバック（Wikidataに出てこない準国家・地域など）
+const FALLBACK_A2_TO_LANGIDS: Record<string, string[]> = {
+  NO: ['nor','nob','nno'],
+  UA: ['ukr'],
+  MD: ['ron'],
+  RS: ['srp'],
+  FR: ['fra'],
+  GL: ['kal'],
+  SJ: ['nor'],
+  SO: ['som','ara'],
+  // ソマリランド（Hargeisa 周辺）やプントランド（Bosaso 周辺）等の部分行政区分
+  'XS': ['som'],
+  'XP': ['som']
 };
 
 function getFeatureA2(feature: google.maps.Data.Feature): string | undefined {
@@ -70,13 +98,57 @@ const DEMO_LANG_LINEAGE: Record<string, { family: string; branch?: string; subgr
   rus: { family: 'インド・ヨーロッパ', branch: 'スラブ', subgroup: '東スラブ' },
   hin: { family: 'インド・ヨーロッパ', branch: 'インド・アーリア' },
   cmn: { family: 'シナ・チベット' },
-  jpn: { family: '日本語族' },
-  arb: { family: 'アフロ・アジア' }
+  jpn: { family: 'その他' },
+  kor: { family: 'その他' },
+  fin: { family: 'その他' },
+  hun: { family: 'その他' },
+  ita: { family: 'インド・ヨーロッパ', branch: 'ロマンス', subgroup: 'イタロ・ロマンス' },
+  pol: { family: 'インド・ヨーロッパ', branch: 'スラブ', subgroup: '西スラブ' },
+  ukr: { family: 'インド・ヨーロッパ', branch: 'スラブ', subgroup: '東スラブ' },
+  bel: { family: 'インド・ヨーロッパ', branch: 'スラブ', subgroup: '東スラブ' },
+  ron: { family: 'インド・ヨーロッパ', branch: 'ロマンス', subgroup: 'バルカン・ロマンス' },
+  bul: { family: 'インド・ヨーロッパ', branch: 'スラブ', subgroup: '南スラブ' },
+  ces: { family: 'インド・ヨーロッパ', branch: 'スラブ', subgroup: '西スラブ' },
+  slk: { family: 'インド・ヨーロッパ', branch: 'スラブ', subgroup: '西スラブ' },
+  ell: { family: 'インド・ヨーロッパ', branch: 'ギリシア' },
+  swe: { family: 'インド・ヨーロッパ', branch: 'ゲルマン', subgroup: '北ゲルマン' },
+  nor: { family: 'インド・ヨーロッパ', branch: 'ゲルマン', subgroup: '北ゲルマン' },
+  nob: { family: 'インド・ヨーロッパ', branch: 'ゲルマン', subgroup: '北ゲルマン' },
+  nno: { family: 'インド・ヨーロッパ', branch: 'ゲルマン', subgroup: '北ゲルマン' },
+  dan: { family: 'インド・ヨーロッパ', branch: 'ゲルマン', subgroup: '北ゲルマン' },
+  srp: { family: 'インド・ヨーロッパ', branch: 'スラブ', subgroup: '南スラブ' },
+  mlt: { family: 'アフロ・アジア', branch: 'セム' },
+  kat: { family: 'その他' },
+  kal: { family: 'その他' },
+  tur: { family: 'テュルク', branch: 'オグズ' },
+  aze: { family: 'テュルク', branch: 'オグズ' },
+  kaz: { family: 'テュルク', branch: 'キプチャク' },
+  uzb: { family: 'テュルク', branch: 'カルルク' },
+  ara: { family: 'アフロ・アジア', branch: 'セム' },
+  arb: { family: 'アフロ・アジア', branch: 'セム' },
+  heb: { family: 'アフロ・アジア', branch: 'セム' },
+  fas: { family: 'インド・ヨーロッパ', branch: 'イラン' },
+  pes: { family: 'インド・ヨーロッパ', branch: 'イラン' },
+  kur: { family: 'インド・ヨーロッパ', branch: 'イラン' },
+  urd: { family: 'インド・ヨーロッパ', branch: 'インド・アーリア' },
+  ben: { family: 'インド・ヨーロッパ', branch: 'インド・アーリア' },
+  pan: { family: 'インド・ヨーロッパ', branch: 'インド・アーリア' },
+  tam: { family: 'ドラヴィダ' },
+  tel: { family: 'ドラヴィダ' },
+  kan: { family: 'ドラヴィダ' },
+  mal: { family: 'ドラヴィダ' },
+  vie: { family: 'オーストロアジア', branch: 'モン–クメール' },
+  tha: { family: 'クラーダイ', branch: 'タイ' },
+  ind: { family: 'オーストロネシア', branch: 'マレー・ポリネシア' },
+  zsm: { family: 'オーストロネシア', branch: 'マレー・ポリネシア' }
 };
 
 function modeKeyForLangId(id: string, colorMode: 'family' | 'branch' | 'subgroup'): string | undefined {
   const ll = DEMO_LANG_LINEAGE[id];
-  if (!ll) return undefined;
+  if (!ll) {
+    // 未定義コードは Family=その他 へフォールバック
+    return colorMode === 'family' ? 'その他' : undefined;
+  }
   if (colorMode === 'family') return ll.family;
   if (colorMode === 'branch') return ll.branch || ll.family;
   return ll.subgroup || ll.branch || ll.family;
@@ -100,17 +172,19 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
   const MAJOR_FAMILIES = new Set<string>([
     'インド・ヨーロッパ',
     'シナ・チベット',
-    'アフロ・アジア',
     'ニジェール・コンゴ',
+    'アフロ・アジア',
     'オーストロネシア',
+    'アルタイ',
     'ドラヴィダ',
-    'テュルク',
-    'クラーダイ',
-    'オーストロアジア'
+    // 他は「その他」へ
   ]);
 
   const normalizeFamily = (family: string | undefined): string => {
     if (!family) return 'その他';
+    // テュルク/モンゴル/ツングース等は暫定的に「アルタイ」へ吸収
+    if (family === 'テュルク' || family === 'モンゴル' || family === 'ツングース' || family === 'アルタイ') return 'アルタイ';
+    if (family === '日本語族') return 'その他';
     return MAJOR_FAMILIES.has(family) ? family : 'その他';
   };
 
@@ -122,6 +196,29 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
   ): google.maps.Data.StyleOptions => {
     const isFiltered = Boolean(familyFilter || branchFilter || subgroupFilter);
     const code = getFeatureA2(feature);
+    const adminName = getPropCaseInsensitive(feature, ['ADMIN','NAME','name']);
+
+    // 南極は塗りなし
+    if (code === 'AQ' || (adminName && /Antarctica/i.test(adminName))) {
+      return {
+        fillColor: '#000000',
+        fillOpacity: 0,
+        strokeColor: '#666',
+        strokeOpacity: 0.3,
+        strokeWeight: 0.4,
+        visible: true,
+        zIndex: 1
+      };
+    }
+    // クリティカルな暫定対処: FR/NO/SJ は強制的に適切なキーで着色
+    if (code === 'FR' || (adminName && /France/i.test(adminName))) {
+      const fill = colorForKey('インド・ヨーロッパ');
+      return { fillColor: fill, fillOpacity: 0.7, strokeColor: '#666', strokeOpacity: 0.6, strokeWeight: 1.1, visible: true, zIndex: 95 };
+    }
+    if (code === 'NO' || code === 'SJ' || (adminName && /(Norway|Svalbard)/i.test(adminName))) {
+      const fill = colorForKey('インド・ヨーロッパ');
+      return { fillColor: fill, fillOpacity: 0.7, strokeColor: '#666', strokeOpacity: 0.6, strokeWeight: 1.1, visible: true, zIndex: 95 };
+    }
 
     const families = new Set<string>();
     if (code) {
@@ -137,19 +234,51 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           const key = mode === 'family' ? normalizeFamily(l.family) : mode === 'branch' ? (l.branch || normalizeFamily(l.family)) : (l.subgroup || l.branch || normalizeFamily(l.family));
           families.add(key);
         }
+        // マッチが無い場合でも公用語データから該当キーを推定
+        if (!families.size) {
+          const entry = (countryOfficialMap as Record<string, { official_languages: string[] }>)[code];
+          if (entry) {
+            for (const lid of entry.official_languages) {
+              const key = modeKeyForLangId(lid, mode);
+              if (!key) continue;
+              // フィルタ条件に一致するキーのみ着色
+              const keyMatches = (
+                (!familyFilter || key === familyFilter || (mode==='branch'||mode==='subgroup' ? true : false)) &&
+                (!branchFilter || key === branchFilter || (mode==='subgroup' ? true : false)) &&
+                (!subgroupFilter || key === subgroupFilter)
+              );
+              if (keyMatches) families.add(key);
+            }
+          }
+        }
       } else {
         // 無絞り込み時: Family 単位で色分け
         for (const l of matchedLangs) {
           families.add(normalizeFamily(l.family));
         }
       }
-      // 公用語スタブのフォールバックは、無絞り込み時のみ採用
-      if (!isFiltered && !families.size) {
+      // 公用語スタブのフォールバック（無絞り込み時: Family推定）
+      if (!families.size) {
         const entry = (countryOfficialMap as Record<string, { official_languages: string[] }>)[code];
         if (entry) {
           for (const lid of entry.official_languages) {
             const key = modeKeyForLangId(lid, mode);
             if (key) families.add(key);
+          }
+          // 依然としてキーが得られない場合は "その他" を採用して必ず塗る（無選択時）
+          if (!families.size && !isFiltered && mode === 'family') {
+            families.add('その他');
+          }
+        } else {
+          // Wikidataに存在しない地域などはローカルフォールバック
+          const lids = FALLBACK_A2_TO_LANGIDS[code];
+          if (lids) {
+            for (const lid of lids) {
+              const key = modeKeyForLangId(lid, mode);
+              if (key) families.add(key);
+            }
+          } else if (!isFiltered && mode === 'family') {
+            families.add('その他');
           }
         }
       }
@@ -215,8 +344,17 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           const feature = ev.feature;
           const code = getFeatureA2(feature);
           if (code && hoverInfoRef.current) {
-            // 該当国の可視言語（最大5件）
-            const list = languages.filter(l => l.countries?.includes(code)).slice(0, 5).map(l => l.name_ja);
+            // 該当国の可視言語（最大5件）。無ければ公用語フォールバック
+            let list = languages.filter(l => l.countries?.includes(code)).slice(0, 5).map(l => l.name_ja);
+            if (!list.length) {
+              const entry = (countryOfficialMap as Record<string, { official_languages: string[] }>)[code];
+              if (entry) {
+                list = entry.official_languages.slice(0,5).map((lid) => {
+                  const byId = languages.find(l => l.id === lid);
+                  return byId ? byId.name_ja : lid.toUpperCase();
+                });
+              }
+            }
             const html = `
               <div style="font-size:12px;line-height:1.4;">
                 <div style="font-weight:600;margin-bottom:4px;">${code}</div>
@@ -282,6 +420,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
         const key = colorMode === 'family' ? normalizeFamily(l.family) : colorMode === 'branch' ? (l.branch || normalizeFamily(l.family)) : (l.subgroup || l.branch || normalizeFamily(l.family));
         return [key];
       })) ).sort();
+      if (!keys.includes('その他')) keys.push('その他');
       // その他は末尾へ
       keys.sort((a,b)=> (a==='その他') ? 1 : (b==='その他') ? -1 : a.localeCompare(b));
       const rows = keys.map(key => {

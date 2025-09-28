@@ -17,5 +17,9 @@
   "detail.center": "中心地点",
   "compare.title": "比較",
   "bookmark.add": "ブックマーク",
-  "bookmark.remove": "ブックマーク解除"
+  "bookmark.remove": "ブックマーク解除",
+  "audio.play": "再生",
+  "audio.pause": "一時停止",
+  "audio.noSample": "音声サンプルなし",
+  "audio.error": "再生エラー"
 }
