@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Language } from '../types/Language';
-import { LANGUAGE_TAXONOMY } from '../types/Taxonomy';
 
 interface SidebarProps {
   languages: Language[];
@@ -12,10 +11,16 @@ interface SidebarProps {
   searchQuery: string;
   familyFilter: string;
   branchFilter?: string;
+  groupFilter?: string;
   subgroupFilter?: string;
+  languageFilter?: string;
+  dialectFilter?: string;
   onFamilyFilterChange: (family: string) => void;
   onBranchFilterChange?: (branch: string) => void;
+  onGroupFilterChange?: (group: string) => void;
   onSubgroupFilterChange?: (subgroup: string) => void;
+  onLanguageFilterChange?: (language: string) => void;
+  onDialectFilterChange?: (dialect: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -28,9 +33,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   familyFilter,
   onFamilyFilterChange,
   branchFilter = '',
+  groupFilter = '',
   subgroupFilter = '',
+  languageFilter = '',
+  dialectFilter = '',
   onBranchFilterChange,
-  onSubgroupFilterChange
+  onGroupFilterChange,
+  onSubgroupFilterChange,
+  onLanguageFilterChange,
+  onDialectFilterChange
 }) => {
   const { t } = useTranslation();
 
@@ -42,46 +53,87 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const filteredLanguages = languages.filter(lang => {
-    const matchesSearch = lang.name_ja.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFamily = !familyFilter || lang.family === familyFilter;
-    const matchesBranch = !branchFilter || lang.branch === branchFilter;
-    const matchesSubgroup = !subgroupFilter || lang.subgroup === subgroupFilter;
-    return matchesSearch && matchesFamily && matchesBranch && matchesSubgroup;
-  });
+  const filteredLanguages = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return languages.filter(lang => {
+      // 早期リターンでパフォーマンス向上
+      if (q && !lang.name_ja.toLowerCase().includes(q)) return false;
+      if (familyFilter && lang.family !== familyFilter) return false;
+      if (branchFilter && lang.branch !== branchFilter) return false;
+      if (groupFilter && lang.group !== groupFilter) return false;
+      if (subgroupFilter && lang.subgroup !== subgroupFilter) return false;
+      if (languageFilter && lang.language !== languageFilter) return false;
+      if (dialectFilter && lang.dialect !== dialectFilter) return false;
+      return true;
+    }).sort((a, b) => {
+      // デフォルトで言語名順でソート
+      return a.name_ja.localeCompare(b.name_ja, 'ja');
+    });
+  }, [languages, searchQuery, familyFilter, branchFilter, groupFilter, subgroupFilter, languageFilter, dialectFilter]);
 
-  // 仕様に合わせた固定のファミリー一覧（重複無し・順序固定）
-  const families = [
+  // 実際のデータから語族を動的に抽出
+  const families = useMemo(() => {
+    return Array.from(new Set(
+      languages.map(l => l.family)
+    )).sort();
+  }, [languages]);
+  // Branchが使用されている言語ファミリーかどうかを判定
+  const familiesWithBranches = new Set([
     'インド・ヨーロッパ',
     'シナ・チベット',
-    'ニジェール・コンゴ',
     'アフロ・アジア',
-    'オーストロネシア',
-    'アルタイ',
+    'ウラル',
+    'テュルク',
     'ドラヴィダ',
-    'その他'
-  ];
-  // Family が選択されていれば、定義済みの枝を優先表示。未選択時はデータから集約
-  const branches = familyFilter
-    ? Object.keys(LANGUAGE_TAXONOMY[familyFilter]?.branches || {})
-    : Array.from(new Set(languages.map(l => l.branch).filter(Boolean))) as string[];
-  const subgroupFromTaxonomy = (family: string, branch: string): string[] => {
-    const sg = LANGUAGE_TAXONOMY[family]?.branches?.[branch] || [];
-    return sg;
-  };
-  const subgroups = (familyFilter && branchFilter)
-    ? subgroupFromTaxonomy(familyFilter, branchFilter)
-    : Array.from(new Set(languages
-        .filter(l => (!familyFilter || l.family === familyFilter) && (!branchFilter || l.branch === branchFilter))
-        .map(l => l.subgroup)
-        .filter(Boolean))) as string[];
+    'カルトヴェリ',
+    '日本語族',
+    '朝鮮語族',
+    'タイ・カダイ',
+    'オーストロアジア'
+  ]);
+  const hasBranches = familyFilter ? familiesWithBranches.has(familyFilter) : false;
+  
+  const branches = hasBranches ? Array.from(new Set(languages
+    .filter(l => !familyFilter || l.family === familyFilter)
+    .map(l => l.branch)
+    .filter(Boolean))) as string[] : [];
+  
+  const groups = Array.from(new Set(languages
+    .filter(l => (!familyFilter || l.family === familyFilter) && (!branchFilter || l.branch === branchFilter))
+    .map(l => l.group)
+    .filter(Boolean))) as string[];
+  
+  const subgroups = Array.from(new Set(languages
+    .filter(l => (!familyFilter || l.family === familyFilter) && 
+                 (!branchFilter || l.branch === branchFilter) &&
+                 (!groupFilter || l.group === groupFilter))
+    .map(l => l.subgroup)
+    .filter(Boolean))) as string[];
+
+  const languages_list = Array.from(new Set(languages
+    .filter(l => (!familyFilter || l.family === familyFilter) && 
+                 (!branchFilter || l.branch === branchFilter) &&
+                 (!groupFilter || l.group === groupFilter) &&
+                 (!subgroupFilter || l.subgroup === subgroupFilter))
+    .map(l => l.language)
+    .filter(Boolean))) as string[];
+
+  const dialects_list = Array.from(new Set(languages
+    .filter(l => (!familyFilter || l.family === familyFilter) && 
+                 (!branchFilter || l.branch === branchFilter) &&
+                 (!groupFilter || l.group === groupFilter) &&
+                 (!subgroupFilter || l.subgroup === subgroupFilter) &&
+                 (!languageFilter || l.language === languageFilter))
+    .flatMap(l => l.dialects || [])
+    .map(dialect => dialect.name)
+    .filter(Boolean))) as string[];
 
   return (
     <div className="w-80 bg-gray-100 p-4 h-full overflow-y-auto flex-shrink-0 min-h-0">
       <h2 className="text-lg font-semibold mb-4">{t('sidebar.title')}</h2>
       
       <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">{t('filter.family')}</label>
+        <label className="block text-sm font-medium mb-2">語族 (Family)</label>
         <select
           value={familyFilter}
           onChange={(e) => onFamilyFilterChange(e.target.value)}
@@ -94,46 +146,113 @@ const Sidebar: React.FC<SidebarProps> = ({
         </select>
       </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">{t('filter.branch')}</label>
-        <select
-          value={branchFilter}
-          onChange={(e) => onBranchFilterChange?.(e.target.value)}
-          className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-            !familyFilter || !branches.length 
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-              : 'bg-white text-gray-900'
-          }`}
-          disabled={!familyFilter || !branches.length}
-        >
-          <option value="">すべて</option>
-          {branches.map(branch => (
-            <option key={branch} value={branch}>{branch}</option>
-          ))}
-        </select>
-      </div>
+      {hasBranches && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">語派 (Branch)</label>
+          <select
+            value={branchFilter}
+            onChange={(e) => onBranchFilterChange?.(e.target.value)}
+            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+              !familyFilter || !branches.length 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-white text-gray-900'
+            }`}
+            disabled={!familyFilter || !branches.length}
+          >
+            <option value="">すべて</option>
+            {branches.map(branch => (
+              <option key={branch} value={branch}>{branch}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">{t('filter.subgroup')}</label>
-        <select
-          value={subgroupFilter}
-          onChange={(e) => onSubgroupFilterChange?.(e.target.value)}
-          className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-            !branchFilter || !subgroups.length 
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-              : 'bg-white text-gray-900'
-          }`}
-          disabled={!branchFilter || !subgroups.length}
-        >
-          <option value="">すべて</option>
-          {subgroups.map(sub => (
-            <option key={sub} value={sub}>{sub}</option>
-          ))}
-        </select>
-      </div>
+      {hasBranches && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">語群 (Group)</label>
+          <select
+            value={groupFilter}
+            onChange={(e) => onGroupFilterChange?.(e.target.value)}
+            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+              !branchFilter || !groups.length 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-white text-gray-900'
+            }`}
+            disabled={!branchFilter || !groups.length}
+          >
+            <option value="">すべて</option>
+            {groups.map(group => (
+              <option key={group} value={group}>{group}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
-      <div className="space-y-2">
-        {filteredLanguages.map(lang => (
+      {hasBranches && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">語支 (Subgroup)</label>
+          <select
+            value={subgroupFilter}
+            onChange={(e) => onSubgroupFilterChange?.(e.target.value)}
+            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+              !groupFilter || !subgroups.length 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-white text-gray-900'
+            }`}
+            disabled={!groupFilter || !subgroups.length}
+          >
+            <option value="">すべて</option>
+            {subgroups.map(sub => (
+              <option key={sub} value={sub}>{sub}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {hasBranches && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">言語 (Language)</label>
+          <select
+            value={languageFilter}
+            onChange={(e) => onLanguageFilterChange?.(e.target.value)}
+            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+              !subgroupFilter || !languages_list.length 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-white text-gray-900'
+            }`}
+            disabled={!subgroupFilter || !languages_list.length}
+          >
+            <option value="">すべて</option>
+            {languages_list.map(lang => (
+              <option key={lang} value={lang}>{lang}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {hasBranches && (
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">方言 (Dialect)</label>
+          <select
+            value={dialectFilter || ''}
+            onChange={(e) => onDialectFilterChange?.(e.target.value)}
+            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+              !languageFilter || !dialects_list.length 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-white text-gray-900'
+            }`}
+            disabled={!languageFilter || !dialects_list.length}
+          >
+            <option value="">すべて</option>
+            {dialects_list.map(dialect => (
+              <option key={dialect} value={dialect}>{dialect}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div className="space-y-2 max-h-96 overflow-y-auto">
+        {filteredLanguages.slice(0, 50).map(lang => (
           <div
             key={lang.id}
             className={`p-3 rounded transition-colors ${

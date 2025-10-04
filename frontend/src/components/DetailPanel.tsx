@@ -4,7 +4,7 @@ import { Language } from '../types/Language';
 import BookmarkButton from './BookmarkButton';
 import AudioPlayer from './AudioPlayer';
 import DialectPlayer from './DialectPlayer';
-import { convertTextToDialect } from '../utils/dialectConverter';
+// import { convertTextToDialect } from '../utils/dialectConverter';
 
 interface DetailPanelProps {
   language: Language | null;
@@ -56,7 +56,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             <p className="text-sm text-gray-800">
               {language.family}
               {language.branch ? ` > ${language.branch}` : ''}
+              {language.group ? ` > ${language.group}` : ''}
               {language.subgroup ? ` > ${language.subgroup}` : ''}
+              {language.language ? ` > ${language.language}` : ''}
             </p>
           </div>
 
@@ -110,7 +112,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 {language.dialects.map((dialect, index) => (
                   <DialectPlayer
                     key={index}
-                    dialect={dialect}
+                    dialect={{...dialect, id: dialect.conversion_model || `dialect-${index}`}}
                     className="w-full"
                     customText={showCustomInput ? customText : ''}
                     showCustomInput={showCustomInput}

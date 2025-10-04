@@ -1,0 +1,953 @@
+{
+  "metadata": {
+    "version": "2.0.0",
+    "created": "2024-12-19",
+    "description": "包括的6層言語分類体系の完全データ",
+    "source": "Schliemann Project Team",
+    "references": [
+      "Ethnologue: Languages of the World (SIL International)",
+      "Glottolog: Languages of the World (Max Planck Institute)",
+      "東京外国語大学附属図書館 言語分類表",
+      "各言語学専門書・論文"
+    ],
+    "statistics": {
+      "total_families": 150,
+      "total_branches": 400,
+      "total_groups": 800,
+      "total_subgroups": 1500,
+      "total_languages": 7000,
+      "total_dialects": 20000
+    }
+  },
+  "classification_system": {
+    "layers": [
+      {
+        "level": 1,
+        "name_ja": "語族",
+        "name_en": "Language Family",
+        "code": "FAMILY",
+        "description": "共通の祖先言語から派生した最大のグループ",
+        "count": 150
+      },
+      {
+        "level": 2,
+        "name_ja": "語派",
+        "name_en": "Language Branch",
+        "code": "BRANCH",
+        "description": "語族内の主要な下位区分",
+        "count": 400
+      },
+      {
+        "level": 3,
+        "name_ja": "語群",
+        "name_en": "Language Group",
+        "code": "GROUP",
+        "description": "語派内のさらに細かい分類",
+        "count": 800
+      },
+      {
+        "level": 4,
+        "name_ja": "語支",
+        "name_en": "Language Subgroup",
+        "code": "SUBGROUP",
+        "description": "語群内のより小さな分類",
+        "count": 1500
+      },
+      {
+        "level": 5,
+        "name_ja": "言語",
+        "name_en": "Individual Language",
+        "code": "LANGUAGE",
+        "description": "相互理解可能性を持つ言語の単位",
+        "count": 7000
+      },
+      {
+        "level": 6,
+        "name_ja": "方言",
+        "name_en": "Dialect",
+        "code": "DIALECT",
+        "description": "特定の地域や社会集団で話される言語の変種",
+        "count": 20000
+      }
+    ]
+  },
+  "major_families": {
+    "INDO_EUROPEAN": {
+      "name_ja": "インド・ヨーロッパ",
+      "name_en": "Indo-European",
+      "code": "INDO-EUROPEAN",
+      "speakers": 3000000000,
+      "percentage": 40,
+      "distribution": ["Europe", "South Asia", "Americas", "Oceania"],
+      "branches": {
+        "GERMANIC": {
+          "name_ja": "ゲルマン",
+          "name_en": "Germanic",
+          "code": "GERMANIC",
+          "groups": {
+            "WEST_GERMANIC": {
+              "name_ja": "西ゲルマン",
+              "name_en": "West Germanic",
+              "code": "WEST_GERMANIC",
+              "subgroups": {
+                "HIGH_GERMAN": {
+                  "name_ja": "高地ドイツ語",
+                  "name_en": "High German",
+                  "code": "HIGH_GERMAN",
+                  "languages": {
+                    "deu": {
+                      "name_ja": "ドイツ語",
+                      "name_en": "German",
+                      "speakers": 95000000,
+                      "dialects": {
+                        "standard": "標準ドイツ語",
+                        "bavarian": "バイエルン方言",
+                        "swiss": "スイスドイツ語",
+                        "austrian": "オーストリアドイツ語"
+                      }
+                    },
+                    "yid": {
+                      "name_ja": "イディッシュ語",
+                      "name_en": "Yiddish",
+                      "speakers": 1000000,
+                      "dialects": {
+                        "eastern": "東欧イディッシュ語",
+                        "western": "西欧イディッシュ語"
+                      }
+                    }
+                  }
+                },
+                "LOW_GERMAN": {
+                  "name_ja": "低地ドイツ語",
+                  "name_en": "Low German",
+                  "code": "LOW_GERMAN",
+                  "languages": {
+                    "nld": {
+                      "name_ja": "オランダ語",
+                      "name_en": "Dutch",
+                      "speakers": 24000000,
+                      "dialects": {
+                        "standard": "標準オランダ語",
+                        "flemish": "フラマン語",
+                        "afrikaans": "アフリカーンス語"
+                      }
+                    },
+                    "fry": {
+                      "name_ja": "フリジア語",
+                      "name_en": "Frisian",
+                      "speakers": 500000,
+                      "dialects": {
+                        "west": "西フリジア語",
+                        "east": "東フリジア語",
+                        "north": "北フリジア語"
+                      }
+                    }
+                  }
+                },
+                "ANGLO_FRISIAN": {
+                  "name_ja": "アングロ・フリジア",
+                  "name_en": "Anglo-Frisian",
+                  "code": "ANGLO_FRISIAN",
+                  "languages": {
+                    "eng": {
+                      "name_ja": "英語",
+                      "name_en": "English",
+                      "speakers": 1500000000,
+                      "dialects": {
+                        "american": "アメリカ英語",
+                        "british": "イギリス英語",
+                        "australian": "オーストラリア英語",
+                        "canadian": "カナダ英語",
+                        "new_zealand": "ニュージーランド英語",
+                        "south_african": "南アフリカ英語",
+                        "indian": "インド英語",
+                        "singapore": "シンガポール英語"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "NORTH_GERMANIC": {
+              "name_ja": "北ゲルマン",
+              "name_en": "North Germanic",
+              "code": "NORTH_GERMANIC",
+              "subgroups": {
+                "EAST_SCANDINAVIAN": {
+                  "name_ja": "東スカンジナビア",
+                  "name_en": "East Scandinavian",
+                  "code": "EAST_SCANDINAVIAN",
+                  "languages": {
+                    "swe": {
+                      "name_ja": "スウェーデン語",
+                      "name_en": "Swedish",
+                      "speakers": 10000000,
+                      "dialects": {
+                        "standard": "標準スウェーデン語",
+                        "finland": "フィンランド・スウェーデン語"
+                      }
+                    },
+                    "dan": {
+                      "name_ja": "デンマーク語",
+                      "name_en": "Danish",
+                      "speakers": 6000000,
+                      "dialects": {
+                        "standard": "標準デンマーク語",
+                        "jutlandic": "ユトランド方言"
+                      }
+                    }
+                  }
+                },
+                "WEST_SCANDINAVIAN": {
+                  "name_ja": "西スカンジナビア",
+                  "name_en": "West Scandinavian",
+                  "code": "WEST_SCANDINAVIAN",
+                  "languages": {
+                    "nor": {
+                      "name_ja": "ノルウェー語",
+                      "name_en": "Norwegian",
+                      "speakers": 5000000,
+                      "dialects": {
+                        "bokmal": "ブークモール",
+                        "nynorsk": "ニーノシュク"
+                      }
+                    },
+                    "isl": {
+                      "name_ja": "アイスランド語",
+                      "name_en": "Icelandic",
+                      "speakers": 350000,
+                      "dialects": {
+                        "standard": "標準アイスランド語"
+                      }
+                    },
+                    "fao": {
+                      "name_ja": "フェロー語",
+                      "name_en": "Faroese",
+                      "speakers": 70000,
+                      "dialects": {
+                        "standard": "標準フェロー語"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ROMANCE": {
+          "name_ja": "ロマンス",
+          "name_en": "Romance",
+          "code": "ROMANCE",
+          "groups": {
+            "WESTERN_ROMANCE": {
+              "name_ja": "西ロマンス",
+              "name_en": "Western Romance",
+              "code": "WESTERN_ROMANCE",
+              "subgroups": {
+                "IBERO_ROMANCE": {
+                  "name_ja": "イベロ・ロマンス",
+                  "name_en": "Ibero-Romance",
+                  "code": "IBERO_ROMANCE",
+                  "languages": {
+                    "spa": {
+                      "name_ja": "スペイン語",
+                      "name_en": "Spanish",
+                      "speakers": 500000000,
+                      "dialects": {
+                        "castilian": "カスティーリャ方言",
+                        "andalusian": "アンダルシア方言",
+                        "mexican": "メキシコ方言",
+                        "argentine": "アルゼンチン方言",
+                        "colombian": "コロンビア方言"
+                      }
+                    },
+                    "por": {
+                      "name_ja": "ポルトガル語",
+                      "name_en": "Portuguese",
+                      "speakers": 260000000,
+                      "dialects": {
+                        "brazilian": "ブラジルポルトガル語",
+                        "european": "ヨーロッパポルトガル語"
+                      }
+                    },
+                    "cat": {
+                      "name_ja": "カタルーニャ語",
+                      "name_en": "Catalan",
+                      "speakers": 4000000,
+                      "dialects": {
+                        "barcelona": "バルセロナ方言",
+                        "valencian": "バレンシア方言"
+                      }
+                    },
+                    "glg": {
+                      "name_ja": "ガリシア語",
+                      "name_en": "Galician",
+                      "speakers": 3000000
+                    }
+                  }
+                },
+                "GALLO_ROMANCE": {
+                  "name_ja": "ガロ・ロマンス",
+                  "name_en": "Gallo-Romance",
+                  "code": "GALLO_ROMANCE",
+                  "languages": {
+                    "fra": {
+                      "name_ja": "フランス語",
+                      "name_en": "French",
+                      "speakers": 300000000,
+                      "dialects": {
+                        "parisian": "パリ方言",
+                        "quebec": "ケベック方言",
+                        "swiss": "スイスフランス語",
+                        "belgian": "ベルギーフランス語"
+                      }
+                    },
+                    "oci": {
+                      "name_ja": "オック語",
+                      "name_en": "Occitan",
+                      "speakers": 200000
+                    }
+                  }
+                }
+              }
+            },
+            "ITALO_ROMANCE": {
+              "name_ja": "イタロ・ロマンス",
+              "name_en": "Italo-Romance",
+              "code": "ITALO_ROMANCE",
+              "subgroups": {
+                "ITALO_ROMANCE": {
+                  "name_ja": "イタロ・ロマンス",
+                  "name_en": "Italo-Romance",
+                  "code": "ITALO_ROMANCE",
+                  "languages": {
+                    "ita": {
+                      "name_ja": "イタリア語",
+                      "name_en": "Italian",
+                      "speakers": 65000000,
+                      "dialects": {
+                        "tuscan": "トスカーナ方言",
+                        "sicilian": "シチリア方言",
+                        "neapolitan": "ナポリ方言",
+                        "lombard": "ロンバルディア方言",
+                        "venetian": "ヴェネト方言"
+                      }
+                    },
+                    "srd": {
+                      "name_ja": "サルデーニャ語",
+                      "name_en": "Sardinian",
+                      "speakers": 1000000
+                    },
+                    "cos": {
+                      "name_ja": "コルシカ語",
+                      "name_en": "Corsican",
+                      "speakers": 300000
+                    }
+                  }
+                }
+              }
+            },
+            "EASTERN_ROMANCE": {
+              "name_ja": "東ロマンス",
+              "name_en": "Eastern Romance",
+              "code": "EASTERN_ROMANCE",
+              "subgroups": {
+                "BALKAN_ROMANCE": {
+                  "name_ja": "バルカン・ロマンス",
+                  "name_en": "Balkan Romance",
+                  "code": "BALKAN_ROMANCE",
+                  "languages": {
+                    "ron": {
+                      "name_ja": "ルーマニア語",
+                      "name_en": "Romanian",
+                      "speakers": 24000000,
+                      "dialects": {
+                        "moldovan": "モルドバ語",
+                        "wallachian": "ワラキア方言",
+                        "moldavian": "モルダビア方言"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "SLAVIC": {
+          "name_ja": "スラヴ",
+          "name_en": "Slavic",
+          "code": "SLAVIC",
+          "groups": {
+            "EAST_SLAVIC": {
+              "name_ja": "東スラヴ",
+              "name_en": "East Slavic",
+              "code": "EAST_SLAVIC",
+              "subgroups": {
+                "EAST_SLAVIC": {
+                  "name_ja": "東スラヴ",
+                  "name_en": "East Slavic",
+                  "code": "EAST_SLAVIC",
+                  "languages": {
+                    "rus": {
+                      "name_ja": "ロシア語",
+                      "name_en": "Russian",
+                      "speakers": 260000000,
+                      "dialects": {
+                        "moscow": "モスクワ方言",
+                        "st_petersburg": "サンクトペテルブルク方言",
+                        "siberian": "シベリア方言"
+                      }
+                    },
+                    "ukr": {
+                      "name_ja": "ウクライナ語",
+                      "name_en": "Ukrainian",
+                      "speakers": 40000000,
+                      "dialects": {
+                        "kiev": "キエフ方言",
+                        "galician": "ガリツィア方言"
+                      }
+                    },
+                    "bel": {
+                      "name_ja": "ベラルーシ語",
+                      "name_en": "Belarusian",
+                      "speakers": 5000000
+                    }
+                  }
+                }
+              }
+            },
+            "WEST_SLAVIC": {
+              "name_ja": "西スラヴ",
+              "name_en": "West Slavic",
+              "code": "WEST_SLAVIC",
+              "subgroups": {
+                "WEST_SLAVIC": {
+                  "name_ja": "西スラヴ",
+                  "name_en": "West Slavic",
+                  "code": "WEST_SLAVIC",
+                  "languages": {
+                    "pol": {
+                      "name_ja": "ポーランド語",
+                      "name_en": "Polish",
+                      "speakers": 38000000,
+                      "dialects": {
+                        "warsaw": "ワルシャワ方言",
+                        "krakow": "クラクフ方言"
+                      }
+                    },
+                    "ces": {
+                      "name_ja": "チェコ語",
+                      "name_en": "Czech",
+                      "speakers": 10000000,
+                      "dialects": {
+                        "prague": "プラハ方言"
+                      }
+                    },
+                    "slk": {
+                      "name_ja": "スロバキア語",
+                      "name_en": "Slovak",
+                      "speakers": 5000000
+                    }
+                  }
+                }
+              }
+            },
+            "SOUTH_SLAVIC": {
+              "name_ja": "南スラヴ",
+              "name_en": "South Slavic",
+              "code": "SOUTH_SLAVIC",
+              "subgroups": {
+                "SOUTH_SLAVIC": {
+                  "name_ja": "南スラヴ",
+                  "name_en": "South Slavic",
+                  "code": "SOUTH_SLAVIC",
+                  "languages": {
+                    "srp": {
+                      "name_ja": "セルビア語",
+                      "name_en": "Serbian",
+                      "speakers": 12000000
+                    },
+                    "hrv": {
+                      "name_ja": "クロアチア語",
+                      "name_en": "Croatian",
+                      "speakers": 5000000
+                    },
+                    "bos": {
+                      "name_ja": "ボスニア語",
+                      "name_en": "Bosnian",
+                      "speakers": 2000000
+                    },
+                    "bul": {
+                      "name_ja": "ブルガリア語",
+                      "name_en": "Bulgarian",
+                      "speakers": 7000000
+                    },
+                    "mkd": {
+                      "name_ja": "マケドニア語",
+                      "name_en": "Macedonian",
+                      "speakers": 2000000
+                    },
+                    "slv": {
+                      "name_ja": "スロベニア語",
+                      "name_en": "Slovenian",
+                      "speakers": 2500000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "INDO_IRANIAN": {
+          "name_ja": "インド・イラン",
+          "name_en": "Indo-Iranian",
+          "code": "INDO_IRANIAN",
+          "groups": {
+            "INDIC": {
+              "name_ja": "インド語群",
+              "name_en": "Indic",
+              "code": "INDIC",
+              "subgroups": {
+                "INDIC": {
+                  "name_ja": "インド語",
+                  "name_en": "Indic",
+                  "code": "INDIC",
+                  "languages": {
+                    "hin": {
+                      "name_ja": "ヒンディー語",
+                      "name_en": "Hindi",
+                      "speakers": 600000000,
+                      "dialects": {
+                        "delhi": "デリー方言",
+                        "bombay": "ボンベイ方言"
+                      }
+                    },
+                    "urd": {
+                      "name_ja": "ウルドゥー語",
+                      "name_en": "Urdu",
+                      "speakers": 230000000
+                    },
+                    "ben": {
+                      "name_ja": "ベンガル語",
+                      "name_en": "Bengali",
+                      "speakers": 230000000,
+                      "dialects": {
+                        "west": "西ベンガル方言",
+                        "east": "東ベンガル方言"
+                      }
+                    },
+                    "pan": {
+                      "name_ja": "パンジャブ語",
+                      "name_en": "Punjabi",
+                      "speakers": 120000000
+                    },
+                    "guj": {
+                      "name_ja": "グジャラート語",
+                      "name_en": "Gujarati",
+                      "speakers": 55000000
+                    },
+                    "mar": {
+                      "name_ja": "マラーティー語",
+                      "name_en": "Marathi",
+                      "speakers": 83000000
+                    },
+                    "tel": {
+                      "name_ja": "テルグ語",
+                      "name_en": "Telugu",
+                      "speakers": 75000000
+                    },
+                    "tam": {
+                      "name_ja": "タミル語",
+                      "name_en": "Tamil",
+                      "speakers": 75000000,
+                      "dialects": {
+                        "standard": "標準タミル語",
+                        "sri_lankan": "スリランカ・タミル語"
+                      }
+                    },
+                    "kan": {
+                      "name_ja": "カンナダ語",
+                      "name_en": "Kannada",
+                      "speakers": 44000000
+                    },
+                    "mal": {
+                      "name_ja": "マラヤーラム語",
+                      "name_en": "Malayalam",
+                      "speakers": 38000000
+                    },
+                    "ori": {
+                      "name_ja": "オリヤー語",
+                      "name_en": "Odia",
+                      "speakers": 35000000
+                    },
+                    "asm": {
+                      "name_ja": "アッサム語",
+                      "name_en": "Assamese",
+                      "speakers": 15000000
+                    },
+                    "sin": {
+                      "name_ja": "シンハラ語",
+                      "name_en": "Sinhala",
+                      "speakers": 16000000
+                    }
+                  }
+                }
+              }
+            },
+            "IRANIAN": {
+              "name_ja": "イラン語群",
+              "name_en": "Iranian",
+              "code": "IRANIAN",
+              "subgroups": {
+                "WESTERN_IRANIAN": {
+                  "name_ja": "西イラン",
+                  "name_en": "Western Iranian",
+                  "code": "WESTERN_IRANIAN",
+                  "languages": {
+                    "fas": {
+                      "name_ja": "ペルシャ語",
+                      "name_en": "Persian",
+                      "speakers": 110000000,
+                      "dialects": {
+                        "iranian": "イラン方言",
+                        "dari": "ダリー語",
+                        "tajik": "タジク語"
+                      }
+                    },
+                    "kur": {
+                      "name_ja": "クルド語",
+                      "name_en": "Kurdish",
+                      "speakers": 30000000,
+                      "dialects": {
+                        "northern": "北クルド語",
+                        "central": "中央クルド語",
+                        "southern": "南クルド語"
+                      }
+                    },
+                    "pus": {
+                      "name_ja": "パシュトゥー語",
+                      "name_en": "Pashto",
+                      "speakers": 50000000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "BALTIC": {
+          "name_ja": "バルト",
+          "name_en": "Baltic",
+          "code": "BALTIC",
+          "groups": {
+            "EAST_BALTIC": {
+              "name_ja": "東バルト",
+              "name_en": "East Baltic",
+              "code": "EAST_BALTIC",
+              "subgroups": {
+                "EAST_BALTIC": {
+                  "name_ja": "東バルト",
+                  "name_en": "East Baltic",
+                  "code": "EAST_BALTIC",
+                  "languages": {
+                    "lit": {
+                      "name_ja": "リトアニア語",
+                      "name_en": "Lithuanian",
+                      "speakers": 3000000
+                    },
+                    "lav": {
+                      "name_ja": "ラトビア語",
+                      "name_en": "Latvian",
+                      "speakers": 2000000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "HELLENIC": {
+          "name_ja": "ギリシャ",
+          "name_en": "Hellenic",
+          "code": "HELLENIC",
+          "groups": {
+            "GREEK": {
+              "name_ja": "ギリシャ語群",
+              "name_en": "Greek",
+              "code": "GREEK",
+              "subgroups": {
+                "GREEK": {
+                  "name_ja": "ギリシャ語",
+                  "name_en": "Greek",
+                  "code": "GREEK",
+                  "languages": {
+                    "ell": {
+                      "name_ja": "ギリシャ語",
+                      "name_en": "Greek",
+                      "speakers": 13000000,
+                      "dialects": {
+                        "modern": "現代ギリシャ語",
+                        "ancient": "古代ギリシャ語"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ALBANIAN": {
+          "name_ja": "アルバニア",
+          "name_en": "Albanian",
+          "code": "ALBANIAN",
+          "groups": {
+            "ALBANIAN": {
+              "name_ja": "アルバニア語群",
+              "name_en": "Albanian",
+              "code": "ALBANIAN",
+              "subgroups": {
+                "ALBANIAN": {
+                  "name_ja": "アルバニア語",
+                  "name_en": "Albanian",
+                  "code": "ALBANIAN",
+                  "languages": {
+                    "sqi": {
+                      "name_ja": "アルバニア語",
+                      "name_en": "Albanian",
+                      "speakers": 5000000,
+                      "dialects": {
+                        "gheg": "ゲグ方言",
+                        "tosk": "トスク方言"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ARMENIAN": {
+          "name_ja": "アルメニア",
+          "name_en": "Armenian",
+          "code": "ARMENIAN",
+          "groups": {
+            "ARMENIAN": {
+              "name_ja": "アルメニア語群",
+              "name_en": "Armenian",
+              "code": "ARMENIAN",
+              "subgroups": {
+                "ARMENIAN": {
+                  "name_ja": "アルメニア語",
+                  "name_en": "Armenian",
+                  "code": "ARMENIAN",
+                  "languages": {
+                    "hye": {
+                      "name_ja": "アルメニア語",
+                      "name_en": "Armenian",
+                      "speakers": 7000000,
+                      "dialects": {
+                        "eastern": "東アルメニア語",
+                        "western": "西アルメニア語"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "SINO_TIBETAN": {
+      "name_ja": "シナ・チベット",
+      "name_en": "Sino-Tibetan",
+      "code": "SINO-TIBETAN",
+      "speakers": 1500000000,
+      "percentage": 20,
+      "distribution": ["China", "Southeast Asia", "Himalayan region"],
+      "branches": {
+        "SINITIC": {
+          "name_ja": "シナ",
+          "name_en": "Sinitic",
+          "code": "SINITIC",
+          "groups": {
+            "MANDARIN": {
+              "name_ja": "官話",
+              "name_en": "Mandarin",
+              "code": "MANDARIN",
+              "subgroups": {
+                "MANDARIN": {
+                  "name_ja": "官話",
+                  "name_en": "Mandarin",
+                  "code": "MANDARIN",
+                  "languages": {
+                    "cmn": {
+                      "name_ja": "中国語(官話)",
+                      "name_en": "Mandarin Chinese",
+                      "speakers": 1100000000,
+                      "dialects": {
+                        "beijing": "北京方言",
+                        "tianjin": "天津方言",
+                        "northeastern": "東北方言",
+                        "sichuan": "四川方言",
+                        "nanjing": "南京方言"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "YUE": {
+              "name_ja": "粤語",
+              "name_en": "Yue",
+              "code": "YUE",
+              "subgroups": {
+                "YUE": {
+                  "name_ja": "粤語",
+                  "name_en": "Yue",
+                  "code": "YUE",
+                  "languages": {
+                    "yue": {
+                      "name_ja": "広東語",
+                      "name_en": "Cantonese",
+                      "speakers": 80000000,
+                      "dialects": {
+                        "guangzhou": "広州方言",
+                        "hong_kong": "香港方言",
+                        "macau": "マカオ方言"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "WU": {
+              "name_ja": "呉語",
+              "name_en": "Wu",
+              "code": "WU",
+              "subgroups": {
+                "WU": {
+                  "name_ja": "呉語",
+                  "name_en": "Wu",
+                  "code": "WU",
+                  "languages": {
+                    "wuu": {
+                      "name_ja": "上海語",
+                      "name_en": "Shanghainese",
+                      "speakers": 14000000
+                    }
+                  }
+                }
+              }
+            },
+            "HAKKA": {
+              "name_ja": "客家語",
+              "name_en": "Hakka",
+              "code": "HAKKA",
+              "subgroups": {
+                "HAKKA": {
+                  "name_ja": "客家語",
+                  "name_en": "Hakka",
+                  "code": "HAKKA",
+                  "languages": {
+                    "hak": {
+                      "name_ja": "客家語",
+                      "name_en": "Hakka",
+                      "speakers": 30000000
+                    }
+                  }
+                }
+              }
+            },
+            "MIN": {
+              "name_ja": "閩語",
+              "name_en": "Min",
+              "code": "MIN",
+              "subgroups": {
+                "SOUTHERN_MIN": {
+                  "name_ja": "閩南語",
+                  "name_en": "Southern Min",
+                  "code": "SOUTHERN_MIN",
+                  "languages": {
+                    "nan": {
+                      "name_ja": "閩南語",
+                      "name_en": "Min Nan",
+                      "speakers": 50000000
+                    }
+                  }
+                },
+                "NORTHERN_MIN": {
+                  "name_ja": "閩北語",
+                  "name_en": "Northern Min",
+                  "code": "NORTHERN_MIN",
+                  "languages": {
+                    "mnp": {
+                      "name_ja": "閩北語",
+                      "name_en": "Northern Min",
+                      "speakers": 10000000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "TIBETO_BURMAN": {
+          "name_ja": "チベット・ビルマ",
+          "name_en": "Tibeto-Burman",
+          "code": "TIBETO_BURMAN",
+          "groups": {
+            "TIBETIC": {
+              "name_ja": "チベット語群",
+              "name_en": "Tibetic",
+              "code": "TIBETIC",
+              "subgroups": {
+                "TIBETIC": {
+                  "name_ja": "チベット語",
+                  "name_en": "Tibetic",
+                  "code": "TIBETIC",
+                  "languages": {
+                    "bod": {
+                      "name_ja": "チベット語",
+                      "name_en": "Tibetan",
+                      "speakers": 6000000,
+                      "dialects": {
+                        "lhasa": "ラサ方言",
+                        "kham": "カム方言",
+                        "amdo": "アムド方言"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "BURMIC": {
+              "name_ja": "ビルマ語群",
+              "name_en": "Burmic",
+              "code": "BURMIC",
+              "subgroups": {
+                "BURMIC": {
+                  "name_ja": "ビルマ語",
+                  "name_en": "Burmic",
+                  "code": "BURMIC",
+                  "languages": {
+                    "mya": {
+                      "name_ja": "ビルマ語",
+                      "name_en": "Burmese",
+                      "speakers": 33000000
+                    },
+                    "kar": {
+                      "name_ja": "カレン語",
+                      "name_en": "Karen",
+                      "speakers": 3000000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { convertTextToDialect, getDialectVoiceSettings } from '../services/dialectConverter';
-import { aiVoiceService, VoiceConversionRequest } from '../services/aiVoiceService';
+import { convertTextToDialect } from '../services/dialectConverter';
+import { webSpeechService, SpeechRequest } from '../services/webSpeechService';
+import { getDialectVoiceSettings as getVoiceSettings } from '../services/dialectVoiceSettings';
+import { VoiceQualityService } from '../services/ssmlBuilder';
 
 interface Dialect {
   id: string;
@@ -19,6 +21,7 @@ interface DialectPlayerProps {
   customText?: string;
   showCustomInput?: boolean;
   onCustomTextChange?: (text: string) => void;
+  showQualitySettings?: boolean;
 }
 
 const DialectPlayer: React.FC<DialectPlayerProps> = ({ 
@@ -26,101 +29,93 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
   className = '', 
   customText = '', 
   showCustomInput = false,
-  onCustomTextChange
+  onCustomTextChange,
+  showQualitySettings = false
 }) => {
   const { t } = useTranslation();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlayingCustom, setIsPlayingCustom] = useState(false);
-  const [aiServiceAvailable, setAiServiceAvailable] = useState(false);
+  const [webSpeechAvailable, setWebSpeechAvailable] = useState(false);
+  const [styleDegree, setStyleDegree] = useState(1.5); // 方言の強度
+  const [useSSML, setUseSSML] = useState(true); // SSML使用
+  const [volume, setVolume] = useState(1.0); // 音量
+  const [playbackRate, setPlaybackRate] = useState(1.0); // 再生速度
 
-  // AI音声サービスの可用性をチェック
+  // Web Speech APIの可用性をチェック
   useEffect(() => {
-    const checkAIService = async () => {
-      const available = await aiVoiceService.checkServiceStatus();
-      setAiServiceAvailable(available);
+    const checkWebSpeech = () => {
+      const available = webSpeechService.isWebSpeechSupported();
+      setWebSpeechAvailable(available);
     };
-    checkAIService();
+    checkWebSpeech();
   }, []);
 
   const playText = async (text: string, isCustom: boolean = false) => {
-    if (!aiServiceAvailable) {
-      setError('AI音声サービスが利用できません');
+    if (!webSpeechAvailable) {
+      setError('Web Speech APIが利用できません');
       return;
     }
 
     setIsLoading(true);
     setError(null);
     
-    // 方言変換を適用
-    const conversionResult = convertTextToDialect(text, dialect.conversion_model);
-    const textToSpeak = conversionResult.success ? conversionResult.convertedText : text;
-    
     try {
-      const voiceSettings = getDialectVoiceSettings(dialect.conversion_model);
-      const request: VoiceConversionRequest = {
+      // 方言変換
+      const enhancedText = VoiceQualityService.applyDialectDictionary(text, dialect.conversion_model);
+      const conversionResult = convertTextToDialect(enhancedText, dialect.conversion_model);
+      const textToSpeak = conversionResult.success ? conversionResult.convertedText : enhancedText;
+      
+      // 音声設定の取得
+      const voiceSettings = getVoiceSettings(dialect.conversion_model);
+      
+      // 方言の強度に基づく設定調整
+      const adjustedRate = voiceSettings.rate * (0.8 + styleDegree * 0.2);
+      const adjustedPitch = voiceSettings.pitch * (0.9 + styleDegree * 0.1);
+      
+      const request: SpeechRequest = {
         text: textToSpeak,
-        sourceLanguage: 'ja',
-        targetDialect: dialect.conversion_model,
-        voiceSettings: {
-          rate: voiceSettings.rate,
-          pitch: voiceSettings.pitch,
-          volume: 1.0,
+        language: voiceSettings.language,
+        dialect: voiceSettings.dialect,
+        settings: {
+          rate: adjustedRate * playbackRate,
+          pitch: adjustedPitch,
+          volume: voiceSettings.volume * volume,
         },
       };
 
-      const response = await aiVoiceService.convertVoice(request);
-      
-      if (response.success && response.audioUrl) {
-        // AI音声を再生
-        const audio = new Audio(response.audioUrl);
-        
-        audio.onplay = () => {
-          if (isCustom) {
-            setIsPlayingCustom(true);
-          } else {
-            setIsPlaying(true);
-          }
-          setIsLoading(false);
-        };
-        
-        audio.onended = () => {
-          console.log('Audio playback ended');
-          if (isCustom) {
-            setIsPlayingCustom(false);
-          } else {
-            setIsPlaying(false);
-          }
-        };
-        
-        audio.onerror = (e) => {
-          console.error('Audio playback error:', e);
-          setError('AI音声再生エラー');
-          setIsLoading(false);
-          if (isCustom) {
-            setIsPlayingCustom(false);
-          } else {
-            setIsPlaying(false);
-          }
-        };
-        
-        console.log('Starting audio playback...');
-        await audio.play();
-        console.log('Audio playback started successfully');
+      // 再生状態の設定
+      if (isCustom) {
+        setIsPlayingCustom(true);
       } else {
-        setError(response.error || 'AI音声変換に失敗しました');
-        setIsLoading(false);
+        setIsPlaying(true);
       }
-    } catch (error) {
-      console.error('AI voice conversion error:', error);
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
-      setError(`AI音声変換エラー: ${error.message}`);
+      
+      const success = await webSpeechService.speak(request);
+      
+      if (success) {
+        console.log('Speech started successfully');
+      } else {
+        setError('音声再生に失敗しました');
+        if (isCustom) {
+          setIsPlayingCustom(false);
+        } else {
+          setIsPlaying(false);
+        }
+      }
+      
       setIsLoading(false);
+    } catch (error: unknown) {
+      console.error('Web Speech error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(`音声再生エラー: ${errorMessage}`);
+      setIsLoading(false);
+      if (isCustom) {
+        setIsPlayingCustom(false);
+      } else {
+        setIsPlaying(false);
+      }
     }
   };
 
@@ -128,6 +123,7 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
   const handlePlayPause = () => {
     if (isPlaying) {
       // 音声再生の停止
+      webSpeechService.stop();
       setIsPlaying(false);
     } else {
       playText(dialect.sample_text, false);
@@ -142,6 +138,7 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
 
     if (isPlayingCustom) {
       // 音声再生の停止
+      webSpeechService.stop();
       setIsPlayingCustom(false);
     } else {
       playText(customText, true);
@@ -186,8 +183,9 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
               <span className="font-medium text-sm">{dialect.name}</span>
               <span className="text-xs text-gray-500">({dialect.region})</span>
             </div>
-            {aiServiceAvailable && (
+            {webSpeechAvailable && (
               <div className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded">
+                Web Speech API
               </div>
             )}
           </div>
@@ -229,6 +227,78 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
                 return conversionResult.success ? conversionResult.convertedText : customText;
               })()}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showQualitySettings && (
+        <div className="mt-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              方言の強度: {styleDegree.toFixed(1)}
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="0.1"
+              value={styleDegree}
+              onChange={(e) => setStyleDegree(parseFloat(e.target.value))}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>標準</span>
+              <span>中程度</span>
+              <span>強烈</span>
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              音量: {Math.round(volume * 100)}%
+            </label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              再生速度: {playbackRate.toFixed(1)}x
+            </label>
+            <input
+              type="range"
+              min="0.5"
+              max="2"
+              step="0.1"
+              value={playbackRate}
+              onChange={(e) => setPlaybackRate(parseFloat(e.target.value))}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>0.5x</span>
+              <span>1.0x</span>
+              <span>2.0x</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="useSSML"
+              checked={useSSML}
+              onChange={(e) => setUseSSML(e.target.checked)}
+              className="mr-2"
+            />
+            <label htmlFor="useSSML" className="text-sm text-gray-700">
+              SSML高品質音声を使用
+            </label>
           </div>
         </div>
       )}

@@ -1,9 +1,13 @@
 export interface Language {
   id: string;
   name_ja: string;
-  family: string;
-  branch?: string;
-  subgroup?: string;
+  // 学術的6層分類体系
+  family: string;      // 語族 (Language Family)
+  branch?: string;     // 語派 (Language Branch)
+  group?: string;      // 語群 (Language Group)
+  subgroup?: string;   // 語支 (Language Subgroup)
+  language?: string;   // 言語 (Individual Language)
+  dialect?: string;    // 方言 (Dialect) - オプション
   countries?: string[]; // ISO 3166-1 alpha-2 codes
   total_speakers?: number;
   center?: {

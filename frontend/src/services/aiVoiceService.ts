@@ -8,6 +8,10 @@ export interface VoiceConversionRequest {
     pitch?: number;
     volume?: number;
   };
+  useSSML?: boolean;
+  styleDegree?: number; // 0-2の範囲で方言の強度
+  referenceVoiceId?: string;
+  referenceAudioUrl?: string;
 }
 
 export interface VoiceConversionResponse {

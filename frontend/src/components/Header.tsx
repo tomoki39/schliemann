@@ -1,18 +1,111 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Language } from '../types/Language';
 
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onToggleSidebar: () => void;
+  languages: Language[];
 }
 
-const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, languages }) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // 検索候補を生成（パフォーマンス最適化）
+  const searchSuggestions = useMemo(() => {
+    if (!searchQuery || searchQuery.length < 2) return [];
+    
+    const suggestions = new Set<string>();
+    const q = searchQuery.toLowerCase();
+    const maxSuggestions = 8;
+    
+    // 早期終了のためのカウンター
+    let count = 0;
+    
+    for (const lang of languages) {
+      if (count >= maxSuggestions) break;
+      
+      // 言語名で検索
+      if (lang.name_ja.toLowerCase().includes(q)) {
+        suggestions.add(lang.name_ja);
+        count++;
+      }
+      
+      // 語族で検索
+      if (count < maxSuggestions && lang.family.toLowerCase().includes(q)) {
+        suggestions.add(lang.family);
+        count++;
+      }
+      
+      // 語派で検索
+      if (count < maxSuggestions && lang.branch?.toLowerCase().includes(q)) {
+        suggestions.add(lang.branch);
+        count++;
+      }
+      
+      // 語群で検索
+      if (count < maxSuggestions && lang.group?.toLowerCase().includes(q)) {
+        suggestions.add(lang.group);
+        count++;
+      }
+      
+      // 語支で検索
+      if (count < maxSuggestions && lang.subgroup?.toLowerCase().includes(q)) {
+        suggestions.add(lang.subgroup);
+        count++;
+      }
+      
+      // 言語で検索
+      if (count < maxSuggestions && lang.language?.toLowerCase().includes(q)) {
+        suggestions.add(lang.language);
+        count++;
+      }
+      
+      // 方言で検索
+      if (count < maxSuggestions && lang.dialect?.toLowerCase().includes(q)) {
+        suggestions.add(lang.dialect);
+        count++;
+      }
+      
+      // 国名で検索（制限付き）
+      if (count < maxSuggestions && lang.countries) {
+        for (const country of lang.countries.slice(0, 2)) { // 最初の2国のみ
+          try {
+            const countryName = new Intl.DisplayNames(['ja'], { type: 'region' }).of(country);
+            if (countryName?.toLowerCase().includes(q)) {
+              suggestions.add(countryName);
+              count++;
+              break;
+            }
+          } catch {
+            if (country.toLowerCase().includes(q)) {
+              suggestions.add(country);
+              count++;
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    return Array.from(suggestions).slice(0, maxSuggestions);
+  }, [languages, searchQuery]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSearchChange = (value: string) => {
+    onSearchChange(value);
+    setShowSuggestions(value.length >= 2);
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    onSearchChange(suggestion);
+    setShowSuggestions(false);
   };
 
   return (
@@ -21,23 +114,43 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
         <div className="flex items-center space-x-4">
           <button
             onClick={onToggleSidebar}
-            className="p-2 hover:bg-blue-700 rounded"
+            className="p-2 hover:bg-blue-700 rounded transition-colors"
             aria-label="サイドバー切り替え"
+            title="メニュー"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 4H5a2 2 0 00-2 2v12a2 2 0 002 2h4m0-16v16m0-16l7 0m-7 16l7 0m-7-8h14" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
           <h1 className="text-xl font-bold">{t('app.title')}</h1>
         </div>
-        <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder={t('nav.search.placeholder')}
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="px-3 py-2 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
-          />
+        <div className="flex items-center space-x-4 relative">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder={t('nav.search.placeholder')}
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowSuggestions(searchQuery.length >= 2)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              className="px-3 py-2 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300 w-64"
+            />
+            
+            {/* 検索候補ドロップダウン */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                {searchSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             onClick={toggleMenu}
             className="p-2 hover:bg-blue-700 rounded"

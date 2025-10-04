@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './i18n';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -9,6 +9,8 @@ import DetailPanel from './components/DetailPanel';
 import ComparePanel from './components/ComparePanel';
 import DialectPlayer from './components/DialectPlayer';
 import DialectDetailPanel from './components/DialectDetailPanel';
+import VoiceTour from './components/VoiceTour';
+import VoiceComparison from './components/VoiceComparison';
 import { useBookmarks } from './hooks/useBookmarks';
 import { Language } from './types/Language';
 import languagesData from './data/languages.json';
@@ -18,18 +20,61 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [familyFilter, setFamilyFilter] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
+  const [groupFilter, setGroupFilter] = useState('');
   const [subgroupFilter, setSubgroupFilter] = useState('');
-  const [colorMode] = useState<'family' | 'branch' | 'subgroup'>('family');
+  const [languageFilter, setLanguageFilter] = useState('');
+  const [dialectFilter, setDialectFilter] = useState('');
+  const [colorMode] = useState<'family' | 'branch' | 'group' | 'subgroup' | 'language' | 'dialect'>('family');
+  const [activeTab, setActiveTab] = useState<'map' | 'voice'>('map');
 
+  // 検索結果のキャッシュ
+  const searchCache = useRef<Map<string, Language[]>>(new Map());
+  
   const visibleLanguages = useMemo(() => {
+    const cacheKey = `${searchQuery}-${familyFilter}-${branchFilter}-${groupFilter}-${subgroupFilter}-${languageFilter}-${dialectFilter}`;
+    
+    // キャッシュから取得
+    if (searchCache.current.has(cacheKey)) {
+      return searchCache.current.get(cacheKey)!;
+    }
+    
     const q = searchQuery.toLowerCase();
-    return languages.filter((lang) => {
-      const matchesSearch = !q || lang.name_ja.toLowerCase().includes(q);
+    const filtered = languages.filter((lang) => {
+      // 多言語検索: 日本語名、英語名、現地語名、国名、語族・語派・語群・語支・言語名で検索
+      const matchesSearch = !q || 
+        lang.name_ja.toLowerCase().includes(q) ||
+        (lang as any).name_en?.toLowerCase().includes(q) ||
+        (lang as any).name_native?.toLowerCase().includes(q) ||
+        lang.family.toLowerCase().includes(q) ||
+        lang.branch?.toLowerCase().includes(q) ||
+        lang.group?.toLowerCase().includes(q) ||
+        lang.subgroup?.toLowerCase().includes(q) ||
+        lang.language?.toLowerCase().includes(q) ||
+        lang.dialect?.toLowerCase().includes(q) ||
+        lang.countries?.some(country => {
+          try {
+            const countryName = new Intl.DisplayNames(['ja'], { type: 'region' }).of(country);
+            return countryName?.toLowerCase().includes(q);
+          } catch {
+            return country.toLowerCase().includes(q);
+          }
+        });
+      
       const matchesFamily = !familyFilter || lang.family === familyFilter;
       const matchesBranch = !branchFilter || lang.branch === branchFilter;
+      const matchesGroup = !groupFilter || lang.group === groupFilter;
       const matchesSubgroup = !subgroupFilter || lang.subgroup === subgroupFilter;
-      return matchesSearch && matchesFamily && matchesBranch && matchesSubgroup;
+      const matchesLanguage = !languageFilter || lang.language === languageFilter;
+      const matchesDialect = !dialectFilter || (lang.dialects && lang.dialects.some(dialect => dialect.name === dialectFilter));
+      return matchesSearch && matchesFamily && matchesBranch && matchesGroup && matchesSubgroup && matchesLanguage && matchesDialect;
     });
+    
+    // キャッシュに保存（最大100件まで）
+    if (searchCache.current.size < 100) {
+      searchCache.current.set(cacheKey, filtered);
+    }
+    
+    return filtered;
   }, [languages, searchQuery, familyFilter, branchFilter, subgroupFilter]);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -92,16 +137,44 @@ const App: React.FC = () => {
     setRightLanguage(null);
   };
 
-  // 階層的なフィルタのリセット処理
+  // 階層的なフィルタのリセット処理（6層構造対応）
   const handleFamilyFilterChange = (family: string) => {
     setFamilyFilter(family);
     setBranchFilter(''); // Familyが変更されたらBranchをリセット
+    setGroupFilter(''); // Groupもリセット
     setSubgroupFilter(''); // Subgroupもリセット
+    setLanguageFilter(''); // Languageもリセット
+    setDialectFilter(''); // Dialectもリセット
   };
 
   const handleBranchFilterChange = (branch: string) => {
     setBranchFilter(branch);
-    setSubgroupFilter(''); // Branchが変更されたらSubgroupをリセット
+    setGroupFilter(''); // Branchが変更されたらGroupをリセット
+    setSubgroupFilter(''); // Subgroupもリセット
+    setLanguageFilter(''); // Languageもリセット
+    setDialectFilter(''); // Dialectもリセット
+  };
+
+  const handleGroupFilterChange = (group: string) => {
+    setGroupFilter(group);
+    setSubgroupFilter(''); // Groupが変更されたらSubgroupをリセット
+    setLanguageFilter(''); // Languageもリセット
+    setDialectFilter(''); // Dialectもリセット
+  };
+
+  const handleSubgroupFilterChange = (subgroup: string) => {
+    setSubgroupFilter(subgroup);
+    setLanguageFilter(''); // Subgroupが変更されたらLanguageをリセット
+    setDialectFilter(''); // Dialectもリセット
+  };
+
+  const handleLanguageFilterChange = (language: string) => {
+    setLanguageFilter(language);
+    setDialectFilter(''); // Languageが変更されたらDialectをリセット
+  };
+
+  const handleDialectFilterChange = (dialect: string) => {
+    setDialectFilter(dialect);
   };
 
   const toggleSidebar = () => {
@@ -156,16 +229,45 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col">
-      <Header 
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onToggleSidebar={toggleSidebar}
-      />
+        <Header
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onToggleSidebar={toggleSidebar}
+          languages={languages}
+        />
+        
+        {/* タブナビゲーション */}
+        <div className="border-b bg-white">
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'map'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              地図表示
+            </button>
+            <button
+              onClick={() => setActiveTab('voice')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'voice'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              音声体験
+            </button>
+          </div>
+        </div>
       
       <div className="flex-1 flex min-h-0">
-        {sidebarVisible && !isJapaneseDialectMode && (
-          <Sidebar
-            languages={visibleLanguages}
+        {activeTab === 'map' && (
+          <>
+            {sidebarVisible && !isJapaneseDialectMode && (
+              <Sidebar
+            languages={languages}
             selectedLanguage={selectedLanguage}
             onLanguageSelect={handleLanguageSelect}
             onSetLeft={handleSetLeft}
@@ -173,10 +275,16 @@ const App: React.FC = () => {
             searchQuery={searchQuery}
             familyFilter={familyFilter}
             branchFilter={branchFilter}
+            groupFilter={groupFilter}
             subgroupFilter={subgroupFilter}
+            languageFilter={languageFilter}
+            dialectFilter={dialectFilter}
             onFamilyFilterChange={handleFamilyFilterChange}
             onBranchFilterChange={handleBranchFilterChange}
-            onSubgroupFilterChange={setSubgroupFilter}
+            onGroupFilterChange={handleGroupFilterChange}
+            onSubgroupFilterChange={handleSubgroupFilterChange}
+            onLanguageFilterChange={handleLanguageFilterChange}
+            onDialectFilterChange={handleDialectFilterChange}
           />
         )}
         
@@ -212,28 +320,30 @@ const App: React.FC = () => {
           </div>
         ) : (
           <GoogleMapView
-            languages={visibleLanguages}
+            languages={languages}
             selectedLanguage={selectedLanguage}
             onLanguageClick={handleLanguageSelect}
             colorMode={colorMode}
             familyFilter={familyFilter}
             branchFilter={branchFilter}
+            groupFilter={groupFilter}
             subgroupFilter={subgroupFilter}
+            languageFilter={languageFilter}
+            dialectFilter={dialectFilter}
           />
-        )}
-      </div>
+            )}
+            
+            {showDetail && selectedLanguage && (
+              <DetailPanel
+                language={selectedLanguage}
+                onClose={handleDetailClose}
+                isBookmarked={isBookmarked(selectedLanguage.id)}
+                onToggleBookmark={toggleBookmark}
+              />
+            )}
       
-      {showDetail && selectedLanguage && (
-        <DetailPanel
-          language={selectedLanguage}
-          onClose={handleDetailClose}
-          isBookmarked={isBookmarked(selectedLanguage.id)}
-          onToggleBookmark={toggleBookmark}
-        />
-      )}
-      
-             {/* 方言選択時の音声パネル */}
-             {isJapaneseDialectMode && selectedDialect && selectedDialectData && !showDialectDetail && (
+            {/* 方言選択時の音声パネル */}
+            {isJapaneseDialectMode && selectedDialect && selectedDialectData && !showDialectDetail && (
                <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-md z-50">
                  <div className="flex justify-between items-center mb-3">
                    <h3 className="text-lg font-semibold text-gray-800">
@@ -294,8 +404,8 @@ const App: React.FC = () => {
                </div>
              )}
 
-             {/* 方言詳細パネル */}
-             {isJapaneseDialectMode && selectedDialect && selectedDialectData && showDialectDetail && (
+            {/* 方言詳細パネル */}
+            {isJapaneseDialectMode && selectedDialect && selectedDialectData && showDialectDetail && (
                <DialectDetailPanel
                  dialect={selectedDialectData}
                  onClose={handleDialectDetailClose}
@@ -306,17 +416,29 @@ const App: React.FC = () => {
                />
              )}
       
-      {showCompare && (
-        <ComparePanel
-          leftLanguage={leftLanguage}
-          rightLanguage={rightLanguage}
-          onClose={handleCompareClose}
-          onSetLeft={handleSetLeft}
-          onSetRight={handleSetRight}
-          onClearLeft={handleClearLeft}
-          onClearRight={handleClearRight}
-        />
-      )}
+            {showCompare && (
+              <ComparePanel
+                leftLanguage={leftLanguage}
+                rightLanguage={rightLanguage}
+                onClose={handleCompareClose}
+                onSetLeft={handleSetLeft}
+                onSetRight={handleSetRight}
+                onClearLeft={handleClearLeft}
+                onClearRight={handleClearRight}
+              />
+            )}
+          </>
+        )}
+        
+        {activeTab === 'voice' && (
+          <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <VoiceTour className="h-fit" />
+              <VoiceComparison className="h-fit" />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
