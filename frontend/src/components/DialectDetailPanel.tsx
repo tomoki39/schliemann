@@ -14,7 +14,7 @@ interface Dialect {
   name: string;
   region: string;
   sample_text: string;
-  description: string;
+  description?: string;
   conversion_model: string;
   detailed_info?: DetailedInfo;
 }

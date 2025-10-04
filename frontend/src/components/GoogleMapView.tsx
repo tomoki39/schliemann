@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Wrapper, Status } from '@googlemaps/react-wrapper';
 import { Language } from '../types/Language';
 import countryOfficialMap from '../data/countries_official_languages.json';
@@ -154,6 +154,19 @@ function modeKeyForLangId(id: string, colorMode: 'family' | 'branch' | 'subgroup
   return ll.subgroup || ll.branch || ll.family;
 }
 
+// ズームに応じて可視化件数をサンプリング（Phase 7 足場）
+function sampleLanguagesByZoom(zoom: number, langs: Language[]): Language[] {
+  // ズームが低いほど件数を絞る。total_speakers が無ければ安定順で切る
+  const cap = zoom >= 7 ? Infinity : zoom >= 5 ? 500 : zoom >= 3 ? 200 : 80;
+  if (!isFinite(cap)) return langs;
+  const withScore = langs.map((l) => ({
+    l,
+    s: typeof l.total_speakers === 'number' ? -l.total_speakers : l.id.charCodeAt(0)
+  }));
+  withScore.sort((a, b) => a.s - b.s);
+  return withScore.slice(0, cap).map(x => x.l);
+}
+
 const MapComponent: React.FC<GoogleMapViewProps> = ({ 
   languages, 
   selectedLanguage, 
@@ -168,6 +181,8 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
   const dataLoadedRef = useRef(false);
   const legendRef = useRef<HTMLDivElement | null>(null);
   const hoverInfoRef = useRef<google.maps.InfoWindow | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(2);
+  const visibleLanguages = useMemo(() => sampleLanguagesByZoom(zoomLevel, languages), [zoomLevel, languages]);
   // 主要ファミリー（これ以外は「その他」扱い）
   const MAJOR_FAMILIES = new Set<string>([
     'インド・ヨーロッパ',
@@ -252,9 +267,15 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           }
         }
       } else {
-        // 無絞り込み時: Family 単位で色分け
+        // 無絞り込み時: colorModeに応じた色分け
         for (const l of matchedLangs) {
-          families.add(normalizeFamily(l.family));
+          if (mode === 'family') {
+            families.add(normalizeFamily(l.family));
+          } else if (mode === 'branch') {
+            families.add(l.branch || '未分類');
+          } else if (mode === 'subgroup') {
+            families.add(l.subgroup || '未分類');
+          }
         }
       }
       // 公用語スタブのフォールバック（無絞り込み時: Family推定）
@@ -318,6 +339,11 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     });
 
     mapInstanceRef.current = map;
+    // ズーム変更で可視件数を更新
+    map.addListener('zoom_changed', () => {
+      const z = map.getZoom() ?? 2;
+      setZoomLevel(z);
+    });
     // 国境GeoJSONを読み込み
     fetch(WORLD_GEOJSON_URL)
       .then(r => r.json())
@@ -326,11 +352,11 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
         dataLoadedRef.current = true;
         console.info('[GoogleMapView] Loaded features:', added.length);
         // setStyle と overrideStyle の両方を適用
-        map.data.setStyle((f) => computeStyleForFeature(f, languages, colorMode));
-        map.data.forEach((f) => map.data.overrideStyle(f, computeStyleForFeature(f, languages, colorMode)));
+        map.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, colorMode));
+        map.data.forEach((f) => map.data.overrideStyle(f, computeStyleForFeature(f, visibleLanguages, colorMode)));
         // 後から追加される場合にも適用
         map.data.addListener('addfeature', (e) => {
-          const style = computeStyleForFeature(e.feature, languages, colorMode);
+          const style = computeStyleForFeature(e.feature, visibleLanguages, colorMode);
           map.data.overrideStyle(e.feature, style);
         });
         // ホバーでカーソル変更 + ツールチップ
@@ -345,12 +371,12 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           const code = getFeatureA2(feature);
           if (code && hoverInfoRef.current) {
             // 該当国の可視言語（最大5件）。無ければ公用語フォールバック
-            let list = languages.filter(l => l.countries?.includes(code)).slice(0, 5).map(l => l.name_ja);
+            let list = visibleLanguages.filter(l => l.countries?.includes(code)).slice(0, 5).map(l => l.name_ja);
             if (!list.length) {
               const entry = (countryOfficialMap as Record<string, { official_languages: string[] }>)[code];
               if (entry) {
                 list = entry.official_languages.slice(0,5).map((lid) => {
-                  const byId = languages.find(l => l.id === lid);
+                  const byId = visibleLanguages.find(l => l.id === lid);
                   return byId ? byId.name_ja : lid.toUpperCase();
                 });
               }
@@ -378,7 +404,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           const feature = ev.feature;
           const code = getFeatureA2(feature);
           if (!code) return;
-          const lang = languages.find(l => l.countries?.includes(code));
+          const lang = visibleLanguages.find(l => l.countries?.includes(code));
           if (lang) onLanguageClick(lang);
         });
         // デバッグポリゴンは撤去（運用ロジックへ切替）
@@ -393,36 +419,136 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     legend.style.borderRadius = '6px';
     legend.style.boxShadow = '0 1px 4px rgba(0,0,0,0.2)';
     legend.style.fontSize = '12px';
-    legend.innerHTML = '<div style="font-weight:600;margin-bottom:6px;">Family</div>' +
-      COLOR_PALETTE.slice(0,6).map((c,i)=>`<div style="display:flex;align-items:center;margin:2px 0;"><span style="display:inline-block;width:12px;height:12px;background:${c};margin-right:6px;border:1px solid #ccc"></span>色サンプル ${i+1}</div>`).join('');
+    legend.style.minWidth = '120px';
+    legend.innerHTML = '<div style="font-weight:600;margin-bottom:6px;">Family</div><div style="color:#666;">読み込み中...</div>';
     legendRef.current = legend;
     map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(legend);
-  }, []);
+    
+    // 初期凡例更新（地図読み込み完了後）
+    const updateInitialLegend = () => {
+      if (legendRef.current && languages.length > 0) {
+        const isFiltered = Boolean(familyFilter || branchFilter || subgroupFilter);
+        
+        let keys: string[];
+        if (colorMode === 'family') {
+          // Family モード: 固定の8つのファミリーを表示
+          keys = [
+            'インド・ヨーロッパ',
+            'シナ・チベット',
+            'ニジェール・コンゴ',
+            'アフロ・アジア',
+            'オーストロネシア',
+            'アルタイ',
+            'ドラヴィダ',
+            'その他'
+          ];
+        } else {
+          // Branch/Subgroup モード: 実際のデータから動的生成
+          keys = Array.from(new Set(languages.flatMap(l => {
+            if (!isFiltered) {
+              if (colorMode === 'branch') {
+                return [l.branch || '未分類'];
+              } else if (colorMode === 'subgroup') {
+                return [l.subgroup || '未分類'];
+              }
+              return [normalizeFamily(l.family)];
+            }
+            const ok = (!familyFilter || l.family === familyFilter) && (!branchFilter || l.branch === branchFilter) && (!subgroupFilter || l.subgroup === subgroupFilter);
+            if (!ok) return [] as string[];
+            if (colorMode === 'branch') {
+              return [l.branch || '未分類'];
+            } else if (colorMode === 'subgroup') {
+              return [l.subgroup || '未分類'];
+            }
+            return [normalizeFamily(l.family)];
+          })) ).sort();
+          
+          // その他/未分類は末尾へ移動
+          const others = ['その他', '未分類'];
+          others.forEach(other => {
+            if (keys.includes(other)) {
+              keys.splice(keys.indexOf(other), 1);
+              keys.push(other);
+            }
+          });
+        }
+        
+        const rows = keys.map(key => {
+          const color = colorForKey(key);
+          return `<div style="display:flex;align-items:center;margin:2px 0;">
+            <span style="display:inline-block;width:12px;height:12px;background:${color};margin-right:6px;border:1px solid #ccc"></span>
+            <span>${key}</span>
+          </div>`;
+        }).join('');
+        
+        const title = colorMode === 'family' ? 'Family' : colorMode === 'branch' ? 'Branch' : 'Subgroup';
+        legendRef.current.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">${title}</div>${rows || '<div style="color:#666;">該当なし</div>'}`;
+      }
+    };
+    
+    // 言語データが利用可能になったら凡例を更新
+    if (languages.length > 0) {
+      updateInitialLegend();
+    }
+  }, [languages, colorMode, familyFilter, branchFilter, subgroupFilter]);
 
   useEffect(() => {
     if (!mapInstanceRef.current || !dataLoadedRef.current) return;
     // スタイル更新: 既存フィーチャのスタイルを全て上書き
     mapInstanceRef.current.data.revertStyle();
-    mapInstanceRef.current.data.setStyle((f) => computeStyleForFeature(f, languages, colorMode));
+    mapInstanceRef.current.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, colorMode));
     mapInstanceRef.current.data.forEach((f) => {
-      const style = computeStyleForFeature(f, languages, colorMode);
+      const style = computeStyleForFeature(f, visibleLanguages, colorMode);
       mapInstanceRef.current!.data.overrideStyle(f, style);
     });
     // 凡例の更新（可視言語のファミリー一覧）
     if (legendRef.current) {
       const isFiltered = Boolean(familyFilter || branchFilter || subgroupFilter);
-      const keys = Array.from(new Set(languages.flatMap(l => {
-        if (!isFiltered) {
+      
+      let keys: string[];
+      if (colorMode === 'family') {
+        // Family モード: 固定の8つのファミリーを表示
+        keys = [
+          'インド・ヨーロッパ',
+          'シナ・チベット',
+          'ニジェール・コンゴ',
+          'アフロ・アジア',
+          'オーストロネシア',
+          'アルタイ',
+          'ドラヴィダ',
+          'その他'
+        ];
+      } else {
+        // Branch/Subgroup モード: 実際のデータから動的生成
+        keys = Array.from(new Set(visibleLanguages.flatMap(l => {
+          if (!isFiltered) {
+            if (colorMode === 'branch') {
+              return [l.branch || '未分類'];
+            } else if (colorMode === 'subgroup') {
+              return [l.subgroup || '未分類'];
+            }
+            return [normalizeFamily(l.family)];
+          }
+          const ok = (!familyFilter || l.family === familyFilter) && (!branchFilter || l.branch === branchFilter) && (!subgroupFilter || l.subgroup === subgroupFilter);
+          if (!ok) return [] as string[];
+          if (colorMode === 'branch') {
+            return [l.branch || '未分類'];
+          } else if (colorMode === 'subgroup') {
+            return [l.subgroup || '未分類'];
+          }
           return [normalizeFamily(l.family)];
-        }
-        const ok = (!familyFilter || l.family === familyFilter) && (!branchFilter || l.branch === branchFilter) && (!subgroupFilter || l.subgroup === subgroupFilter);
-        if (!ok) return [] as string[];
-        const key = colorMode === 'family' ? normalizeFamily(l.family) : colorMode === 'branch' ? (l.branch || normalizeFamily(l.family)) : (l.subgroup || l.branch || normalizeFamily(l.family));
-        return [key];
-      })) ).sort();
-      if (!keys.includes('その他')) keys.push('その他');
-      // その他は末尾へ
-      keys.sort((a,b)=> (a==='その他') ? 1 : (b==='その他') ? -1 : a.localeCompare(b));
+        })) ).sort();
+        
+        // その他/未分類は末尾へ移動
+        const others = ['その他', '未分類'];
+        others.forEach(other => {
+          if (keys.includes(other)) {
+            keys.splice(keys.indexOf(other), 1);
+            keys.push(other);
+          }
+        });
+      }
+      
       const rows = keys.map(key => {
         const color = colorForKey(key);
         return `<div style="display:flex;align-items:center;margin:2px 0;">
@@ -430,10 +556,11 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           <span>${key}</span>
         </div>`;
       }).join('');
-      const title = colorMode.charAt(0).toUpperCase() + colorMode.slice(1);
-      legendRef.current.innerHTML = `<div style=\"font-weight:600;margin-bottom:6px;\">${title}</div>${rows || '<div style="color:#666;">該当なし</div>'}`;
+      
+      const title = colorMode === 'family' ? 'Family' : colorMode === 'branch' ? 'Branch' : 'Subgroup';
+      legendRef.current.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">${title}</div>${rows || '<div style="color:#666;">該当なし</div>'}`;
     }
-  }, [languages, onLanguageClick, colorMode, familyFilter, branchFilter, subgroupFilter]);
+  }, [visibleLanguages, onLanguageClick, colorMode, familyFilter, branchFilter, subgroupFilter]);
 
   useEffect(() => {
     if (!mapInstanceRef.current || !selectedLanguage?.center) return;

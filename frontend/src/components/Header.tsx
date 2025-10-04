@@ -5,12 +5,9 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onToggleSidebar: () => void;
-  sidebarVisible: boolean;
-  colorMode: 'family' | 'branch' | 'subgroup';
-  onChangeColorMode: (m: 'family' | 'branch' | 'subgroup') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, sidebarVisible, colorMode, onChangeColorMode }) => {
+const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar }) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -28,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
             aria-label="サイドバー切り替え"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 4H5a2 2 0 00-2 2v12a2 2 0 002 2h4m0-16v16m0-16l7 0m-7 16l7 0m-7-8h14" />
             </svg>
           </button>
           <h1 className="text-xl font-bold">{t('app.title')}</h1>
@@ -41,23 +38,13 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
             onChange={(e) => onSearchChange(e.target.value)}
             className="px-3 py-2 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
-          <select
-            value={colorMode}
-            onChange={(e) => onChangeColorMode(e.target.value as any)}
-            className="px-2 py-2 rounded text-gray-900"
-            aria-label="色分けモード"
-          >
-            <option value="family">Family</option>
-            <option value="branch">Branch</option>
-            <option value="subgroup">Subgroup</option>
-          </select>
           <button
             onClick={toggleMenu}
             className="p-2 hover:bg-blue-700 rounded"
-            aria-label="メニュー"
+            aria-label="地球メニュー"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </button>
         </div>

@@ -4,6 +4,7 @@ import { convertTextToDialect, getDialectVoiceSettings } from '../services/diale
 import { aiVoiceService, VoiceConversionRequest } from '../services/aiVoiceService';
 
 interface Dialect {
+  id: string;
   name: string;
   region: string;
   sample_text: string;
@@ -17,13 +18,15 @@ interface DialectPlayerProps {
   className?: string;
   customText?: string;
   showCustomInput?: boolean;
+  onCustomTextChange?: (text: string) => void;
 }
 
 const DialectPlayer: React.FC<DialectPlayerProps> = ({ 
   dialect, 
   className = '', 
   customText = '', 
-  showCustomInput = false 
+  showCustomInput = false,
+  onCustomTextChange
 }) => {
   const { t } = useTranslation();
   const [isPlaying, setIsPlaying] = useState(false);

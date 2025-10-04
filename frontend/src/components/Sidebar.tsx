@@ -13,11 +13,9 @@ interface SidebarProps {
   familyFilter: string;
   branchFilter?: string;
   subgroupFilter?: string;
-  countryFilter?: string;
   onFamilyFilterChange: (family: string) => void;
   onBranchFilterChange?: (branch: string) => void;
   onSubgroupFilterChange?: (subgroup: string) => void;
-  onCountryFilterChange?: (country: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -31,10 +29,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onFamilyFilterChange,
   branchFilter = '',
   subgroupFilter = '',
-  countryFilter = '',
   onBranchFilterChange,
-  onSubgroupFilterChange,
-  onCountryFilterChange
+  onSubgroupFilterChange
 }) => {
   const { t } = useTranslation();
 
@@ -51,8 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const matchesFamily = !familyFilter || lang.family === familyFilter;
     const matchesBranch = !branchFilter || lang.branch === branchFilter;
     const matchesSubgroup = !subgroupFilter || lang.subgroup === subgroupFilter;
-    const matchesCountry = !countryFilter || (lang.countries && lang.countries.includes(countryFilter));
-    return matchesSearch && matchesFamily && matchesBranch && matchesSubgroup && matchesCountry;
+    return matchesSearch && matchesFamily && matchesBranch && matchesSubgroup;
   });
 
   // 仕様に合わせた固定のファミリー一覧（重複無し・順序固定）
@@ -80,35 +75,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         .filter(l => (!familyFilter || l.family === familyFilter) && (!branchFilter || l.branch === branchFilter))
         .map(l => l.subgroup)
         .filter(Boolean))) as string[];
-  const countries = Array.from(new Set(
-    languages
-      .filter(l => (
-        (!familyFilter || l.family === familyFilter) &&
-        (!branchFilter || l.branch === branchFilter) &&
-        (!subgroupFilter || l.subgroup === subgroupFilter)
-      ))
-      .flatMap(l => l.countries || [])
-  ));
 
   return (
     <div className="w-80 bg-gray-100 p-4 h-full overflow-y-auto flex-shrink-0 min-h-0">
       <h2 className="text-lg font-semibold mb-4">{t('sidebar.title')}</h2>
       
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">{t('filter.country')}</label>
-        <select
-          value={countryFilter}
-          onChange={(e) => onCountryFilterChange?.(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-          disabled={!countries.length}
-        >
-          <option value="">すべて</option>
-          {countries.map(code => (
-            <option key={code} value={code}>{formatCountry(code)}</option>
-          ))}
-        </select>
-      </div>
-
       <div className="mb-4">
         <label className="block text-sm font-medium mb-2">{t('filter.family')}</label>
         <select
@@ -123,15 +94,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         </select>
       </div>
 
-      
-
       <div className="mb-4">
         <label className="block text-sm font-medium mb-2">{t('filter.branch')}</label>
         <select
           value={branchFilter}
           onChange={(e) => onBranchFilterChange?.(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-          disabled={!branches.length}
+          className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+            !familyFilter || !branches.length 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-white text-gray-900'
+          }`}
+          disabled={!familyFilter || !branches.length}
         >
           <option value="">すべて</option>
           {branches.map(branch => (
@@ -145,8 +118,12 @@ const Sidebar: React.FC<SidebarProps> = ({
         <select
           value={subgroupFilter}
           onChange={(e) => onSubgroupFilterChange?.(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-          disabled={!subgroups.length}
+          className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+            !branchFilter || !subgroups.length 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-white text-gray-900'
+          }`}
+          disabled={!branchFilter || !subgroups.length}
         >
           <option value="">すべて</option>
           {subgroups.map(sub => (

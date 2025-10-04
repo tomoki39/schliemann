@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import './i18n';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -13,22 +12,14 @@ import DialectDetailPanel from './components/DialectDetailPanel';
 import { useBookmarks } from './hooks/useBookmarks';
 import { Language } from './types/Language';
 import languagesData from './data/languages.json';
-import countryOfficialMap from './data/countries_official_languages.json';
 
 const App: React.FC = () => {
-  const { t } = useTranslation();
   const [languages, setLanguages] = useState<Language[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [familyFilter, setFamilyFilter] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
   const [subgroupFilter, setSubgroupFilter] = useState('');
-  const [countryFilter, setCountryFilter] = useState('');
-  const [colorMode, setColorMode] = useState<'family' | 'branch' | 'subgroup'>('family');
-  const countryOfficialSet = useMemo(() => {
-    if (!countryFilter) return new Set<string>();
-    const entry = (countryOfficialMap as Record<string, { official_languages: string[] }>)[countryFilter];
-    return new Set(entry ? entry.official_languages : []);
-  }, [countryFilter]);
+  const [colorMode] = useState<'family' | 'branch' | 'subgroup'>('family');
 
   const visibleLanguages = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -37,10 +28,9 @@ const App: React.FC = () => {
       const matchesFamily = !familyFilter || lang.family === familyFilter;
       const matchesBranch = !branchFilter || lang.branch === branchFilter;
       const matchesSubgroup = !subgroupFilter || lang.subgroup === subgroupFilter;
-      const matchesCountry = !countryFilter || (lang.countries?.includes(countryFilter) || countryOfficialSet.has(lang.id));
-      return matchesSearch && matchesFamily && matchesBranch && matchesSubgroup && matchesCountry;
+      return matchesSearch && matchesFamily && matchesBranch && matchesSubgroup;
     });
-  }, [languages, searchQuery, familyFilter, branchFilter, subgroupFilter, countryFilter, countryOfficialSet]);
+  }, [languages, searchQuery, familyFilter, branchFilter, subgroupFilter]);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
@@ -102,6 +92,18 @@ const App: React.FC = () => {
     setRightLanguage(null);
   };
 
+  // 階層的なフィルタのリセット処理
+  const handleFamilyFilterChange = (family: string) => {
+    setFamilyFilter(family);
+    setBranchFilter(''); // Familyが変更されたらBranchをリセット
+    setSubgroupFilter(''); // Subgroupもリセット
+  };
+
+  const handleBranchFilterChange = (branch: string) => {
+    setBranchFilter(branch);
+    setSubgroupFilter(''); // Branchが変更されたらSubgroupをリセット
+  };
+
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
   };
@@ -110,7 +112,7 @@ const App: React.FC = () => {
     setSelectedDialect(dialectId);
   };
 
-  const handleDialectHover = (dialectId: string | null) => {
+  const handleDialectHover = () => {
     // ホバー時の処理（必要に応じて実装）
   };
 
@@ -133,7 +135,6 @@ const App: React.FC = () => {
     // サンプル音声を再生する処理（既存の音声再生機能を使用）
     if (selectedDialectData) {
       // 一時的にカスタムテキストを変更して音声再生
-      const originalText = customText;
       setCustomText(text);
       // 音声再生はDialectPlayerコンポーネントで処理される
     }
@@ -147,7 +148,10 @@ const App: React.FC = () => {
 
   // 日本語の方言データを取得
   const japaneseLanguage = languages.find(lang => lang.id === 'jpn');
-  const japaneseDialects = japaneseLanguage?.dialects || [];
+  const japaneseDialects = japaneseLanguage?.dialects?.map((d, index) => ({
+    ...d,
+    id: d.conversion_model || `dialect-${index}`
+  })) || [];
   const selectedDialectData = selectedDialect && japaneseDialects.find(d => d.conversion_model === selectedDialect);
 
   return (
@@ -156,9 +160,6 @@ const App: React.FC = () => {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onToggleSidebar={toggleSidebar}
-        sidebarVisible={sidebarVisible}
-        colorMode={colorMode}
-        onChangeColorMode={setColorMode}
       />
       
       <div className="flex-1 flex min-h-0">
@@ -173,11 +174,9 @@ const App: React.FC = () => {
             familyFilter={familyFilter}
             branchFilter={branchFilter}
             subgroupFilter={subgroupFilter}
-            onFamilyFilterChange={(v) => { setFamilyFilter(v); setBranchFilter(''); setSubgroupFilter(''); setCountryFilter(''); }}
-            onBranchFilterChange={(v) => { setBranchFilter(v); setSubgroupFilter(''); setCountryFilter(''); }}
-            onSubgroupFilterChange={(v) => { setSubgroupFilter(v); setCountryFilter(''); }}
-            countryFilter={countryFilter}
-            onCountryFilterChange={setCountryFilter}
+            onFamilyFilterChange={handleFamilyFilterChange}
+            onBranchFilterChange={handleBranchFilterChange}
+            onSubgroupFilterChange={setSubgroupFilter}
           />
         )}
         
