@@ -224,15 +224,15 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
                 {/* 方言一覧 */}
                 {language.dialects && language.dialects.length > 0 && (
                   <div className="mt-3">
-                    <div className="flex flex-wrap gap-2">
-                      {language.dialects.slice(0, 5).map((dialect, index) => {
+                    <div className="flex gap-2 overflow-x-auto flex-nowrap no-scrollbar">
+                      {language.dialects.map((dialect, index) => {
                         const itemId = `${language.id}_${index}`;
                         const isPlaying = playingItems.has(itemId);
                         const isLoading = loadingItems.has(itemId);
                         const error = errorItems.get(itemId);
                         
                         return (
-                          <div key={index} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
+                          <div key={index} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1 shrink-0">
                             <span className="text-sm text-gray-700">{dialect.name}</span>
                             {dialect.region && (
                               <span className="text-xs text-gray-500">({dialect.region})</span>
@@ -254,11 +254,6 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
                           </div>
                         );
                       })}
-                      {language.dialects.length > 5 && (
-                        <span className="text-xs text-gray-500 px-2 py-1">
-                          +{language.dialects.length - 5}個
-                        </span>
-                      )}
                     </div>
                   </div>
                 )}
