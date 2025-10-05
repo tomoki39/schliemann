@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './i18n';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -9,8 +9,7 @@ import DetailPanel from './components/DetailPanel';
 import ComparePanel from './components/ComparePanel';
 import DialectPlayer from './components/DialectPlayer';
 import DialectDetailPanel from './components/DialectDetailPanel';
-import VoiceTour from './components/VoiceTour';
-import VoiceComparison from './components/VoiceComparison';
+import LanguageExplorer from './components/LanguageExplorer';
 import { useBookmarks } from './hooks/useBookmarks';
 import { Language } from './types/Language';
 import languagesData from './data/languages.json';
@@ -26,59 +25,8 @@ const App: React.FC = () => {
   const [dialectFilter, setDialectFilter] = useState('');
   const [colorMode] = useState<'family' | 'branch' | 'group' | 'subgroup' | 'language' | 'dialect'>('family');
   const [activeTab, setActiveTab] = useState<'map' | 'voice'>('map');
-  const [showVoiceTour, setShowVoiceTour] = useState(false);
-  const [showVoiceComparison, setShowVoiceComparison] = useState(false);
-  const [comparisonDialects, setComparisonDialects] = useState<string[]>([]);
 
-  // 検索結果のキャッシュ
-  const searchCache = useRef<Map<string, Language[]>>(new Map());
   
-  const visibleLanguages = useMemo(() => {
-    const cacheKey = `${searchQuery}-${familyFilter}-${branchFilter}-${groupFilter}-${subgroupFilter}-${languageFilter}-${dialectFilter}`;
-    
-    // キャッシュから取得
-    if (searchCache.current.has(cacheKey)) {
-      return searchCache.current.get(cacheKey)!;
-    }
-    
-    const q = searchQuery.toLowerCase();
-    const filtered = languages.filter((lang) => {
-      // 多言語検索: 日本語名、英語名、現地語名、国名、語族・語派・語群・語支・言語名で検索
-      const matchesSearch = !q || 
-        lang.name_ja.toLowerCase().includes(q) ||
-        (lang as any).name_en?.toLowerCase().includes(q) ||
-        (lang as any).name_native?.toLowerCase().includes(q) ||
-        lang.family.toLowerCase().includes(q) ||
-        lang.branch?.toLowerCase().includes(q) ||
-        lang.group?.toLowerCase().includes(q) ||
-        lang.subgroup?.toLowerCase().includes(q) ||
-        lang.language?.toLowerCase().includes(q) ||
-        lang.dialect?.toLowerCase().includes(q) ||
-        lang.countries?.some(country => {
-          try {
-            const countryName = new Intl.DisplayNames(['ja'], { type: 'region' }).of(country);
-            return countryName?.toLowerCase().includes(q);
-          } catch {
-            return country.toLowerCase().includes(q);
-          }
-        });
-      
-      const matchesFamily = !familyFilter || lang.family === familyFilter;
-      const matchesBranch = !branchFilter || lang.branch === branchFilter;
-      const matchesGroup = !groupFilter || lang.group === groupFilter;
-      const matchesSubgroup = !subgroupFilter || lang.subgroup === subgroupFilter;
-      const matchesLanguage = !languageFilter || lang.language === languageFilter;
-      const matchesDialect = !dialectFilter || (lang.dialects && lang.dialects.some(dialect => dialect.name === dialectFilter));
-      return matchesSearch && matchesFamily && matchesBranch && matchesGroup && matchesSubgroup && matchesLanguage && matchesDialect;
-    });
-    
-    // キャッシュに保存（最大100件まで）
-    if (searchCache.current.size < 100) {
-      searchCache.current.set(cacheKey, filtered);
-    }
-    
-    return filtered;
-  }, [languages, searchQuery, familyFilter, branchFilter, subgroupFilter]);
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
@@ -434,75 +382,14 @@ const App: React.FC = () => {
         )}
         
         {activeTab === 'voice' && (
-          <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-            <div className="flex gap-4 mb-6">
-              <button
-                onClick={() => setShowVoiceTour(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-                音声ツアー
-              </button>
-              <button
-                onClick={() => setShowVoiceComparison(true)}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-                音声比較
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">音声ツアー</h3>
-                <p className="text-gray-600 mb-4">
-                  地域別や語族別に言語を順番に体験できます。自動再生機能で連続して聞くことができます。
-                </p>
-                <button
-                  onClick={() => setShowVoiceTour(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium"
-                >
-                  ツアーを開始
-                </button>
-              </div>
-
-              <div className="bg-white rounded-lg p-6 shadow-sm border">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">音声比較</h3>
-                <p className="text-gray-600 mb-4">
-                  複数の方言や言語を同時に聞き比べることができます。違いを直感的に理解できます。
-                </p>
-                <button
-                  onClick={() => setShowVoiceComparison(true)}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium"
-                >
-                  比較を開始
-                </button>
-              </div>
-            </div>
+          <div className="flex-1 overflow-hidden">
+            <LanguageExplorer
+              languages={languages}
+              onClose={() => {}} // 音声タブでは閉じる機能は不要
+            />
           </div>
         )}
 
-        {/* 音声ツアーモーダル */}
-        {showVoiceTour && (
-          <VoiceTour
-            languages={languages}
-            onClose={() => setShowVoiceTour(false)}
-          />
-        )}
-
-        {/* 音声比較モーダル */}
-        {showVoiceComparison && (
-          <VoiceComparison
-            text="こんにちは、音声比較のデモです"
-            language="japanese"
-            dialects={['kansai', 'hakata', 'tsugaru', 'okinawa']}
-            onClose={() => setShowVoiceComparison(false)}
-          />
-        )}
       </div>
     </div>
   );
