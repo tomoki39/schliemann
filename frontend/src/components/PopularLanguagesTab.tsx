@@ -239,7 +239,7 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-gray-800 mb-2">主要言語</h3>
         <p className="text-gray-600">
-          話者人口TOP10の言語とその方言を探索しましょう
+          話者人口TOP30の言語とその方言を探索しましょう
         </p>
       </div>
 

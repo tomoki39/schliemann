@@ -44,6 +44,28 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
     });
   }, [languages, searchQuery, sortBy]);
 
+  // 国コード→日本語名
+  const countryCodeToName = (code?: string): string => {
+    if (!code) return '';
+    try {
+      const dn = new Intl.DisplayNames(['ja'], { type: 'region' });
+      return (dn.of(code) as string) || code;
+    } catch {
+      return code || '';
+    }
+  };
+
+  const getOfficialCountryNames = (langId: string): string => {
+    const original = languages.find(l => l.id === langId);
+    if (!original) return '';
+    const list = (original.official_languages && original.official_languages.length > 0)
+      ? original.official_languages
+      : (original.countries || []);
+    const names = list.map(countryCodeToName);
+    const max = 5;
+    return names.length > max ? `${names.slice(0, max).join(', ')} …` : names.join(', ');
+  };
+
   // 音声再生
   const playAudio = async (languageId: string, dialectId?: string) => {
     const itemId = dialectId ? `${languageId}_${dialectId}` : languageId;
@@ -205,20 +227,18 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
                 </div>
                 
                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                  <span>🌳 {language.family}</span>
-                  {language.branch && <span>🌿 {language.branch}</span>}
-                  {language.group && <span>🌱 {language.group}</span>}
-                  {language.subgroup && <span>🍃 {language.subgroup}</span>}
-                  {language.language && <span>📝 {language.language}</span>}
+                  <span>{language.family}</span>
+                  {language.branch && <span>{language.branch}</span>}
+                  {language.group && <span>{language.group}</span>}
+                  {language.subgroup && <span>{language.subgroup}</span>}
+                  {language.language && <span>{language.language}</span>}
                 </div>
                 
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   {language.total_speakers && (
                     <span>👥 {language.total_speakers.toLocaleString()}人</span>
                   )}
-                  {language.countries && language.countries.length > 0 && (
-                    <span>🌍 {language.countries.slice(0, 3).join(', ')}{language.countries.length > 3 && '...'}</span>
-                  )}
+                  <span className="truncate max-w-[65%]">{getOfficialCountryNames(language.id) || '—'}</span>
                 </div>
 
                 {/* 方言一覧 */}
