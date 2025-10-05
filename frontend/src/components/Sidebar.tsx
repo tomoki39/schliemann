@@ -133,12 +133,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div className="w-80 bg-gray-100 p-4 h-full overflow-y-auto flex-shrink-0 min-h-0">
       <h2 className="text-lg font-semibold mb-4">{t('sidebar.title')}</h2>
       
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">語族 (Family)</label>
+      <div className="mb-2">
+        <label className="block text-xs font-medium mb-1">語族 (Family)</label>
         <select
           value={familyFilter}
           onChange={(e) => onFamilyFilterChange(e.target.value)}
-          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="w-full p-1.5 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
           <option value="">すべて</option>
           {families.map(family => (
@@ -147,113 +147,103 @@ const Sidebar: React.FC<SidebarProps> = ({
         </select>
       </div>
 
-      {hasBranches && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">語派 (Branch)</label>
-          <select
-            value={branchFilter}
-            onChange={(e) => onBranchFilterChange?.(e.target.value)}
-            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-              !familyFilter || !branches.length 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                : 'bg-white text-gray-900'
-            }`}
-            disabled={!familyFilter || !branches.length}
-          >
-            <option value="">すべて</option>
-            {branches.map(branch => (
-              <option key={branch} value={branch}>{branch}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="mb-2">
+        <label className="block text-xs font-medium mb-1">語派 (Branch)</label>
+        <select
+          value={branchFilter}
+          onChange={(e) => onBranchFilterChange?.(e.target.value)}
+          className={`w-full p-1.5 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+            !familyFilter || !branches.length 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-white text-gray-900'
+          }`}
+          disabled={!familyFilter || !branches.length}
+        >
+          <option value="">すべて</option>
+          {branches.map(branch => (
+            <option key={branch} value={branch}>{branch}</option>
+          ))}
+        </select>
+      </div>
 
-      {hasBranches && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">語群 (Group)</label>
-          <select
-            value={groupFilter}
-            onChange={(e) => onGroupFilterChange?.(e.target.value)}
-            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-              !branchFilter || !groups.length 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                : 'bg-white text-gray-900'
-            }`}
-            disabled={!branchFilter || !groups.length}
-          >
-            <option value="">すべて</option>
-            {groups.map(group => (
-              <option key={group} value={group}>{group}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="mb-2">
+        <label className="block text-xs font-medium mb-1">語群 (Group)</label>
+        <select
+          value={groupFilter}
+          onChange={(e) => onGroupFilterChange?.(e.target.value)}
+          className={`w-full p-1.5 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+            !branchFilter || !groups.length 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-white text-gray-900'
+          }`}
+          disabled={!branchFilter || !groups.length}
+        >
+          <option value="">すべて</option>
+          {groups.map(group => (
+            <option key={group} value={group}>{group}</option>
+          ))}
+        </select>
+      </div>
 
-      {hasBranches && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">語支 (Subgroup)</label>
-          <select
-            value={subgroupFilter}
-            onChange={(e) => onSubgroupFilterChange?.(e.target.value)}
-            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-              !groupFilter || !subgroups.length 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                : 'bg-white text-gray-900'
-            }`}
-            disabled={!groupFilter || !subgroups.length}
-          >
-            <option value="">すべて</option>
-            {subgroups.map(sub => (
-              <option key={sub} value={sub}>{sub}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="mb-2">
+        <label className="block text-xs font-medium mb-1">語支 (Subgroup)</label>
+        <select
+          value={subgroupFilter}
+          onChange={(e) => onSubgroupFilterChange?.(e.target.value)}
+          className={`w-full p-1.5 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+            !groupFilter || !subgroups.length 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-white text-gray-900'
+          }`}
+          disabled={!groupFilter || !subgroups.length}
+        >
+          <option value="">すべて</option>
+          {subgroups.map(sub => (
+            <option key={sub} value={sub}>{sub}</option>
+          ))}
+        </select>
+      </div>
 
-      {hasBranches && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">言語 (Language)</label>
-          <select
-            value={languageFilter}
-            onChange={(e) => onLanguageFilterChange?.(e.target.value)}
-            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-              !subgroupFilter || !languages_list.length 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                : 'bg-white text-gray-900'
-            }`}
-            disabled={!subgroupFilter || !languages_list.length}
-          >
-            <option value="">すべて</option>
-            {languages_list.map(lang => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="mb-2">
+        <label className="block text-xs font-medium mb-1">言語 (Language)</label>
+        <select
+          value={languageFilter}
+          onChange={(e) => onLanguageFilterChange?.(e.target.value)}
+          className={`w-full p-1.5 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+            !subgroupFilter || !languages_list.length 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-white text-gray-900'
+          }`}
+          disabled={!subgroupFilter || !languages_list.length}
+        >
+          <option value="">すべて</option>
+          {languages_list.map(lang => (
+            <option key={lang} value={lang}>{lang}</option>
+          ))}
+        </select>
+      </div>
 
-      {hasBranches && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-2">方言 (Dialect)</label>
-          <select
-            value={dialectFilter || ''}
-            onChange={(e) => onDialectFilterChange?.(e.target.value)}
-            className={`w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-              !languageFilter || !dialects_list.length 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                : 'bg-white text-gray-900'
-            }`}
-            disabled={!languageFilter || !dialects_list.length}
-          >
-            <option value="">すべて</option>
-            {dialects_list.map(dialect => (
-              <option key={dialect} value={dialect}>{dialect}</option>
-            ))}
-          </select>
-        </div>
-      )}
+      <div className="mb-2">
+        <label className="block text-xs font-medium mb-1">方言 (Dialect)</label>
+        <select
+          value={dialectFilter || ''}
+          onChange={(e) => onDialectFilterChange?.(e.target.value)}
+          className={`w-full p-1.5 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+            !languageFilter || !dialects_list.length 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-white text-gray-900'
+          }`}
+          disabled={!languageFilter || !dialects_list.length}
+        >
+          <option value="">すべて</option>
+          {dialects_list.map(dialect => (
+            <option key={dialect} value={dialect}>{dialect}</option>
+          ))}
+        </select>
+      </div>
 
       <div className="space-y-2 max-h-96 overflow-y-auto">
-        {filteredLanguages.slice(0, 50).map(lang => (
+        {filteredLanguages.map(lang => (
           <div
             key={lang.id}
             className={`p-3 rounded transition-colors ${
