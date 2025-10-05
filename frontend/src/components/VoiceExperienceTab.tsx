@@ -74,9 +74,9 @@ const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) =>
   return (
     <div className="h-full flex flex-col bg-white">
       {/* ヘッダー */}
-      <div className="p-2 border-b bg-gray-50">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-bold text-gray-800">音声体験</h2>
+      <div className="px-3 py-1.5 border-b bg-gray-50">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-base font-bold text-gray-800">音声体験</h2>
           <div className="text-xs text-gray-600">世界の言語と方言を探索</div>
         </div>
         
@@ -87,19 +87,19 @@ const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) =>
             placeholder="言語名、国名、語族名で検索... (例: フランス語, French, français)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-1.5 pl-7 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="w-full px-2.5 py-1 pl-6 pr-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs"
           />
-          <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-            <svg className="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="absolute inset-y-0 left-0 pl-1.5 flex items-center pointer-events-none">
+            <svg className="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-2 flex items-center"
+              className="absolute inset-y-0 right-0 pr-1.5 flex items-center"
             >
-              <svg className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-3 w-3 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>

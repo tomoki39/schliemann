@@ -35,339 +35,68 @@ interface Region {
   languages: RegionalLanguage[];
 }
 
-const RegionalTab: React.FC<RegionalTabProps> = ({ searchQuery }) => {
+const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => {
   const [playingItems, setPlayingItems] = useState<Set<string>>(new Set());
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
   const [errorItems, setErrorItems] = useState<Map<string, string>>(new Map());
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
 
-  // 地域別の言語データを定義
-  const regions: Region[] = useMemo(() => [
-    {
-      id: 'asia',
-      name: 'アジア',
-      icon: '🌏',
-      languages: [
-        {
-          id: 'japanese',
-          name: '日本語',
-          nameJa: '日本語',
-          nameEn: 'Japanese',
-          nameNative: '日本語',
-          flag: '🇯🇵',
-          country: '日本',
-          speakers: 125000000,
-          family: '日本語族',
-          dialects: [
-            { id: 'standard', name: '標準語', region: '東京', description: '日本の標準語' },
-            { id: 'kansai', name: '関西弁', region: '関西地方', description: '大阪、京都、神戸で話される方言' },
-            { id: 'hakata', name: '博多弁', region: '福岡', description: '福岡県で話される方言' },
-            { id: 'tsugaru', name: '津軽弁', region: '青森', description: '青森県津軽地方の方言' },
-            { id: 'okinawa', name: '沖縄方言', region: '沖縄', description: '沖縄県で話される方言' }
-          ],
+  // 国コード→国旗
+  const countryCodeToFlag = (code?: string): string => {
+    if (!code || code.length !== 2) return '🌍';
+    const base = 127397;
+    const upper = code.toUpperCase();
+    return String.fromCodePoint(upper.charCodeAt(0) + base) + String.fromCodePoint(upper.charCodeAt(1) + base);
+  };
+
+  // ISO2→大陸の簡易マップ（必要分のみ・未知はその他）
+  const isoToContinent: Record<string, 'asia' | 'europe' | 'africa' | 'americas' | 'oceania' | 'other'> = {
+    JP: 'asia', CN: 'asia', TW: 'asia', SG: 'asia', IN: 'asia', BD: 'asia', PK: 'asia', LK: 'asia', TH: 'asia', VN: 'asia', KH: 'asia', LA: 'asia', MM: 'asia', MY: 'asia', PH: 'asia', ID: 'asia', HK: 'asia', MO: 'asia', KR: 'asia', KP: 'asia', NP: 'asia', BT: 'asia',
+    TR: 'asia', AM: 'asia', AZ: 'asia', GE: 'asia', IR: 'asia', IQ: 'asia', SA: 'asia', AE: 'asia', OM: 'asia', YE: 'asia', JO: 'asia', LB: 'asia', SY: 'asia', IL: 'asia', KZ: 'asia', KG: 'asia', TJ: 'asia', UZ: 'asia', TM: 'asia',
+    RU: 'europe', UA: 'europe', BY: 'europe', PL: 'europe', LT: 'europe', LV: 'europe', EE: 'europe', CZ: 'europe', SK: 'europe', HU: 'europe', RO: 'europe', BG: 'europe', HR: 'europe', BA: 'europe', RS: 'europe', ME: 'europe', SI: 'europe', IT: 'europe', ES: 'europe', PT: 'europe', FR: 'europe', DE: 'europe', AT: 'europe', CH: 'europe', BE: 'europe', NL: 'europe', LU: 'europe', LI: 'europe', MC: 'europe', SM: 'europe', VA: 'europe', AL: 'europe', MK: 'europe', GR: 'europe', SE: 'europe', NO: 'europe', FI: 'europe', IS: 'europe', IE: 'europe', GB: 'europe',
+    US: 'americas', CA: 'americas', MX: 'americas', AR: 'americas', CO: 'americas', CL: 'americas', PE: 'americas', VE: 'americas', EC: 'americas', UY: 'americas', PY: 'americas', BO: 'americas', DO: 'americas', SV: 'americas', HN: 'americas', NI: 'americas', CR: 'americas', GT: 'americas', PA: 'americas', CU: 'americas', BR: 'americas',
+    EG: 'africa', DZ: 'africa', MA: 'africa', TN: 'africa', LY: 'africa', SD: 'africa', SO: 'africa', MR: 'africa', PS: 'asia', DJ: 'africa', KM: 'africa', TZ: 'africa', KE: 'africa', UG: 'africa', RW: 'africa', BI: 'africa', CD: 'africa', GA: 'africa', MG: 'africa', GH: 'africa', BF: 'africa', CM: 'africa', TD: 'africa', NE: 'africa', ML: 'africa', BJ: 'africa', TG: 'africa', CF: 'africa', CG: 'africa', ZA: 'africa', SZ: 'africa', LS: 'africa', MZ: 'africa', ZW: 'africa', BW: 'africa', NG: 'africa', ET: 'africa', AO: 'africa', GW: 'africa', CV: 'africa', ST: 'africa'
+  };
+
+  const regions: Region[] = useMemo(() => {
+    const result: Record<string, Region> = {
+      asia: { id: 'asia', name: 'アジア', icon: '🌏', languages: [] },
+      europe: { id: 'europe', name: 'ヨーロッパ', icon: '🇪🇺', languages: [] },
+      africa: { id: 'africa', name: 'アフリカ', icon: '🌍', languages: [] },
+      americas: { id: 'americas', name: 'アメリカ', icon: '🌎', languages: [] },
+      oceania: { id: 'oceania', name: 'オセアニア', icon: '🦘', languages: [] },
+      other: { id: 'other', name: 'その他', icon: '🗺️', languages: [] }
+    };
+
+    (languages || [])
+      .filter(l => (l.total_speakers || 0) >= 10000000)
+      .forEach(l => {
+        const firstCountry = l.countries?.[0];
+        const bucket = firstCountry ? (isoToContinent[firstCountry] || 'other') : 'other';
+        const entry: RegionalLanguage = {
+          id: l.id,
+          name: l.language || l.name_ja,
+          nameJa: l.name_ja,
+          nameEn: undefined,
+          nameNative: undefined,
+          flag: countryCodeToFlag(firstCountry),
+          country: firstCountry || '—',
+          speakers: l.total_speakers || 0,
+          family: l.family,
+          dialects: (() => {
+            const items = (l.dialects || []).map((d, i) => ({ id: d.conversion_model || String(i), name: d.name, region: d.region }));
+            if (items.length > 0) return items;
+            return [{ id: 'standard', name: '標準', region: '' }];
+          })(),
           isPlaying: false,
           isLoading: false
-        },
-        {
-          id: 'chinese',
-          name: '中国語',
-          nameJa: '中国語',
-          nameEn: 'Chinese',
-          nameNative: '中文',
-          flag: '🇨🇳',
-          country: '中国',
-          speakers: 1200000000,
-          family: 'シナ・チベット',
-          dialects: [
-            { id: 'mandarin', name: '北京語', region: '北京', description: '中国の標準語' },
-            { id: 'cantonese', name: '広東語', region: '広東', description: '香港、広東省で話される方言' },
-            { id: 'taiwanese', name: '台湾語', region: '台湾', description: '台湾で話される方言' },
-            { id: 'shanghainese', name: '上海語', region: '上海', description: '上海で話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'korean',
-          name: '韓国語',
-          nameJa: '韓国語',
-          nameEn: 'Korean',
-          nameNative: '한국어',
-          flag: '🇰🇷',
-          country: '韓国',
-          speakers: 77000000,
-          family: 'その他',
-          dialects: [
-            { id: 'standard', name: '標準語', region: 'ソウル', description: '韓国の標準語' },
-            { id: 'busan', name: '釜山方言', region: '釜山', description: '釜山で話される方言' },
-            { id: 'jeju', name: '済州方言', region: '済州島', description: '済州島で話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'vietnamese',
-          name: 'ベトナム語',
-          nameJa: 'ベトナム語',
-          nameEn: 'Vietnamese',
-          nameNative: 'Tiếng Việt',
-          flag: '🇻🇳',
-          country: 'ベトナム',
-          speakers: 95000000,
-          family: 'オーストロアジア',
-          dialects: [
-            { id: 'standard', name: '標準ベトナム語', region: 'ハノイ', description: 'ベトナムの標準語' },
-            { id: 'hochiminh', name: 'ホーチミン方言', region: 'ホーチミン', description: 'ホーチミン市で話される方言' },
-            { id: 'hue', name: 'フエ方言', region: 'フエ', description: 'フエで話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'thai',
-          name: 'タイ語',
-          nameJa: 'タイ語',
-          nameEn: 'Thai',
-          nameNative: 'ไทย',
-          flag: '🇹🇭',
-          country: 'タイ',
-          speakers: 60000000,
-          family: 'タイ・カダイ',
-          dialects: [
-            { id: 'standard', name: '標準タイ語', region: 'バンコク', description: 'タイの標準語' },
-            { id: 'northern', name: '北部タイ語', region: 'チェンマイ', description: '北部で話される方言' },
-            { id: 'southern', name: '南部タイ語', region: 'プーケット', description: '南部で話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'hindi',
-          name: 'ヒンディー語',
-          nameJa: 'ヒンディー語',
-          nameEn: 'Hindi',
-          nameNative: 'हिन्दी',
-          flag: '🇮🇳',
-          country: 'インド',
-          speakers: 600000000,
-          family: 'インド・ヨーロッパ',
-          dialects: [
-            { id: 'standard', name: '標準ヒンディー語', region: 'デリー', description: 'インドの標準語' },
-            { id: 'punjabi', name: 'パンジャブ語', region: 'パンジャブ', description: 'パンジャブ州で話される方言' },
-            { id: 'rajasthani', name: 'ラージャスターン語', region: 'ラージャスターン', description: 'ラージャスターン州で話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        }
-      ]
-    },
-    {
-      id: 'europe',
-      name: 'ヨーロッパ',
-      icon: '🇪🇺',
-      languages: [
-        {
-          id: 'english',
-          name: '英語',
-          nameJa: '英語',
-          nameEn: 'English',
-          nameNative: 'English',
-          flag: '🇬🇧',
-          country: 'イギリス',
-          speakers: 1500000000,
-          family: 'インド・ヨーロッパ',
-          dialects: [
-            { id: 'british', name: 'イギリス英語', region: 'イギリス', description: 'イギリスで話される英語' },
-            { id: 'irish', name: 'アイルランド英語', region: 'アイルランド', description: 'アイルランドで話される英語' },
-            { id: 'scottish', name: 'スコットランド英語', region: 'スコットランド', description: 'スコットランドで話される英語' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'french',
-          name: 'フランス語',
-          nameJa: 'フランス語',
-          nameEn: 'French',
-          nameNative: 'français',
-          flag: '🇫🇷',
-          country: 'フランス',
-          speakers: 280000000,
-          family: 'インド・ヨーロッパ',
-          dialects: [
-            { id: 'standard', name: '標準フランス語', region: 'フランス', description: 'フランスの標準語' },
-            { id: 'quebec', name: 'ケベック・フランス語', region: 'カナダ', description: 'ケベック州で話されるフランス語' },
-            { id: 'belgian', name: 'ベルギー・フランス語', region: 'ベルギー', description: 'ベルギーで話されるフランス語' },
-            { id: 'swiss', name: 'スイス・フランス語', region: 'スイス', description: 'スイスで話されるフランス語' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'german',
-          name: 'ドイツ語',
-          nameJa: 'ドイツ語',
-          nameEn: 'German',
-          nameNative: 'Deutsch',
-          flag: '🇩🇪',
-          country: 'ドイツ',
-          speakers: 100000000,
-          family: 'インド・ヨーロッパ',
-          dialects: [
-            { id: 'standard', name: '標準ドイツ語', region: 'ドイツ', description: 'ドイツの標準語' },
-            { id: 'austrian', name: 'オーストリア・ドイツ語', region: 'オーストリア', description: 'オーストリアで話されるドイツ語' },
-            { id: 'swiss', name: 'スイス・ドイツ語', region: 'スイス', description: 'スイスで話されるドイツ語' },
-            { id: 'bavarian', name: 'バイエルン方言', region: 'バイエルン', description: 'バイエルン州で話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'spanish',
-          name: 'スペイン語',
-          nameJa: 'スペイン語',
-          nameEn: 'Spanish',
-          nameNative: 'español',
-          flag: '🇪🇸',
-          country: 'スペイン',
-          speakers: 500000000,
-          family: 'インド・ヨーロッパ',
-          dialects: [
-            { id: 'castilian', name: 'カスティーリャ語', region: 'スペイン', description: 'スペインの標準語' },
-            { id: 'catalan', name: 'カタルーニャ語', region: 'カタルーニャ', description: 'カタルーニャ州で話される言語' },
-            { id: 'galician', name: 'ガリシア語', region: 'ガリシア', description: 'ガリシア州で話される言語' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        }
-      ]
-    },
-    {
-      id: 'africa',
-      name: 'アフリカ',
-      icon: '🌍',
-      languages: [
-        {
-          id: 'arabic',
-          name: 'アラビア語',
-          nameJa: 'アラビア語',
-          nameEn: 'Arabic',
-          nameNative: 'العربية',
-          flag: '🇸🇦',
-          country: 'サウジアラビア',
-          speakers: 400000000,
-          family: 'アフロ・アジア',
-          dialects: [
-            { id: 'standard', name: '標準アラビア語', region: '中東', description: 'アラビア語の標準語' },
-            { id: 'egyptian', name: 'エジプト・アラビア語', region: 'エジプト', description: 'エジプトで話される方言' },
-            { id: 'moroccan', name: 'モロッコ・アラビア語', region: 'モロッコ', description: 'モロッコで話される方言' },
-            { id: 'lebanese', name: 'レバノン・アラビア語', region: 'レバノン', description: 'レバノンで話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'swahili',
-          name: 'スワヒリ語',
-          nameJa: 'スワヒリ語',
-          nameEn: 'Swahili',
-          nameNative: 'Kiswahili',
-          flag: '🇹🇿',
-          country: 'タンザニア',
-          speakers: 200000000,
-          family: 'ニジェール・コンゴ',
-          dialects: [
-            { id: 'standard', name: '標準スワヒリ語', region: 'タンザニア', description: 'スワヒリ語の標準語' },
-            { id: 'kenyan', name: 'ケニア・スワヒリ語', region: 'ケニア', description: 'ケニアで話される方言' },
-            { id: 'ugandan', name: 'ウガンダ・スワヒリ語', region: 'ウガンダ', description: 'ウガンダで話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'hausa',
-          name: 'ハウサ語',
-          nameJa: 'ハウサ語',
-          nameEn: 'Hausa',
-          nameNative: 'Hausa',
-          flag: '🇳🇬',
-          country: 'ナイジェリア',
-          speakers: 80000000,
-          family: 'ニジェール・コンゴ',
-          dialects: [
-            { id: 'standard', name: '標準ハウサ語', region: 'ナイジェリア', description: 'ハウサ語の標準語' },
-            { id: 'niger', name: 'ニジェール・ハウサ語', region: 'ニジェール', description: 'ニジェールで話される方言' },
-            { id: 'ghana', name: 'ガーナ・ハウサ語', region: 'ガーナ', description: 'ガーナで話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        }
-      ]
-    },
-    {
-      id: 'americas',
-      name: 'アメリカ',
-      icon: '🌎',
-      languages: [
-        {
-          id: 'english_us',
-          name: '英語（アメリカ）',
-          nameJa: '英語（アメリカ）',
-          nameEn: 'American English',
-          nameNative: 'English',
-          flag: '🇺🇸',
-          country: 'アメリカ',
-          speakers: 300000000,
-          family: 'インド・ヨーロッパ',
-          dialects: [
-            { id: 'general', name: '一般アメリカ英語', region: 'アメリカ', description: 'アメリカの標準語' },
-            { id: 'southern', name: '南部英語', region: '南部', description: 'アメリカ南部で話される方言' },
-            { id: 'new_york', name: 'ニューヨーク英語', region: 'ニューヨーク', description: 'ニューヨークで話される方言' },
-            { id: 'california', name: 'カリフォルニア英語', region: 'カリフォルニア', description: 'カリフォルニアで話される方言' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'spanish_americas',
-          name: 'スペイン語（アメリカ）',
-          nameJa: 'スペイン語（アメリカ）',
-          nameEn: 'American Spanish',
-          nameNative: 'español',
-          flag: '🇲🇽',
-          country: 'メキシコ',
-          speakers: 400000000,
-          family: 'インド・ヨーロッパ',
-          dialects: [
-            { id: 'mexican', name: 'メキシコ・スペイン語', region: 'メキシコ', description: 'メキシコで話されるスペイン語' },
-            { id: 'argentine', name: 'アルゼンチン・スペイン語', region: 'アルゼンチン', description: 'アルゼンチンで話されるスペイン語' },
-            { id: 'colombian', name: 'コロンビア・スペイン語', region: 'コロンビア', description: 'コロンビアで話されるスペイン語' },
-            { id: 'peruvian', name: 'ペルー・スペイン語', region: 'ペルー', description: 'ペルーで話されるスペイン語' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        },
-        {
-          id: 'portuguese',
-          name: 'ポルトガル語',
-          nameJa: 'ポルトガル語',
-          nameEn: 'Portuguese',
-          nameNative: 'português',
-          flag: '🇧🇷',
-          country: 'ブラジル',
-          speakers: 260000000,
-          family: 'インド・ヨーロッパ',
-          dialects: [
-            { id: 'brazilian', name: 'ブラジル・ポルトガル語', region: 'ブラジル', description: 'ブラジルで話されるポルトガル語' },
-            { id: 'european', name: 'ヨーロッパ・ポルトガル語', region: 'ポルトガル', description: 'ポルトガルで話されるポルトガル語' },
-            { id: 'angolan', name: 'アンゴラ・ポルトガル語', region: 'アンゴラ', description: 'アンゴラで話されるポルトガル語' }
-          ],
-          isPlaying: false,
-          isLoading: false
-        }
-      ]
-    }
-  ], []);
+        };
+        result[bucket].languages.push(entry);
+      });
+
+    // 空地域は除外
+    return Object.values(result).filter(r => r.languages.length > 0);
+  }, [languages]);
 
   // 音声再生
   const playAudio = async (languageId: string, dialectId?: string) => {
@@ -635,8 +364,8 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ searchQuery }) => {
                     </div>
 
                     {/* 方言一覧 */}
-                    <div className="space-y-1">
-                      {language.dialects.slice(0, 3).map((dialect) => {
+                    <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
+                      {language.dialects.map((dialect) => {
                         const itemId = `${language.id}_${dialect.id}`;
                         const isPlaying = playingItems.has(itemId);
                         const isLoading = loadingItems.has(itemId);
@@ -667,11 +396,7 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ searchQuery }) => {
                           </div>
                         );
                       })}
-                      {language.dialects.length > 3 && (
-                        <div className="text-xs text-gray-500 text-center pt-1">
-                          +{language.dialects.length - 3}個の方言
-                        </div>
-                      )}
+                      
                     </div>
                   </div>
                 ))}

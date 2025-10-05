@@ -27,192 +27,46 @@ interface LanguageCard {
   error?: string;
 }
 
-const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ searchQuery }) => {
+const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, searchQuery }) => {
   const [playingItems, setPlayingItems] = useState<Set<string>>(new Set());
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
   const [errorItems, setErrorItems] = useState<Map<string, string>>(new Map());
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
 
-  // 話者人口TOP10の主要言語データを定義
-  const majorLanguages: LanguageCard[] = [
-    {
-      id: 'english',
-      name: '英語',
-      nameJa: '英語',
-      nameEn: 'English',
-      nameNative: 'English',
-      flag: '🇺🇸',
-      region: '世界',
-      speakers: 1500000000,
-      dialects: [
-        { id: 'american', name: 'アメリカ英語', region: 'アメリカ', description: 'アメリカで話される英語' },
-        { id: 'british', name: 'イギリス英語', region: 'イギリス', description: 'イギリスで話される英語' },
-        { id: 'australian', name: 'オーストラリア英語', region: 'オーストラリア', description: 'オーストラリアで話される英語' },
-        { id: 'canadian', name: 'カナダ英語', region: 'カナダ', description: 'カナダで話される英語' }
-      ],
+  // 国コードから国旗絵文字を生成
+  const countryCodeToFlag = (code?: string): string => {
+    if (!code || code.length !== 2) return '🌍';
+    const base = 127397; // 'A' regional indicator
+    const upper = code.toUpperCase();
+    return String.fromCodePoint(upper.charCodeAt(0) + base) + String.fromCodePoint(upper.charCodeAt(1) + base);
+  };
+
+  // デフォルト方言のフォールバック
+  const toDialectCards = (lang: Language): { id: string; name: string; region: string }[] => {
+    const items = (lang.dialects || []).map((d, i) => ({ id: d.conversion_model || String(i), name: d.name, region: d.region || '' }));
+    if (items.length > 0) return items;
+    // フォールバック: 方言未定義の場合は標準を1件
+    return [{ id: 'standard', name: '標準', region: '' }];
+  };
+
+  // データセットから話者人口TOP10を動的生成
+  const majorLanguages: LanguageCard[] = (languages || [])
+    .slice()
+    .sort((a, b) => (b.total_speakers || 0) - (a.total_speakers || 0))
+    .slice(0, 10)
+    .map((lang) => ({
+      id: lang.id,
+      name: lang.language || lang.name_ja,
+      nameJa: lang.name_ja,
+      nameEn: undefined,
+      nameNative: undefined,
+      flag: countryCodeToFlag(lang.countries?.[0]),
+      region: '—',
+      speakers: lang.total_speakers || 0,
+      dialects: toDialectCards(lang),
       isPlaying: false,
       isLoading: false
-    },
-    {
-      id: 'chinese',
-      name: '中国語',
-      nameJa: '中国語',
-      nameEn: 'Chinese',
-      nameNative: '中文',
-      flag: '🇨🇳',
-      region: '中国',
-      speakers: 1200000000,
-      dialects: [
-        { id: 'mandarin', name: '北京語', region: '北京', description: '中国の標準語' },
-        { id: 'cantonese', name: '広東語', region: '広東', description: '香港、広東省で話される方言' },
-        { id: 'taiwanese', name: '台湾語', region: '台湾', description: '台湾で話される方言' },
-        { id: 'shanghainese', name: '上海語', region: '上海', description: '上海で話される方言' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    },
-    {
-      id: 'hindi',
-      name: 'ヒンディー語',
-      nameJa: 'ヒンディー語',
-      nameEn: 'Hindi',
-      nameNative: 'हिन्दी',
-      flag: '🇮🇳',
-      region: 'インド',
-      speakers: 600000000,
-      dialects: [
-        { id: 'standard', name: '標準ヒンディー語', region: 'デリー', description: 'インドの標準語' },
-        { id: 'punjabi', name: 'パンジャブ語', region: 'パンジャブ', description: 'パンジャブ州で話される方言' },
-        { id: 'rajasthani', name: 'ラージャスターン語', region: 'ラージャスターン', description: 'ラージャスターン州で話される方言' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    },
-    {
-      id: 'spanish',
-      name: 'スペイン語',
-      nameJa: 'スペイン語',
-      nameEn: 'Spanish',
-      nameNative: 'español',
-      flag: '🇪🇸',
-      region: 'スペイン',
-      speakers: 500000000,
-      dialects: [
-        { id: 'castilian', name: 'カスティーリャ語', region: 'スペイン', description: 'スペインの標準語' },
-        { id: 'mexican', name: 'メキシコ・スペイン語', region: 'メキシコ', description: 'メキシコで話されるスペイン語' },
-        { id: 'argentine', name: 'アルゼンチン・スペイン語', region: 'アルゼンチン', description: 'アルゼンチンで話されるスペイン語' },
-        { id: 'colombian', name: 'コロンビア・スペイン語', region: 'コロンビア', description: 'コロンビアで話されるスペイン語' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    },
-    {
-      id: 'arabic',
-      name: 'アラビア語',
-      nameJa: 'アラビア語',
-      nameEn: 'Arabic',
-      nameNative: 'العربية',
-      flag: '🇸🇦',
-      region: '中東',
-      speakers: 400000000,
-      dialects: [
-        { id: 'standard', name: '標準アラビア語', region: '中東', description: 'アラビア語の標準語' },
-        { id: 'egyptian', name: 'エジプト・アラビア語', region: 'エジプト', description: 'エジプトで話される方言' },
-        { id: 'moroccan', name: 'モロッコ・アラビア語', region: 'モロッコ', description: 'モロッコで話される方言' },
-        { id: 'lebanese', name: 'レバノン・アラビア語', region: 'レバノン', description: 'レバノンで話される方言' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    },
-    {
-      id: 'portuguese',
-      name: 'ポルトガル語',
-      nameJa: 'ポルトガル語',
-      nameEn: 'Portuguese',
-      nameNative: 'português',
-      flag: '🇧🇷',
-      region: 'ブラジル',
-      speakers: 260000000,
-      dialects: [
-        { id: 'brazilian', name: 'ブラジル・ポルトガル語', region: 'ブラジル', description: 'ブラジルで話されるポルトガル語' },
-        { id: 'european', name: 'ヨーロッパ・ポルトガル語', region: 'ポルトガル', description: 'ポルトガルで話されるポルトガル語' },
-        { id: 'angolan', name: 'アンゴラ・ポルトガル語', region: 'アンゴラ', description: 'アンゴラで話されるポルトガル語' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    },
-    {
-      id: 'bengali',
-      name: 'ベンガル語',
-      nameJa: 'ベンガル語',
-      nameEn: 'Bengali',
-      nameNative: 'বাংলা',
-      flag: '🇧🇩',
-      region: 'バングラデシュ',
-      speakers: 230000000,
-      dialects: [
-        { id: 'standard', name: '標準ベンガル語', region: 'バングラデシュ', description: 'バングラデシュの標準語' },
-        { id: 'indian', name: 'インド・ベンガル語', region: 'インド', description: 'インドで話されるベンガル語' },
-        { id: 'sylheti', name: 'シレット語', region: 'シレット', description: 'シレット地方で話される方言' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    },
-    {
-      id: 'russian',
-      name: 'ロシア語',
-      nameJa: 'ロシア語',
-      nameEn: 'Russian',
-      nameNative: 'русский',
-      flag: '🇷🇺',
-      region: 'ロシア',
-      speakers: 200000000,
-      dialects: [
-        { id: 'standard', name: '標準ロシア語', region: 'ロシア', description: 'ロシアの標準語' },
-        { id: 'ukrainian', name: 'ウクライナ・ロシア語', region: 'ウクライナ', description: 'ウクライナで話されるロシア語' },
-        { id: 'belarusian', name: 'ベラルーシ・ロシア語', region: 'ベラルーシ', description: 'ベラルーシで話されるロシア語' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    },
-    {
-      id: 'japanese',
-      name: '日本語',
-      nameJa: '日本語',
-      nameEn: 'Japanese',
-      nameNative: '日本語',
-      flag: '🇯🇵',
-      region: '日本',
-      speakers: 125000000,
-      dialects: [
-        { id: 'standard', name: '標準語', region: '東京', description: '日本の標準語' },
-        { id: 'kansai', name: '関西弁', region: '関西地方', description: '大阪、京都、神戸で話される方言' },
-        { id: 'hakata', name: '博多弁', region: '福岡', description: '福岡県で話される方言' },
-        { id: 'tsugaru', name: '津軽弁', region: '青森', description: '青森県津軽地方の方言' },
-        { id: 'okinawa', name: '沖縄方言', region: '沖縄', description: '沖縄県で話される方言' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    },
-    {
-      id: 'french',
-      name: 'フランス語',
-      nameJa: 'フランス語',
-      nameEn: 'French',
-      nameNative: 'français',
-      flag: '🇫🇷',
-      region: 'フランス',
-      speakers: 120000000,
-      dialects: [
-        { id: 'standard', name: '標準フランス語', region: 'フランス', description: 'フランスの標準語' },
-        { id: 'quebec', name: 'ケベック・フランス語', region: 'カナダ', description: 'ケベック州で話されるフランス語' },
-        { id: 'belgian', name: 'ベルギー・フランス語', region: 'ベルギー', description: 'ベルギーで話されるフランス語' },
-        { id: 'swiss', name: 'スイス・フランス語', region: 'スイス', description: 'スイスで話されるフランス語' }
-      ],
-      isPlaying: false,
-      isLoading: false
-    }
-  ];
+    }));
 
   // 音声再生
   const playAudio = async (languageId: string, dialectId?: string) => {
@@ -408,7 +262,7 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ searchQuery }
             {/* 方言一覧 */}
             <div className="p-4">
               <h5 className="text-sm font-medium text-gray-700 mb-3">方言・変種</h5>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                 {language.dialects.map((dialect) => {
                   const itemId = `${language.id}_${dialect.id}`;
                   const isPlaying = playingItems.has(itemId);
