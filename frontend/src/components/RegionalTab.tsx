@@ -22,6 +22,7 @@ interface RegionalLanguage {
     name: string;
     region: string;
     description?: string;
+    sample_text?: string;
   }>;
   isPlaying: boolean;
   isLoading: boolean;
@@ -68,11 +69,15 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
       other: { id: 'other', name: 'その他', icon: '🗺️', languages: [] }
     };
 
+    const seenByBucket: Record<string, Set<string>> = { asia: new Set(), europe: new Set(), africa: new Set(), americas: new Set(), oceania: new Set(), other: new Set() };
     (languages || [])
       .filter(l => (l.total_speakers || 0) >= 10000000)
       .forEach(l => {
         const firstCountry = l.countries?.[0];
         const bucket = firstCountry ? (isoToContinent[firstCountry] || 'other') : 'other';
+        const normalizedName = (l.language || l.name_ja).toLowerCase();
+        if (seenByBucket[bucket].has(normalizedName)) return;
+        seenByBucket[bucket].add(normalizedName);
         const entry: RegionalLanguage = {
           id: l.id,
           name: l.language || l.name_ja,
@@ -84,7 +89,7 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
           speakers: l.total_speakers || 0,
           family: l.family,
           dialects: (() => {
-            const items = (l.dialects || []).map((d, i) => ({ id: d.conversion_model || String(i), name: d.name, region: d.region }));
+            const items = (l.dialects || []).map((d, i) => ({ id: d.conversion_model || String(i), name: d.name, region: d.region || '', sample_text: (d as any).sample_text }));
             if (items.length > 0) return items;
             return [{ id: 'standard', name: '標準', region: '' }];
           })(),
@@ -189,97 +194,20 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
 
   // サンプルテキストを取得
   const getSampleText = (language: RegionalLanguage, dialectId?: string): string => {
-    // const dialect = dialectId ? language.dialects.find(d => d.id === dialectId) : null;
-    
-    if (language.id === 'japanese') {
-      if (dialectId === 'kansai') return 'こんにちは、関西弁で話しています。大阪の方言です。';
-      if (dialectId === 'hakata') return 'こんにちは、博多弁で話しています。福岡の方言です。';
-      if (dialectId === 'tsugaru') return 'こんにちは、津軽弁で話しています。青森の方言です。';
-      if (dialectId === 'okinawa') return 'はいさい、沖縄方言で話しています。琉球語の影響を受けています。';
-      return 'こんにちは、日本語で話しています。';
+    if (dialectId) {
+      const d = language.dialects.find(di => di.id === dialectId);
+      if (d?.sample_text) return d.sample_text;
     }
-    
-    if (language.id === 'chinese') {
-      if (dialectId === 'cantonese') return '你好，我講廣東話。你點樣？';
-      if (dialectId === 'taiwanese') return '你好，我講台語。你好嗎？';
-      if (dialectId === 'shanghainese') return '你好，我講上海話。儂好伐？';
-      return '你好，我说普通话。你好吗？';
-    }
-    
-    if (language.id === 'korean') {
-      if (dialectId === 'busan') return '안녕하세요, 부산 사투리로 말하고 있습니다.';
-      if (dialectId === 'jeju') return '안녕하세요, 제주 사투리로 말하고 있습니다.';
-      return '안녕하세요, 한국어로 말하고 있습니다.';
-    }
-    
-    if (language.id === 'hindi') {
-      if (dialectId === 'punjabi') return 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ ਪੰਜਾਬੀ ਬੋਲ ਰਿਹਾ ਹਾਂ।';
-      if (dialectId === 'rajasthani') return 'नमस्कार, मैं राजस्थानी बोल रहा हूं।';
-      return 'नमस्कार, मैं हिंदी बोल रहा हूं।';
-    }
-    
-    if (language.id === 'english' || language.id === 'english_us') {
-      if (dialectId === 'british') return 'Hello, I am speaking British English. Would you like a cup of tea?';
-      if (dialectId === 'irish') return 'Hello, I am speaking Irish English. How are you doing?';
-      if (dialectId === 'scottish') return 'Hello, I am speaking Scottish English. How are you doing?';
-      if (dialectId === 'southern') return 'Howdy, I am speaking Southern English. How are y\'all doing?';
-      if (dialectId === 'new_york') return 'Hello, I am speaking New York English. How are you doing?';
-      if (dialectId === 'california') return 'Hey, I am speaking California English. How are you doing?';
-      return 'Hello, I am speaking American English. How are you doing today?';
-    }
-    
-    if (language.id === 'french') {
-      if (dialectId === 'quebec') return 'Bonjour, je parle français québécois. Comment ça va?';
-      if (dialectId === 'belgian') return 'Bonjour, je parle français belge. Comment allez-vous?';
-      if (dialectId === 'swiss') return 'Bonjour, je parle français suisse. Comment ça va?';
-      return 'Bonjour, je parle français standard. Comment allez-vous?';
-    }
-    
-    if (language.id === 'german') {
-      if (dialectId === 'austrian') return 'Grüß Gott, ich spreche österreichisches Deutsch. Wie geht\'s?';
-      if (dialectId === 'swiss') return 'Grüezi, ich spreche Schweizerdeutsch. Wie geht\'s?';
-      if (dialectId === 'bavarian') return 'Servus, i red boarisch. Wia geht\'s?';
-      return 'Hallo, ich spreche Standarddeutsch. Wie geht es Ihnen?';
-    }
-    
-    if (language.id === 'spanish' || language.id === 'spanish_americas') {
-      if (dialectId === 'castilian') return 'Hola, hablo español estándar. ¿Qué tal?';
-      if (dialectId === 'catalan') return 'Hola, parlo català. Com estàs?';
-      if (dialectId === 'galician') return 'Ola, falo galego. Como estás?';
-      if (dialectId === 'mexican') return 'Hola, hablo español mexicano. ¿Cómo estás?';
-      if (dialectId === 'argentine') return 'Hola, hablo español argentino. ¿Cómo andás?';
-      if (dialectId === 'colombian') return 'Hola, hablo español colombiano. ¿Cómo estás?';
-      if (dialectId === 'peruvian') return 'Hola, hablo español peruano. ¿Cómo estás?';
-      return 'Hola, hablo español. ¿Qué tal?';
-    }
-    
-    if (language.id === 'portuguese') {
-      if (dialectId === 'brazilian') return 'Olá, eu falo português brasileiro. Como você está?';
-      if (dialectId === 'european') return 'Olá, eu falo português europeu. Como está?';
-      if (dialectId === 'angolan') return 'Olá, eu falo português angolano. Como está?';
-      return 'Olá, eu falo português. Como está?';
-    }
-    
-    if (language.id === 'arabic') {
-      if (dialectId === 'egyptian') return 'أهلاً وسهلاً، أنا أتكلم باللهجة المصرية. إزيك؟';
-      if (dialectId === 'moroccan') return 'أهلاً وسهلاً، أنا أتكلم باللهجة المغربية. كيف حالك؟';
-      if (dialectId === 'lebanese') return 'أهلاً وسهلاً، أنا أتكلم باللهجة اللبنانية. كيفك؟';
-      return 'أهلاً وسهلاً، أنا أتكلم بالعربية الفصحى. كيف حالك؟';
-    }
-    
-    if (language.id === 'swahili') {
-      if (dialectId === 'kenyan') return 'Hujambo, ninazungumza Kiswahili cha Kenya. Habari yako?';
-      if (dialectId === 'ugandan') return 'Hujambo, ninazungumza Kiswahili cha Uganda. Habari yako?';
-      return 'Hujambo, ninazungumza Kiswahili. Habari yako?';
-    }
-    
-    if (language.id === 'hausa') {
-      if (dialectId === 'niger') return 'Sannu, ina magana da Hausa na Nijar. Yaya kuke?';
-      if (dialectId === 'ghana') return 'Sannu, ina magana da Hausa na Ghana. Yaya kuke?';
-      return 'Sannu, ina magana da Hausa. Yaya kuke?';
-    }
-    
-    return `Hello, I am speaking ${language.name}.`;
+    const original = (languages.find(l => l.id === language.id) as any);
+    if (original?.audio?.text) return original.audio.text as string;
+    const greetMap: Record<string, string> = {
+      jpn: 'こんにちは。今日はいい天気ですね。お元気ですか？', eng: 'Hello! Nice to meet you today. How are you doing?',
+      fra: 'Bonjour, je suis ravi de vous rencontrer aujourd’hui. Comment ça va ?', spa: 'Hola, mucho gusto. ¿Cómo estás hoy?',
+      deu: 'Hallo, freut mich, dich heute zu treffen. Wie geht es dir?', ita: 'Ciao, piacere di conoscerti. Come stai oggi?',
+      por: 'Olá, é um prazer falar com você hoje. Tudo bem?', rus: 'Здравствуйте! Рад встрече сегодня. Как ваши дела?',
+      cmn: '你好！很高兴今天见到你。你最近怎么样？', yue: '你好呀！好開心今日見到你。你最近點呀？', arb: 'مرحبًا! يسعدني لقاؤك اليوم. كيف حالك؟'
+    };
+    return greetMap[language.id] || language.nameJa;
   };
 
   // 検索でフィルタリング
@@ -339,17 +267,7 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
                           <p className="text-sm text-gray-600">{language.nameEn}</p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => playAudio(language.id)}
-                        disabled={loadingItems.has(language.id)}
-                        className={`px-3 py-1 text-sm rounded ${
-                          playingItems.has(language.id)
-                            ? 'bg-red-500 text-white hover:bg-red-600'
-                            : 'bg-blue-500 text-white hover:bg-blue-600'
-                        } disabled:opacity-50`}
-                      >
-                        {loadingItems.has(language.id) ? '生成中...' : playingItems.has(language.id) ? '停止' : '再生'}
-                      </button>
+                      {/* 親レベルの再生ボタンは削除（方言側で再生） */}
                     </div>
 
                     {/* 言語情報 */}
@@ -376,7 +294,9 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium text-gray-800">{dialect.name}</span>
-                                <span className="text-xs text-gray-500">({dialect.region})</span>
+                                {dialect.region && (
+                                  <span className="text-xs text-gray-500">({dialect.region})</span>
+                                )}
                               </div>
                               {error && (
                                 <p className="text-xs text-red-500 mt-1">{error}</p>

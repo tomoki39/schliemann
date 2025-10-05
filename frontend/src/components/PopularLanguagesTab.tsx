@@ -20,6 +20,7 @@ interface LanguageCard {
     id: string;
     name: string;
     region: string;
+    sample_text?: string;
     description?: string;
   }>;
   isPlaying: boolean;
@@ -42,19 +43,28 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
   };
 
   // デフォルト方言のフォールバック
-  const toDialectCards = (lang: Language): { id: string; name: string; region: string }[] => {
-    const items = (lang.dialects || []).map((d, i) => ({ id: d.conversion_model || String(i), name: d.name, region: d.region || '' }));
+  const toDialectCards = (lang: Language): { id: string; name: string; region: string; sample_text?: string }[] => {
+    const items = (lang.dialects || []).map((d, i) => ({ id: d.conversion_model || String(i), name: d.name, region: d.region || '', sample_text: (d as any).sample_text }));
     if (items.length > 0) return items;
     // フォールバック: 方言未定義の場合は標準を1件
     return [{ id: 'standard', name: '標準', region: '' }];
   };
 
-  // データセットから話者人口TOP10を動的生成
-  const majorLanguages: LanguageCard[] = (languages || [])
-    .slice()
-    .sort((a, b) => (b.total_speakers || 0) - (a.total_speakers || 0))
-    .slice(0, 10)
-    .map((lang) => ({
+  // データセットから話者人口TOP30を動的生成（重複言語を除外）
+  const majorLanguages: LanguageCard[] = (() => {
+    const seen = new Set<string>();
+    const uniq = (lang: Language) => {
+      const key = ((lang.language || lang.name_ja) || '').toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    };
+    return (languages || [])
+      .slice()
+      .sort((a, b) => (b.total_speakers || 0) - (a.total_speakers || 0))
+      .filter(uniq)
+      .slice(0, 30)
+      .map((lang) => ({
       id: lang.id,
       name: lang.language || lang.name_ja,
       nameJa: lang.name_ja,
@@ -67,6 +77,7 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
       isPlaying: false,
       isLoading: false
     }));
+  })();
 
   // 音声再生
   const playAudio = async (languageId: string, dialectId?: string) => {
@@ -157,52 +168,34 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
 
   // サンプルテキストを取得
   const getSampleText = (language: LanguageCard, dialectId?: string): string => {
-      // const dialect = dialectId ? language.dialects.find(d => d.id === dialectId) : null;
-    
-    if (language.id === 'japanese') {
-      if (dialectId === 'kansai') return 'こんにちは、関西弁で話しています。大阪の方言です。';
-      if (dialectId === 'hakata') return 'こんにちは、博多弁で話しています。福岡の方言です。';
-      if (dialectId === 'tsugaru') return 'こんにちは、津軽弁で話しています。青森の方言です。';
-      if (dialectId === 'okinawa') return 'はいさい、沖縄方言で話しています。琉球語の影響を受けています。';
-      return 'こんにちは、日本語で話しています。';
+    // 1) 方言のサンプル
+    if (dialectId) {
+      const d = language.dialects.find(di => di.id === dialectId);
+      if (d?.sample_text) return d.sample_text;
     }
-    
-    if (language.id === 'english') {
-      if (dialectId === 'british') return 'Hello, I am speaking British English. Would you like a cup of tea?';
-      if (dialectId === 'australian') return 'G\'day mate! I am speaking Australian English. How\'s it going?';
-      if (dialectId === 'canadian') return 'Hello, I am speaking Canadian English. How are you doing, eh?';
-      return 'Hello, I am speaking American English. How are you doing today?';
-    }
-    
-    if (language.id === 'french') {
-      if (dialectId === 'quebec') return 'Bonjour, je parle français québécois. Comment ça va?';
-      if (dialectId === 'belgian') return 'Bonjour, je parle français belge. Comment allez-vous?';
-      if (dialectId === 'swiss') return 'Bonjour, je parle français suisse. Comment ça va?';
-      return 'Bonjour, je parle français standard. Comment allez-vous?';
-    }
-    
-    if (language.id === 'spanish') {
-      if (dialectId === 'mexican') return 'Hola, hablo español mexicano. ¿Cómo estás?';
-      if (dialectId === 'argentine') return 'Hola, hablo español argentino. ¿Cómo andás?';
-      if (dialectId === 'colombian') return 'Hola, hablo español colombiano. ¿Cómo estás?';
-      return 'Hola, hablo español estándar. ¿Qué tal?';
-    }
-    
-    if (language.id === 'german') {
-      if (dialectId === 'austrian') return 'Grüß Gott, ich spreche österreichisches Deutsch. Wie geht\'s?';
-      if (dialectId === 'swiss') return 'Grüezi, ich spreche Schweizerdeutsch. Wie geht\'s?';
-      if (dialectId === 'bavarian') return 'Servus, i red boarisch. Wia geht\'s?';
-      return 'Hallo, ich spreche Standarddeutsch. Wie geht es Ihnen?';
-    }
-    
-    if (language.id === 'chinese') {
-      if (dialectId === 'cantonese') return '你好，我講廣東話。你點樣？';
-      if (dialectId === 'taiwanese') return '你好，我講台語。你好嗎？';
-      if (dialectId === 'shanghainese') return '你好，我講上海話。儂好伐？';
-      return '你好，我说普通话。你好吗？';
-    }
-    
-    return `Hello, I am speaking ${language.name}.`;
+    // 2) 言語のデフォルト（データ側にある場合）
+    const original = (languages.find(l => l.id === language.id) as any);
+    if (original?.audio?.text) return original.audio.text as string;
+    // 3) 3-5秒の汎用あいさつ（適度に長め）
+    const greetMap: Record<string, string> = {
+      jpn: 'こんにちは。今日はいい天気ですね。お元気ですか？',
+      eng: 'Hello! Nice to meet you today. How are you doing?',
+      fra: 'Bonjour, je suis ravi de vous rencontrer aujourd’hui. Comment ça va ?',
+      spa: 'Hola, mucho gusto. ¿Cómo estás hoy? Espero que todo vaya bien.',
+      deu: 'Hallo, freut mich, dich heute zu treffen. Wie geht es dir?',
+      ita: 'Ciao, piacere di conoscerti. Come stai oggi?',
+      por: 'Olá, é um prazer falar com você hoje. Tudo bem?',
+      rus: 'Здравствуйте! Рад встрече сегодня. Как ваши дела?',
+      cmn: '你好！很高兴今天见到你。你最近怎么样？',
+      yue: '你好呀！好開心今日見到你。你最近點呀？',
+      wuu: '侬好！今朝见到侬真欢喜。侬最近好伐？',
+      arb: 'مرحبًا! يسعدني لقاؤك اليوم. كيف حالك هذه الأيام؟',
+      hin: 'नमस्ते! आपसे मिलकर खुशी हुई। आज आप कैसे हैं?',
+      kor: '안녕하세요! 오늘 만나서 반갑습니다. 요즘 잘 지내세요?',
+      vie: 'Xin chào! Rất vui được gặp bạn hôm nay. Bạn có khỏe không?',
+      tha: 'สวัสดีครับ/ค่ะ ยินดีที่ได้พบวันนี้ คุณสบายดีไหมครับ/คะ?'
+    };
+    return greetMap[language.id] || `${language.nameJa}です。よろしくお願いします。`;
   };
 
   // 検索でフィルタリング
@@ -241,17 +234,7 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
                     <p className="text-sm text-gray-600">{language.nameEn}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => playAudio(language.id)}
-                  disabled={loadingItems.has(language.id)}
-                  className={`px-3 py-1 text-sm rounded ${
-                    playingItems.has(language.id)
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  } disabled:opacity-50`}
-                >
-                  {loadingItems.has(language.id) ? '生成中...' : playingItems.has(language.id) ? '停止' : '再生'}
-                </button>
+                {/* 親レベルの再生ボタンは削除（方言側で再生） */}
               </div>
               <div className="flex items-center justify-between text-sm text-gray-600">
                 <span>🌍 {language.region}</span>
@@ -274,7 +257,9 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-gray-800">{dialect.name}</span>
-                          <span className="text-xs text-gray-500">({dialect.region})</span>
+                          {dialect.region && (
+                            <span className="text-xs text-gray-500">({dialect.region})</span>
+                          )}
                         </div>
                         {dialect.description && (
                           <p className="text-xs text-gray-600 mt-1">{dialect.description}</p>

@@ -44,6 +44,14 @@ export class WebSpeechService {
     if (this.voices.length === 0) {
       this.synthesis.onvoiceschanged = loadVoicesList;
       loadVoicesList();
+      // 念のためポーリングで取得（ブラウザ差異対応）
+      const start = Date.now();
+      const timer = setInterval(() => {
+        loadVoicesList();
+        if (this.voices.length > 0 || Date.now() - start > 3000) {
+          clearInterval(timer);
+        }
+      }, 200);
     }
   }
 
@@ -82,26 +90,35 @@ export class WebSpeechService {
       }
     }
 
-    // 言語コードに基づく選択
-    const languageMap: Record<string, string> = {
-      'en': 'en',
-      'es': 'es',
-      'fr': 'fr',
-      'de': 'de',
-      'it': 'it',
-      'pt': 'pt',
-      'ru': 'ru',
-      'ja': 'ja',
-      'ko': 'ko',
-      'zh': 'zh',
-      'ar': 'ar',
-      'hi': 'hi',
-    };
+    // 言語コードに基づく選択（BCP-47やISO派生も許容）
+    const lc = (language || '').toLowerCase();
+    const primary = lc.split(/[-_]/)[0];
 
-    const langCode = languageMap[language.toLowerCase()] || language.toLowerCase();
-    const voice = this.voices.find(v => v.lang.startsWith(langCode));
-    
-    return voice || this.voices.find(v => v.default) || this.voices[0] || null;
+    // 追加マッピング（ISO639-3等 → 2文字/BCP）
+    const isoMap: Record<string, string> = {
+      eng: 'en', fra: 'fr', fre: 'fr', spa: 'es', por: 'pt', deu: 'de', ger: 'de', ita: 'it', rus: 'ru', jpn: 'ja', kor: 'ko',
+      // Chinese macro and major regional varieties
+      cmn: 'zh-CN', zho: 'zh-CN', yue: 'zh-HK', wuu: 'zh-CN', hak: 'zh-CN',
+      // Southern Min / Minnan: prefer Taiwan voice when available
+      min: 'zh-TW', nan: 'zh-TW',
+      // Others
+      arb: 'ar', hin: 'hi', vie: 'vi', tha: 'th', ben: 'bn', tur: 'tr', ind: 'id'
+    };
+    const normalized = isoMap[lc] || isoMap[primary] || lc;
+    const normalizedPrimary = normalized.split(/[-_]/)[0];
+
+    // 1) 完全一致（ケース無視）
+    let voice = this.voices.find(v => v.lang.toLowerCase() === normalized);
+    // 2) BCP-47の前方一致（例: ja-JP → ja）
+    if (!voice) voice = this.voices.find(v => v.lang.toLowerCase().startsWith(normalizedPrimary));
+    // 3) 地域コードが含まれる場合は地域も考慮した startsWith
+    if (!voice && normalized.includes('-')) {
+      const regionPrefix = normalized.split('-').slice(0, 2).join('-');
+      voice = this.voices.find(v => v.lang.toLowerCase().startsWith(regionPrefix));
+    }
+
+    // 最終フォールバック: プライマリだけで再検索 → 既定 → 先頭
+    return voice || this.voices.find(v => v.lang.toLowerCase().startsWith(primary)) || this.voices.find(v => v.default) || this.voices[0] || null;
   }
 
   // 音声合成の実行
@@ -118,6 +135,16 @@ export class WebSpeechService {
       const utterance = new SpeechSynthesisUtterance(request.text);
       
       // 音声の選択
+      // 可能なら少し待ってから選択（初回読み込み対策）
+      if (this.voices.length === 0) {
+        const start = Date.now();
+        const wait = setInterval(() => {
+          this.voices = this.synthesis.getVoices();
+          if (this.voices.length > 0 || Date.now() - start > 1500) {
+            clearInterval(wait);
+          }
+        }, 100);
+      }
       const selectedVoice = this.selectVoiceForLanguage(request.language, request.dialect);
       if (selectedVoice) {
         utterance.voice = selectedVoice;

@@ -130,45 +130,38 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
 
   // サンプルテキストを取得
   const getSampleText = (language: Language, dialectId?: string): string => {
-    if (language.id === 'jpn') {
-      if (dialectId === 'kansai') return 'こんにちは、関西弁で話しています。';
-      if (dialectId === 'hakata') return 'こんにちは、博多弁で話しています。';
-      if (dialectId === 'tsugaru') return 'こんにちは、津軽弁で話しています。';
-      if (dialectId === 'okinawa') return 'はいさい、沖縄方言で話しています。';
-      return 'こんにちは、日本語で話しています。';
+    // 1) 方言のサンプルがあれば最優先
+    if (dialectId && language.dialects) {
+      const d = language.dialects.find(d => d.name === dialectId);
+      if (d?.sample_text) return d.sample_text;
     }
-    
-    if (language.id === 'eng') {
-      if (dialectId === 'british') return 'Hello, I am speaking British English.';
-      if (dialectId === 'australian') return 'G\'day mate! I am speaking Australian English.';
-      return 'Hello, I am speaking English.';
-    }
-    
-    if (language.id === 'fr') {
-      if (dialectId === 'quebec') return 'Bonjour, je parle français québécois.';
-      if (dialectId === 'belgian') return 'Bonjour, je parle français belge.';
-      return 'Bonjour, je parle français.';
-    }
-    
-    if (language.id === 'spa') {
-      if (dialectId === 'mexican') return 'Hola, hablo español mexicano.';
-      if (dialectId === 'argentine') return 'Hola, hablo español argentino.';
-      return 'Hola, hablo español.';
-    }
-    
-    if (language.id === 'deu') {
-      if (dialectId === 'austrian') return 'Grüß Gott, ich spreche österreichisches Deutsch.';
-      if (dialectId === 'swiss') return 'Grüezi, ich spreche Schweizerdeutsch.';
-      return 'Hallo, ich spreche Deutsch.';
-    }
-    
-    if (language.id === 'cmn') {
-      if (dialectId === 'cantonese') return '你好，我講廣東話。';
-      if (dialectId === 'taiwanese') return '你好，我講台語。';
-      return '你好，我说普通话。';
-    }
-    
-    return `Hello, I am speaking ${language.name_ja}.`;
+    // 2) 言語のデフォルト音声テキスト
+    if ((language as any).audio?.text) return (language as any).audio.text as string;
+    // 3) 3-5秒の汎用あいさつ（適度に長め）
+    const greetMap: Record<string, string> = {
+      jpn: 'こんにちは。今日はいい天気ですね。お元気ですか？',
+      eng: 'Hello! Nice to meet you today. How are you doing?',
+      fra: 'Bonjour, je suis ravi de vous rencontrer aujourd’hui. Comment ça va ?',
+      spa: 'Hola, mucho gusto. ¿Cómo estás hoy? Espero que todo vaya bien.',
+      deu: 'Hallo, freut mich, dich heute zu treffen. Wie geht es dir?',
+      ita: 'Ciao, piacere di conoscerti. Come stai oggi?',
+      por: 'Olá, é um prazer falar com você hoje. Tudo bem?',
+      rus: 'Здравствуйте! Рад встрече сегодня. Как ваши дела?',
+      cmn: '你好！很高兴今天见到你。你最近怎么样？',
+      yue: '你好呀！好開心今日見到你。你最近點呀？',
+      wuu: '侬好！今朝见到侬真欢喜。侬最近好伐？',
+      arb: 'مرحبًا! يسعدني لقاؤك اليوم. كيف حالك هذه الأيام؟',
+      hin: 'नमस्ते! आपसे मिलकर खुशी हुई। आज आप कैसे हैं?',
+      kor: '안녕하세요! 오늘 만나서 반갑습니다. 요즘 잘 지내세요?',
+      vie: 'Xin chào! Rất vui được gặp bạn hôm nay. Bạn có khỏe không?',
+      tha: 'สวัสดีครับ/ค่ะ ยินดีที่ได้พบวันนี้ คุณสบายดีไหมครับ/คะ?',
+      ben: 'নমস্কার! আজ আপনাকে পেয়ে খুব ভালো লাগছে। কেমন আছেন?',
+      tam: 'வணக்கம்! இன்று உங்களை சந்தித்ததில் மகிழ்ச்சி. எப்படி இருக்கிறீர்கள்?',
+      tel: 'నమస్తే! ఈ రోజు మీను చూసి ఆనందంగా ఉంది. మీరు ఎలా ఉన్నారు?',
+      mar: 'नमस्कार! आज आपली भेट होऊन आनंद झाला. आपले कसे चालले आहे?',
+      pan: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਅੱਜ ਤੁਹਾਨੂੰ ਮਿਲ ਕੇ ਖੁਸ਼ੀ ਹੋਈ। ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ?'
+    };
+    return greetMap[language.id] || `${language.name_ja}です。よろしくお願いします。`;
   };
 
   return (
@@ -197,8 +190,8 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
       </div>
 
       <div className="space-y-2">
-        {sortedLanguages.map((language) => (
-          <div key={language.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+        {sortedLanguages.map((language, idx) => (
+          <div key={`${language.id}_${idx}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -241,6 +234,9 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
                         return (
                           <div key={index} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1">
                             <span className="text-sm text-gray-700">{dialect.name}</span>
+                            {dialect.region && (
+                              <span className="text-xs text-gray-500">({dialect.region})</span>
+                            )}
                             <button
                               onClick={() => playAudio(language.id, dialect.name)}
                               disabled={isLoading}
@@ -268,19 +264,7 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
                 )}
               </div>
               
-              <div className="ml-4">
-                <button
-                  onClick={() => playAudio(language.id)}
-                  disabled={loadingItems.has(language.id)}
-                  className={`px-4 py-2 rounded ${
-                    playingItems.has(language.id)
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
-                  } disabled:opacity-50`}
-                >
-                  {loadingItems.has(language.id) ? '生成中...' : playingItems.has(language.id) ? '停止' : '再生'}
-                </button>
-              </div>
+              {/* 親レベルの再生ボタンは削除（方言側で再生） */}
             </div>
           </div>
         ))}

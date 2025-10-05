@@ -33,7 +33,9 @@ export class EnhancedVoiceService {
 
   constructor() {
     // 環境変数からAPIキーを取得
-    this.elevenLabsApiKey = import.meta.env.VITE_ELEVENLABS_API_KEY || null;
+    // Vite 環境を想定。型は any で吸収
+    const viteEnv: any = (import.meta as any).env || {};
+    this.elevenLabsApiKey = viteEnv.VITE_ELEVENLABS_API_KEY || null;
     if (this.elevenLabsApiKey) {
       elevenLabsService.setApiKey(this.elevenLabsApiKey);
       this.isElevenLabsAvailable = true;
@@ -114,17 +116,18 @@ export class EnhancedVoiceService {
     // 言語コードを取得
     const languageCode = this.getLanguageCode(request.language, request.dialect);
 
-    const response = await webSpeechService.speak(dialectText, {
-      lang: languageCode,
-      rate: this.getRateForDialect(request.dialect),
-      pitch: this.getPitchForDialect(request.dialect),
-      volume: 1.0
+    const ok = await webSpeechService.speak({
+      text: dialectText,
+      language: languageCode,
+      settings: {
+        rate: this.getRateForDialect(request.dialect),
+        pitch: this.getPitchForDialect(request.dialect),
+        volume: 1.0
+      }
     });
 
     return {
-      success: response.success,
-      audioUrl: response.audioUrl,
-      error: response.error,
+      success: ok,
       provider: 'webspeech'
     };
   }
@@ -175,21 +178,21 @@ export class EnhancedVoiceService {
 
   // 言語コードを取得
   private getLanguageCode(language: string, dialect?: string): string {
-    const languageCodes: Record<string, string> = {
-      japanese: 'ja-JP',
-      english: 'en-US',
-      chinese: 'zh-CN',
-      spanish: 'es-ES',
-      french: 'fr-FR',
-      arabic: 'ar-SA',
-      german: 'de-DE',
-      italian: 'it-IT',
-      portuguese: 'pt-BR',
-      russian: 'ru-RU',
-      korean: 'ko-KR'
+    // 入力はISO 639-3のidや英語名の可能性がある
+    const map: Record<string, string> = {
+      // ISO 639-3 → BCP-47
+      jpn: 'ja-JP', eng: 'en-US', fra: 'fr-FR', fre: 'fr-FR', spa: 'es-ES', deu: 'de-DE', ger: 'de-DE', ita: 'it-IT', por: 'pt-PT',
+      ptb: 'pt-BR', rus: 'ru-RU', cmn: 'zh-CN', zho: 'zh-CN', yue: 'zh-HK', wuu: 'zh-CN', hak: 'zh-CN', min: 'zh-CN',
+      arb: 'ar-SA', hin: 'hi-IN', kor: 'ko-KR', vie: 'vi-VN', tha: 'th-TH', ben: 'bn-IN', pan: 'pa-IN', guj: 'gu-IN',
+      mar: 'mr-IN', tel: 'te-IN', tam: 'ta-IN', kan: 'kn-IN', mal: 'ml-IN', ori: 'or-IN', asm: 'as-IN',
+      tur: 'tr-TR', aze: 'az-AZ', kaz: 'kk-KZ', uzb: 'uz-UZ', pus: 'ps-AF', kur: 'ku-TR', amh: 'am-ET', swa: 'sw-KE'
     };
-
-    return languageCodes[language] || 'en-US';
+    const byName: Record<string, string> = {
+      japanese: 'ja-JP', english: 'en-US', chinese: 'zh-CN', mandarin: 'zh-CN', cantonese: 'zh-HK', spanish: 'es-ES',
+      french: 'fr-FR', arabic: 'ar-SA', german: 'de-DE', italian: 'it-IT', portuguese: 'pt-PT', russian: 'ru-RU', korean: 'ko-KR'
+    };
+    const key = (language || '').toLowerCase();
+    return map[key] || byName[key] || 'en-US';
   }
 
   // 方言に応じた話速を取得

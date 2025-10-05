@@ -285,26 +285,39 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
 
   // サンプルテキストを取得
   const getSampleText = (item: LanguageItem): string => {
-    if (item.level === 'dialect') {
-      const lang = item.languages[0];
-      if (lang.id === 'jpn') {
-        return DEMO_CONFIG.sampleTexts.japanese[item.name.toLowerCase() as keyof typeof DEMO_CONFIG.sampleTexts.japanese] || 
-               `こんにちは、${item.name}で話しています。`;
-      }
-    }
-    
     const lang = item.languages[0];
-    if (lang.id === 'eng') {
-      return `Hello, I am speaking ${item.name}.`;
-    } else if (lang.id === 'fr') {
-      return `Bonjour, je parle ${item.name}.`;
-    } else if (lang.id === 'spa') {
-      return `Hola, hablo ${item.name}.`;
-    } else if (lang.id === 'cmn') {
-      return `你好，我说${item.name}。`;
+    // 1) 方言ノードなら、その方言のサンプル
+    if (item.level === 'dialect' && lang.dialects) {
+      const d = lang.dialects.find(di => di.name === item.name);
+      if (d?.sample_text) return d.sample_text;
     }
-    
-    return `Hello, I am speaking ${item.name}.`;
+    // 2) 言語レベル: 言語のデフォルト音声テキスト
+    if ((lang as any).audio?.text) return (lang as any).audio.text as string;
+    // 3) 3-5秒の汎用あいさつ
+    const greetMap: Record<string, string> = {
+      jpn: 'こんにちは。今日はいい天気ですね。お元気ですか？',
+      eng: 'Hello! Nice to meet you today. How are you doing?',
+      fra: 'Bonjour, je suis ravi de vous rencontrer aujourd’hui. Comment ça va ?',
+      spa: 'Hola, mucho gusto. ¿Cómo estás hoy? Espero que todo vaya bien.',
+      deu: 'Hallo, freut mich, dich heute zu treffen. Wie geht es dir?',
+      ita: 'Ciao, piacere di conoscerti. Come stai oggi?',
+      por: 'Olá, é um prazer falar com você hoje. Tudo bem?',
+      rus: 'Здравствуйте! Рад встрече сегодня. Как ваши дела?',
+      cmn: '你好！很高兴今天见到你。你最近怎么样？',
+      yue: '你好呀！好開心今日見到你。你最近點呀？',
+      wuu: '侬好！今朝见到侬真欢喜。侬最近好伐？',
+      arb: 'مرحبًا! يسعدني لقاؤك اليوم. كيف حالك هذه الأيام؟',
+      hin: 'नमस्ते! आपसे मिलकर खुशी हुई। आज आप कैसे हैं?',
+      kor: '안녕하세요! 오늘 만나서 반갑습니다. 요즘 잘 지내세요?',
+      vie: 'Xin chào! Rất vui được gặp bạn hôm nay. Bạn có khỏe không?',
+      tha: 'สวัสดีครับ/ค่ะ ยินดีที่ได้พบวันนี้ คุณสบายดีไหมครับ/คะ?',
+      ben: 'নমস্কার! আজ আপনাকে পেয়ে খুব ভালো লাগছে। কেমন আছেন?',
+      tam: 'வணக்கம்! இன்று உங்களை சந்தித்ததில் மகிழ்ச்சி. எப்படி இருக்கிறீர்கள்?',
+      tel: 'నమస్తే! ఈ రోజు మీను చూసి ఆనందంగా ఉంది. మీరు ఎలా ఉన్నారు?',
+      mar: 'नमस्कार! आज आपली भेट होऊन आनंद झाला. आपले कसे चालले आहे?',
+      pan: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਅੱਜ ਤੁਹਾਨੂੰ ਮਿਲ ਕੇ ਖੁਸ਼ੀ ਹੋਈ। ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ?'
+    };
+    return greetMap[lang.id] || `${item.name} を話しています。よろしくお願いします。`;
   };
 
   // 言語コードを取得
