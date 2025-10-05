@@ -50,6 +50,28 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
     return [{ id: 'standard', name: '標準', region: '' }];
   };
 
+  // 国コードを日本語名へ
+  const countryCodeToName = (code?: string): string => {
+    if (!code) return '';
+    try {
+      const dn = new Intl.DisplayNames(['ja'], { type: 'region' });
+      return (dn.of(code) as string) || code;
+    } catch {
+      return code;
+    }
+  };
+
+  const getOfficialCountryNames = (langId: string): string => {
+    const original = languages.find(l => l.id === langId);
+    if (!original) return '';
+    const list = (original.official_languages && original.official_languages.length > 0)
+      ? original.official_languages
+      : (original.countries || []);
+    const names = list.map(countryCodeToName);
+    const max = 5;
+    return names.length > max ? `${names.slice(0, max).join(', ')} …` : names.join(', ');
+  };
+
   // データセットから話者人口TOP30を動的生成（重複言語を除外）
   const majorLanguages: LanguageCard[] = (() => {
     const seen = new Set<string>();
@@ -71,7 +93,7 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
       nameEn: undefined,
       nameNative: undefined,
       flag: countryCodeToFlag(lang.countries?.[0]),
-      region: '—',
+      region: getOfficialCountryNames(lang.id) || '—',
       speakers: lang.total_speakers || 0,
       dialects: toDialectCards(lang),
       isPlaying: false,
@@ -237,7 +259,7 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
                 {/* 親レベルの再生ボタンは削除（方言側で再生） */}
               </div>
               <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>🌍 {language.region}</span>
+                <span className="truncate max-w-[65%]">{language.region}</span>
                 <span>👥 {language.speakers.toLocaleString()}人</span>
               </div>
             </div>
