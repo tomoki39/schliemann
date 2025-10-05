@@ -316,6 +316,28 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
     }
   };
 
+  // 語族選択時の一括再生
+  const playFamilyLanguages = async (familyId: string) => {
+    const family = findItemById(languageTree, familyId);
+    if (!family) return;
+
+    // 語族内のすべての言語と方言を収集
+    const allLanguages: LanguageItem[] = [];
+    const collectLanguages = (item: LanguageItem) => {
+      if (item.level === 'language' || item.level === 'dialect') {
+        allLanguages.push(item);
+      }
+      item.children.forEach(collectLanguages);
+    };
+    collectLanguages(family);
+
+    // 順番に再生
+    for (const lang of allLanguages) {
+      await playAudio(lang);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  };
+
   // アイテムをIDで検索
   const findItemById = (items: LanguageItem[], id: string): LanguageItem | null => {
     for (const item of items) {
@@ -357,7 +379,13 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={() => toggleSelection(item.id)}
+            onChange={() => {
+              toggleSelection(item.id);
+              // 語族レベルの場合は一括再生も実行
+              if (item.level === 'family') {
+                playFamilyLanguages(item.id);
+              }
+            }}
             className="mr-2"
           />
           
@@ -438,6 +466,9 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
           >
             選択をクリア
           </button>
+        </div>
+        <div className="mt-2 text-xs text-gray-600">
+          💡 語族にチェックを入れると、その語族のすべての言語と方言を順番に再生します
         </div>
       </div>
       

@@ -9,7 +9,7 @@ import DetailPanel from './components/DetailPanel';
 import ComparePanel from './components/ComparePanel';
 import DialectPlayer from './components/DialectPlayer';
 import DialectDetailPanel from './components/DialectDetailPanel';
-import LanguageExplorer from './components/LanguageExplorer';
+import VoiceExperienceTab from './components/VoiceExperienceTab';
 import { useBookmarks } from './hooks/useBookmarks';
 import { Language } from './types/Language';
 import languagesData from './data/languages.json';
@@ -383,9 +383,8 @@ const App: React.FC = () => {
         
         {activeTab === 'voice' && (
           <div className="flex-1 overflow-hidden">
-            <LanguageExplorer
+            <VoiceExperienceTab
               languages={languages}
-              onClose={() => {}} // 音声タブでは閉じる機能は不要
             />
           </div>
         )}
