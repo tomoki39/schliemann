@@ -1,0 +1,68 @@
+{
+  "japanese_dialects": [
+    {
+      "id": "kansai",
+      "name": "関西弁",
+      "text": "こんにちは、関西弁で話しています。大阪の方言です。",
+      "description": "関西地方で話される方言。大阪、京都、神戸などで使われます。"
+    },
+    {
+      "id": "hakata",
+      "name": "博多弁",
+      "text": "こんにちは、博多弁で話しています。福岡の方言です。",
+      "description": "福岡県で話される方言。独特の語尾やイントネーションがあります。"
+    },
+    {
+      "id": "tsugaru",
+      "name": "津軽弁",
+      "text": "こんにちは、津軽弁で話しています。青森の方言です。",
+      "description": "青森県津軽地方の方言。非常に独特で、他の方言とは大きく異なります。"
+    },
+    {
+      "id": "okinawa",
+      "name": "沖縄方言",
+      "text": "はいさい、沖縄方言で話しています。琉球語の影響を受けています。",
+      "description": "沖縄県で話される方言。琉球語の影響を強く受けています。"
+    }
+  ],
+  "english_dialects": [
+    {
+      "id": "british",
+      "name": "British English",
+      "text": "Hello, I'm speaking British English. Would you like a cup of tea?",
+      "description": "イギリス英語。独特の発音と語彙があります。"
+    },
+    {
+      "id": "american",
+      "name": "American English",
+      "text": "Hello, I'm speaking American English. How are you doing today?",
+      "description": "アメリカ英語。標準的なアメリカの発音です。"
+    },
+    {
+      "id": "australian",
+      "name": "Australian English",
+      "text": "G'day mate! I'm speaking Australian English. How's it going?",
+      "description": "オーストラリア英語。独特のアクセントと語彙があります。"
+    }
+  ],
+  "demo_scenarios": [
+    {
+      "id": "japanese_tour",
+      "title": "日本語方言ツアー",
+      "description": "日本の主要な方言を順番に聞いてみましょう",
+      "dialects": ["kansai", "hakata", "tsugaru", "okinawa"]
+    },
+    {
+      "id": "english_tour",
+      "title": "英語方言ツアー",
+      "description": "世界の英語方言を比較してみましょう",
+      "dialects": ["british", "american", "australian"]
+    },
+    {
+      "id": "comparison_demo",
+      "title": "方言比較デモ",
+      "description": "関西弁と博多弁を同時に聞き比べてみましょう",
+      "dialects": ["kansai", "hakata"]
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
 import { Language } from '../types/Language';
+import { DEMO_CONFIG, getDemoText, getDemoTour } from '../config/demo';
 
 interface VoiceTourProps {
   languages: Language[];
