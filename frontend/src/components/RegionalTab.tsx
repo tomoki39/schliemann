@@ -50,9 +50,31 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
     return String.fromCodePoint(upper.charCodeAt(0) + base) + String.fromCodePoint(upper.charCodeAt(1) + base);
   };
 
+  // 国コード→日本語名
+  const countryCodeToName = (code?: string): string => {
+    if (!code) return '';
+    try {
+      const dn = new Intl.DisplayNames(['ja'], { type: 'region' });
+      return (dn.of(code) as string) || code;
+    } catch {
+      return code;
+    }
+  };
+
+  const getOfficialCountryNames = (langId: string): string => {
+    const original = languages.find(l => l.id === langId);
+    if (!original) return '';
+    const list = (original.official_languages && original.official_languages.length > 0)
+      ? original.official_languages
+      : (original.countries || []);
+    const names = list.map(countryCodeToName);
+    const max = 5;
+    return names.length > max ? `${names.slice(0, max).join(', ')} …` : names.join(', ');
+  };
+
   // ISO2→大陸の簡易マップ（必要分のみ・未知はその他）
   const isoToContinent: Record<string, 'asia' | 'europe' | 'africa' | 'americas' | 'oceania' | 'other'> = {
-    JP: 'asia', CN: 'asia', TW: 'asia', SG: 'asia', IN: 'asia', BD: 'asia', PK: 'asia', LK: 'asia', TH: 'asia', VN: 'asia', KH: 'asia', LA: 'asia', MM: 'asia', MY: 'asia', PH: 'asia', ID: 'asia', HK: 'asia', MO: 'asia', KR: 'asia', KP: 'asia', NP: 'asia', BT: 'asia',
+    JP: 'asia', CN: 'asia', TW: 'asia', SG: 'asia', IN: 'asia', BD: 'asia', PK: 'asia', AF: 'asia', LK: 'asia', TH: 'asia', VN: 'asia', KH: 'asia', LA: 'asia', MM: 'asia', MY: 'asia', PH: 'asia', ID: 'asia', HK: 'asia', MO: 'asia', KR: 'asia', KP: 'asia', NP: 'asia', BT: 'asia',
     TR: 'asia', AM: 'asia', AZ: 'asia', GE: 'asia', IR: 'asia', IQ: 'asia', SA: 'asia', AE: 'asia', OM: 'asia', YE: 'asia', JO: 'asia', LB: 'asia', SY: 'asia', IL: 'asia', KZ: 'asia', KG: 'asia', TJ: 'asia', UZ: 'asia', TM: 'asia',
     RU: 'europe', UA: 'europe', BY: 'europe', PL: 'europe', LT: 'europe', LV: 'europe', EE: 'europe', CZ: 'europe', SK: 'europe', HU: 'europe', RO: 'europe', BG: 'europe', HR: 'europe', BA: 'europe', RS: 'europe', ME: 'europe', SI: 'europe', IT: 'europe', ES: 'europe', PT: 'europe', FR: 'europe', DE: 'europe', AT: 'europe', CH: 'europe', BE: 'europe', NL: 'europe', LU: 'europe', LI: 'europe', MC: 'europe', SM: 'europe', VA: 'europe', AL: 'europe', MK: 'europe', GR: 'europe', SE: 'europe', NO: 'europe', FI: 'europe', IS: 'europe', IE: 'europe', GB: 'europe',
     US: 'americas', CA: 'americas', MX: 'americas', AR: 'americas', CO: 'americas', CL: 'americas', PE: 'americas', VE: 'americas', EC: 'americas', UY: 'americas', PY: 'americas', BO: 'americas', DO: 'americas', SV: 'americas', HN: 'americas', NI: 'americas', CR: 'americas', GT: 'americas', PA: 'americas', CU: 'americas', BR: 'americas',
@@ -273,7 +295,7 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
                     {/* 言語情報 */}
                     <div className="text-sm text-gray-600 mb-3">
                       <div className="flex items-center justify-between">
-                        <span>🌍 {language.country}</span>
+                        <span className="truncate max-w-[65%]">{getOfficialCountryNames(language.id) || '—'}</span>
                         <span>👥 {language.speakers.toLocaleString()}人</span>
                       </div>
                       <div className="mt-1">

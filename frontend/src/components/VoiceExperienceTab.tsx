@@ -77,7 +77,6 @@ const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) =>
       <div className="px-3 py-1.5 border-b bg-gray-50">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-base font-bold text-gray-800">音声体験</h2>
-          <div className="text-xs text-gray-600">世界の言語と方言を探索</div>
         </div>
         
         {/* 検索バー */}
