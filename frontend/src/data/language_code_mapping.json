@@ -409,7 +409,7 @@
   },
   "mn": {
     "name_ja": "モンゴル語",
-    "family": "モンゴル",
+    "family": "アルタイ",
     "branch": "モンゴル",
     "group": "モンゴル",
     "subgroup": "モンゴル",
@@ -846,5 +846,117 @@
     "group": "南バントゥー",
     "subgroup": "ズールー",
     "language": "ズールー語"
+  },
+  "kal": {
+    "name_ja": "グリーンランド語",
+    "family": "エスキモー・アレウト",
+    "branch": "エスキモー",
+    "group": "イヌイット",
+    "subgroup": "イヌイット",
+    "language": "グリーンランド語"
+  },
+  "yue": {
+    "name_ja": "広東語",
+    "family": "シナ・チベット",
+    "branch": "シナ",
+    "group": "官話",
+    "subgroup": "粤語",
+    "language": "広東語"
+  },
+  "pau": {
+    "name_ja": "パラオ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "パラオ語",
+    "language": "パラオ語"
+  },
+  "mah": {
+    "name_ja": "マーシャル語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "マーシャル語",
+    "language": "マーシャル語"
+  },
+  "gil": {
+    "name_ja": "キリバス語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "キリバス語",
+    "language": "キリバス語"
+  },
+  "tvl": {
+    "name_ja": "ツバル語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "ツバル語",
+    "language": "ツバル語"
+  },
+  "nau": {
+    "name_ja": "ナウル語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "ナウル語",
+    "language": "ナウル語"
+  },
+  "rar": {
+    "name_ja": "ラロトンガ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "ラロトンガ語",
+    "language": "ラロトンガ語"
+  },
+  "niu": {
+    "name_ja": "ニウエ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "ニウエ語",
+    "language": "ニウエ語"
+  },
+  "tkl": {
+    "name_ja": "トケラウ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "トケラウ語",
+    "language": "トケラウ語"
+  },
+  "ch": {
+    "name_ja": "チャモロ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "チャモロ語",
+    "language": "チャモロ語"
+  },
+  "sm": {
+    "name_ja": "サモア語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "サモア語",
+    "language": "サモア語"
+  },
+  "bi": {
+    "name_ja": "ビスラマ語",
+    "family": "クレオール",
+    "branch": "英語系クレオール",
+    "group": "太平洋クレオール",
+    "subgroup": "ビスラマ語",
+    "language": "ビスラマ語"
+  },
+  "pap": {
+    "name_ja": "パピアメント語",
+    "family": "クレオール",
+    "branch": "イベロ・ロマンス系クレオール",
+    "group": "カリブクレオール",
+    "subgroup": "パピアメント語",
+    "language": "パピアメント語"
   }
 }

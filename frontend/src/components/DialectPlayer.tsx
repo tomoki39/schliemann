@@ -4,6 +4,7 @@ import { convertTextToDialect } from '../services/dialectConverter';
 import { webSpeechService, SpeechRequest } from '../services/webSpeechService';
 import { getDialectVoiceSettings as getVoiceSettings } from '../services/dialectVoiceSettings';
 import { VoiceQualityService } from '../services/ssmlBuilder';
+import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
 
 interface Dialect {
   id: string;
@@ -22,6 +23,7 @@ interface DialectPlayerProps {
   showCustomInput?: boolean;
   onCustomTextChange?: (text: string) => void;
   showQualitySettings?: boolean;
+  showProviderSelection?: boolean;
 }
 
 const DialectPlayer: React.FC<DialectPlayerProps> = ({ 
@@ -30,7 +32,8 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
   customText = '', 
   showCustomInput = false,
   onCustomTextChange,
-  showQualitySettings = false
+  showQualitySettings = false,
+  showProviderSelection = false
 }) => {
   const { t } = useTranslation();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -42,6 +45,8 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
   const [useSSML, setUseSSML] = useState(true); // SSML使用
   const [volume, setVolume] = useState(1.0); // 音量
   const [playbackRate, setPlaybackRate] = useState(1.0); // 再生速度
+  const [selectedProvider, setSelectedProvider] = useState<'elevenlabs' | 'webspeech'>('elevenlabs');
+  const [availableProviders, setAvailableProviders] = useState<string[]>([]);
 
   // Web Speech APIの可用性をチェック
   useEffect(() => {
@@ -52,12 +57,20 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
     checkWebSpeech();
   }, []);
 
-  const playText = async (text: string, isCustom: boolean = false) => {
-    if (!webSpeechAvailable) {
-      setError('Web Speech APIが利用できません');
-      return;
+  // 利用可能な音声プロバイダーを取得
+  useEffect(() => {
+    const providers = enhancedVoiceService.getAvailableProviders();
+    setAvailableProviders(providers);
+    
+    // デフォルトプロバイダーを設定
+    if (providers.includes('elevenlabs')) {
+      setSelectedProvider('elevenlabs');
+    } else if (providers.includes('webspeech')) {
+      setSelectedProvider('webspeech');
     }
+  }, []);
 
+  const playText = async (text: string, isCustom: boolean = false) => {
     setIsLoading(true);
     setError(null);
     
@@ -67,47 +80,76 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
       const conversionResult = convertTextToDialect(enhancedText, dialect.conversion_model);
       const textToSpeak = conversionResult.success ? conversionResult.convertedText : enhancedText;
       
-      // 音声設定の取得
-      const voiceSettings = getVoiceSettings(dialect.conversion_model);
-      
-      // 方言の強度に基づく設定調整
-      const adjustedRate = voiceSettings.rate * (0.8 + styleDegree * 0.2);
-      const adjustedPitch = voiceSettings.pitch * (0.9 + styleDegree * 0.1);
-      
-      const request: SpeechRequest = {
-        text: textToSpeak,
-        language: voiceSettings.language,
-        dialect: voiceSettings.dialect,
-        settings: {
-          rate: adjustedRate * playbackRate,
-          pitch: adjustedPitch,
-          volume: voiceSettings.volume * volume,
-        },
-      };
-
       // 再生状態の設定
       if (isCustom) {
         setIsPlayingCustom(true);
       } else {
         setIsPlaying(true);
       }
-      
-      const success = await webSpeechService.speak(request);
-      
-      if (success) {
-        console.log('Speech started successfully');
-      } else {
-        setError('音声再生に失敗しました');
-        if (isCustom) {
-          setIsPlayingCustom(false);
+
+      if (selectedProvider === 'elevenlabs') {
+        // ElevenLabsを使用
+        const request: EnhancedVoiceRequest = {
+          text: textToSpeak,
+          language: getLanguageName(dialect.conversion_model),
+          dialect: dialect.name,
+          useElevenLabs: true,
+          voiceSettings: {
+            stability: 0.5 + styleDegree * 0.2,
+            similarity_boost: 0.5 + styleDegree * 0.3,
+            style: styleDegree * 0.5,
+            use_speaker_boost: true
+          }
+        };
+
+        const response = await enhancedVoiceService.generateVoice(request);
+        
+        if (response.success && response.audioUrl) {
+          const audio = new Audio(response.audioUrl);
+          audio.playbackRate = playbackRate;
+          audio.volume = volume;
+          audio.addEventListener('ended', () => {
+            if (isCustom) {
+              setIsPlayingCustom(false);
+            } else {
+              setIsPlaying(false);
+            }
+          });
+          await audio.play();
         } else {
-          setIsPlaying(false);
+          throw new Error(response.error || '音声生成に失敗しました');
+        }
+      } else {
+        // Web Speech APIを使用
+        if (!webSpeechAvailable) {
+          throw new Error('Web Speech APIが利用できません');
+        }
+
+        const voiceSettings = getVoiceSettings(dialect.conversion_model);
+        const adjustedRate = voiceSettings.rate * (0.8 + styleDegree * 0.2) * playbackRate;
+        const adjustedPitch = voiceSettings.pitch * (0.9 + styleDegree * 0.1);
+        
+        const request: SpeechRequest = {
+          text: textToSpeak,
+          language: voiceSettings.language,
+          dialect: voiceSettings.dialect,
+          settings: {
+            rate: adjustedRate,
+            pitch: adjustedPitch,
+            volume: voiceSettings.volume * volume,
+          },
+        };
+        
+        const success = await webSpeechService.speak(request);
+        
+        if (!success) {
+          throw new Error('音声再生に失敗しました');
         }
       }
       
       setIsLoading(false);
     } catch (error: unknown) {
-      console.error('Web Speech error:', error);
+      console.error('Voice generation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setError(`音声再生エラー: ${errorMessage}`);
       setIsLoading(false);
@@ -117,6 +159,27 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
         setIsPlaying(false);
       }
     }
+  };
+
+  // 方言名から言語名を取得
+  const getLanguageName = (conversionModel: string): string => {
+    const dialectToLanguage: Record<string, string> = {
+      'kansai': 'japanese',
+      'hakata': 'japanese',
+      'tsugaru': 'japanese',
+      'okinawa': 'japanese',
+      'british': 'english',
+      'american': 'english',
+      'australian': 'english',
+      'mandarin': 'chinese',
+      'cantonese': 'chinese',
+      'castilian': 'spanish',
+      'mexican': 'spanish',
+      'parisian': 'french',
+      'quebec': 'french'
+    };
+
+    return dialectToLanguage[conversionModel] || 'japanese';
   };
 
 
@@ -183,11 +246,24 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
               <span className="font-medium text-sm">{dialect.name}</span>
               <span className="text-xs text-gray-500">({dialect.region})</span>
             </div>
-            {webSpeechAvailable && (
+            <div className="flex items-center gap-2">
+              {showProviderSelection && availableProviders.length > 1 && (
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value as 'elevenlabs' | 'webspeech')}
+                  className="text-xs border border-gray-300 rounded px-2 py-1"
+                >
+                  {availableProviders.map(provider => (
+                    <option key={provider} value={provider}>
+                      {provider === 'elevenlabs' ? 'ElevenLabs' : 'Web Speech API'}
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded">
-                Web Speech API
+                {selectedProvider === 'elevenlabs' ? 'ElevenLabs' : 'Web Speech API'}
               </div>
-            )}
+            </div>
           </div>
           <div className="text-sm text-gray-700">
             "{(() => {

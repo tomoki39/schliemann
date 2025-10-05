@@ -1,214 +1,246 @@
-import React, { useState, useEffect } from 'react';
-import { webSpeechService, SpeechRequest } from '../services/webSpeechService';
-import { getVoiceSettings } from '../services/dialectVoiceSettings';
-import { DEMO_VOICE_SAMPLES, VoiceSample } from '../data/demoVoiceSamples';
+import React, { useState, useRef, useEffect } from 'react';
+import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
 
 interface VoiceComparisonProps {
-  className?: string;
+  text: string;
+  language: string;
+  dialects: string[];
+  onClose: () => void;
 }
 
-const VoiceComparison: React.FC<VoiceComparisonProps> = ({ className = '' }) => {
-  const [selectedSamples, setSelectedSamples] = useState<VoiceSample[]>([]);
-  const [isPlaying, setIsPlaying] = useState<boolean[]>([]);
-  const [isWebSpeechAvailable, setIsWebSpeechAvailable] = useState(false);
-  const [customText, setCustomText] = useState('');
-  const [simultaneousMode, setSimultaneousMode] = useState(false);
+interface VoiceItem {
+  dialect: string;
+  audioUrl?: string;
+  isPlaying: boolean;
+  isLoading: boolean;
+  error?: string;
+  provider: string;
+}
 
-  useEffect(() => {
-    setIsWebSpeechAvailable(webSpeechService.isWebSpeechSupported());
-  }, []);
+const VoiceComparison: React.FC<VoiceComparisonProps> = ({
+  text,
+  language,
+  dialects,
+  onClose
+}) => {
+  const [voiceItems, setVoiceItems] = useState<VoiceItem[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [simultaneousPlayback, setSimultaneousPlayback] = useState(false);
+  const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
 
-  const playSample = async (sample: VoiceSample, index: number) => {
-    if (!isWebSpeechAvailable) return;
+  // 音声生成
+  const generateVoices = async () => {
+    setIsGenerating(true);
+    const items: VoiceItem[] = dialects.map(dialect => ({
+      dialect,
+      isPlaying: false,
+      isLoading: true,
+      provider: 'unknown'
+    }));
 
-    const voiceSettings = getVoiceSettings(sample.dialect);
-    
-    const request: SpeechRequest = {
-      text: customText || sample.text,
-      language: voiceSettings.language,
-      dialect: voiceSettings.dialect,
-      settings: {
-        rate: voiceSettings.rate,
-        pitch: voiceSettings.pitch,
-        volume: voiceSettings.volume,
-      },
-    };
+    setVoiceItems(items);
 
-    // 再生状態を更新
-    const newIsPlaying = [...isPlaying];
-    newIsPlaying[index] = true;
-    setIsPlaying(newIsPlaying);
+    // 並列で音声生成
+    const promises = dialects.map(async (dialect, index) => {
+      try {
+        const request: EnhancedVoiceRequest = {
+          text,
+          language,
+          dialect,
+          useElevenLabs: true
+        };
 
-    await webSpeechService.speak(request);
+        const response = await enhancedVoiceService.generateVoice(request);
+        
+        setVoiceItems(prev => prev.map((item, i) => 
+          i === index ? {
+            ...item,
+            audioUrl: response.audioUrl,
+            isLoading: false,
+            provider: response.provider,
+            error: response.error
+          } : item
+        ));
+      } catch (error) {
+        setVoiceItems(prev => prev.map((item, i) => 
+          i === index ? {
+            ...item,
+            isLoading: false,
+            error: error instanceof Error ? error.message : '音声生成エラー'
+          } : item
+        ));
+      }
+    });
 
-    // 再生終了
-    newIsPlaying[index] = false;
-    setIsPlaying(newIsPlaying);
+    await Promise.all(promises);
+    setIsGenerating(false);
   };
 
-  const addSample = (sample: VoiceSample) => {
-    if (selectedSamples.length >= 3) {
-      alert('最大3つまで比較できます');
-      return;
+  // 音声再生
+  const playVoice = async (dialect: string) => {
+    const item = voiceItems.find(v => v.dialect === dialect);
+    if (!item?.audioUrl) return;
+
+    // 他の音声を停止
+    if (!simultaneousPlayback) {
+      stopAllVoices();
     }
-    setSelectedSamples([...selectedSamples, sample]);
-    setIsPlaying([...isPlaying, false]);
-  };
 
-  const removeSample = (index: number) => {
-    const newSamples = selectedSamples.filter((_, i) => i !== index);
-    const newIsPlaying = isPlaying.filter((_, i) => i !== index);
-    setSelectedSamples(newSamples);
-    setIsPlaying(newIsPlaying);
-  };
-
-  const playAll = async () => {
-    if (simultaneousMode) {
-      // 同時再生モード
-      const promises = selectedSamples.map((sample, index) => playSample(sample, index));
-      await Promise.all(promises);
-    } else {
-      // 順次再生モード
-      for (let i = 0; i < selectedSamples.length; i++) {
-        await playSample(selectedSamples[i], i);
-        if (i < selectedSamples.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-        }
+    const audio = audioRefs.current.get(dialect);
+    if (audio) {
+      try {
+        await audio.play();
+        setVoiceItems(prev => prev.map(v => 
+          v.dialect === dialect ? { ...v, isPlaying: true } : v
+        ));
+      } catch (error) {
+        console.error('Playback error:', error);
       }
     }
   };
 
-  const stopAll = () => {
-    webSpeechService.stop();
-    setIsPlaying(new Array(selectedSamples.length).fill(false));
+  // 音声停止
+  const stopVoice = (dialect: string) => {
+    const audio = audioRefs.current.get(dialect);
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      setVoiceItems(prev => prev.map(v => 
+        v.dialect === dialect ? { ...v, isPlaying: false } : v
+      ));
+    }
   };
 
-  const availableSamples = DEMO_VOICE_SAMPLES.filter(
-    sample => !selectedSamples.some(selected => selected.id === sample.id)
-  );
+  // 全音声停止
+  const stopAllVoices = () => {
+    voiceItems.forEach(item => {
+      if (item.isPlaying) {
+        stopVoice(item.dialect);
+      }
+    });
+  };
 
-  if (!isWebSpeechAvailable) {
-    return (
-      <div className={`p-4 border rounded-lg bg-gray-50 ${className}`}>
-        <p className="text-sm text-gray-500">Web Speech APIが利用できません</p>
-      </div>
-    );
-  }
+  // 同時再生切り替え
+  const toggleSimultaneousPlayback = () => {
+    if (simultaneousPlayback) {
+      stopAllVoices();
+    }
+    setSimultaneousPlayback(!simultaneousPlayback);
+  };
+
+  // 音声URLが変更されたときにAudio要素を更新
+  useEffect(() => {
+    voiceItems.forEach(item => {
+      if (item.audioUrl && !audioRefs.current.has(item.dialect)) {
+        const audio = new Audio(item.audioUrl);
+        audio.addEventListener('ended', () => {
+          setVoiceItems(prev => prev.map(v => 
+            v.dialect === item.dialect ? { ...v, isPlaying: false } : v
+          ));
+        });
+        audioRefs.current.set(item.dialect, audio);
+      }
+    });
+  }, [voiceItems]);
+
+  // クリーンアップ
+  useEffect(() => {
+    return () => {
+      audioRefs.current.forEach(audio => {
+        audio.pause();
+        audio.src = '';
+      });
+      audioRefs.current.clear();
+    };
+  }, []);
 
   return (
-    <div className={`p-4 border rounded-lg ${className}`}>
-      <h3 className="text-lg font-semibold mb-4">音声比較</h3>
-      
-      {/* カスタムテキスト入力 */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          カスタムテキスト（空の場合は各方言のデフォルトテキストを使用）
-        </label>
-        <input
-          type="text"
-          value={customText}
-          onChange={(e) => setCustomText(e.target.value)}
-          placeholder="比較したいテキストを入力..."
-          className="w-full px-3 py-2 border rounded text-sm"
-        />
-      </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">音声比較</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
 
-      {/* 選択されたサンプル */}
-      <div className="mb-4">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">
-          選択された方言 ({selectedSamples.length}/3)
-        </h4>
-        
-        {selectedSamples.length === 0 ? (
-          <p className="text-sm text-gray-500">比較する方言を選択してください</p>
-        ) : (
-          <div className="space-y-2">
-            {selectedSamples.map((sample, index) => (
-              <div key={sample.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-sm">{sample.description}</span>
-                    <span className="text-xs text-gray-500">
-                      {sample.language.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-600 mt-1">
-                    {customText || sample.text}
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => playSample(sample, index)}
-                    disabled={isPlaying[index]}
-                    className="px-2 py-1 text-xs border rounded hover:bg-gray-100 disabled:opacity-50"
-                  >
-                    {isPlaying[index] ? '再生中...' : '再生'}
-                  </button>
-                  <button
-                    onClick={() => removeSample(index)}
-                    className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                  >
-                    削除
-                  </button>
-                </div>
-              </div>
-            ))}
+        <div className="mb-6">
+          <div className="bg-gray-100 p-4 rounded-lg mb-4">
+            <p className="text-lg font-medium text-gray-800 mb-2">テキスト:</p>
+            <p className="text-gray-700">{text}</p>
           </div>
-        )}
 
-        {/* 全体コントロール */}
-        {selectedSamples.length > 0 && (
-          <div className="space-y-2 mt-3">
-            <div className="flex items-center space-x-2">
-              <label className="flex items-center text-sm">
-                <input
-                  type="checkbox"
-                  checked={simultaneousMode}
-                  onChange={(e) => setSimultaneousMode(e.target.checked)}
-                  className="mr-2"
-                />
-                同時再生モード
-              </label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={playAll}
-                className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                {simultaneousMode ? 'すべて同時再生' : 'すべて順番に再生'}
-              </button>
-              <button
-                onClick={stopAll}
-                className="px-3 py-1 text-sm border rounded hover:bg-gray-50"
-              >
-                停止
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 利用可能なサンプル */}
-      <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-2">
-          利用可能な方言
-        </h4>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {availableSamples.map((sample) => (
+          <div className="flex items-center gap-4 mb-4">
             <button
-              key={sample.id}
-              onClick={() => addSample(sample)}
-              className="p-2 text-left border rounded hover:bg-gray-50 text-sm"
+              onClick={generateVoices}
+              disabled={isGenerating}
+              className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium"
             >
-              <div className="font-medium">{sample.description}</div>
-              <div className="text-xs text-gray-500">
-                {sample.language.toUpperCase()} - {sample.text}
-              </div>
+              {isGenerating ? '生成中...' : '音声生成'}
             </button>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={simultaneousPlayback}
+                onChange={toggleSimultaneousPlayback}
+                className="rounded"
+              />
+              <span className="text-sm text-gray-700">同時再生</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {voiceItems.map((item) => (
+            <div key={item.dialect} className="border rounded-lg p-4 bg-gray-50">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-medium text-gray-800">{item.dialect}</h3>
+                <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                  {item.provider}
+                </span>
+              </div>
+
+              {item.isLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+
+              {item.error && (
+                <div className="text-red-500 text-sm py-2">
+                  {item.error}
+                </div>
+              )}
+
+              {item.audioUrl && !item.isLoading && (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => item.isPlaying ? stopVoice(item.dialect) : playVoice(item.dialect)}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm font-medium"
+                    >
+                      {item.isPlaying ? '停止' : '再生'}
+                    </button>
+                  </div>
+
+                  <div className="text-xs text-gray-500">
+                    <div>プロバイダー: {item.provider}</div>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
+
+        {voiceItems.length === 0 && !isGenerating && (
+          <div className="text-center py-8 text-gray-500">
+            音声を生成してください
+          </div>
+        )}
       </div>
     </div>
   );

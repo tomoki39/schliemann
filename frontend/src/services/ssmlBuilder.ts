@@ -30,8 +30,8 @@ export class SSMLBuilder {
   }
 
   // 方言特化のSSML生成
-  static forDialect(text: string, dialect: string): string {
-    const dialectSettings = getDialectSSMLSettings(dialect);
+  static forDialect(text: string, dialect: string, language: string = 'japanese'): string {
+    const dialectSettings = getDialectSSMLSettings(dialect, language);
     const builder = new SSMLBuilder(text, dialectSettings);
     return builder.build();
   }
@@ -91,46 +91,99 @@ export class SSMLBuilder {
 }
 
 // 方言別SSML設定
-function getDialectSSMLSettings(dialect: string): SSMLOptions {
-  const settings: Record<string, SSMLOptions> = {
-    standard: {
-      rate: 1.0,
-      pitch: 1.0,
-      volume: 1.0,
-      language: 'ja-JP',
-      prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+function getDialectSSMLSettings(dialect: string, language: string = 'japanese'): SSMLOptions {
+  const languageCode = getLanguageCode(language);
+  
+  const settings: Record<string, Record<string, SSMLOptions>> = {
+    japanese: {
+      standard: {
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+      },
+      kansai: {
+        rate: 1.1,
+        pitch: 1.05,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 1.1, pitch: 1.05, volume: 1.0 }
+      },
+      hakata: {
+        rate: 1.2,
+        pitch: 1.1,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 1.2, pitch: 1.1, volume: 1.0 }
+      },
+      tsugaru: {
+        rate: 0.9,
+        pitch: 0.95,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 0.9, pitch: 0.95, volume: 1.0 }
+      },
+      okinawa: {
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+      }
     },
-    kansai: {
-      rate: 1.1,
-      pitch: 1.05,
-      volume: 1.0,
-      language: 'ja-JP',
-      prosody: { rate: 1.1, pitch: 1.05, volume: 1.0 }
-    },
-    hakata: {
-      rate: 1.2,
-      pitch: 1.1,
-      volume: 1.0,
-      language: 'ja-JP',
-      prosody: { rate: 1.2, pitch: 1.1, volume: 1.0 }
-    },
-    tsugaru: {
-      rate: 0.9,
-      pitch: 0.95,
-      volume: 1.0,
-      language: 'ja-JP',
-      prosody: { rate: 0.9, pitch: 0.95, volume: 1.0 }
-    },
-    okinawa: {
-      rate: 1.0,
-      pitch: 1.0,
-      volume: 1.0,
-      language: 'ja-JP',
-      prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+    english: {
+      standard: {
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+      },
+      british: {
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+      },
+      american: {
+        rate: 1.1,
+        pitch: 1.0,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 1.1, pitch: 1.0, volume: 1.0 }
+      },
+      australian: {
+        rate: 1.0,
+        pitch: 1.05,
+        volume: 1.0,
+        language: languageCode,
+        prosody: { rate: 1.0, pitch: 1.05, volume: 1.0 }
+      }
     }
   };
 
-  return settings[dialect] || settings.standard;
+  return settings[language]?.[dialect] || settings[language]?.standard || settings.japanese.standard;
+}
+
+// 言語コード取得
+function getLanguageCode(language: string): string {
+  const codes: Record<string, string> = {
+    japanese: 'ja-JP',
+    english: 'en-US',
+    chinese: 'zh-CN',
+    spanish: 'es-ES',
+    french: 'fr-FR',
+    arabic: 'ar-SA',
+    german: 'de-DE',
+    italian: 'it-IT',
+    portuguese: 'pt-BR',
+    russian: 'ru-RU',
+    korean: 'ko-KR'
+  };
+
+  return codes[language] || 'en-US';
 }
 
 // G2P（Grapheme-to-Phoneme）変換の簡易実装
@@ -196,14 +249,149 @@ export class G2PConverter {
 // 音声品質向上のための統合サービス
 export class VoiceQualityService {
   // SSML + G2P を組み合わせた高品質音声生成
-  static generateHighQualityVoice(text: string, dialect: string): string {
-    // 1. G2P変換で発音を最適化
-    const phonemes = G2PConverter.convertToDialectPhonemes(text, dialect);
+  static generateHighQualityVoice(text: string, dialect: string, language: string = 'japanese'): string {
+    // 1. 方言辞書を適用
+    const dialectText = this.applyDialectDictionary(text, dialect);
     
-    // 2. SSMLで韻律を制御
-    const ssml = SSMLBuilder.forDialect(phonemes, dialect);
+    // 2. G2P変換で発音を最適化
+    const phonemes = G2PConverter.convertToDialectPhonemes(dialectText, dialect);
+    
+    // 3. SSMLで韻律を制御
+    const ssml = SSMLBuilder.forDialect(phonemes, dialect, language);
     
     return ssml;
+  }
+
+  // 多言語対応のSSML生成
+  static generateMultilingualSSML(text: string, language: string, dialect?: string): string {
+    const languageSettings = this.getLanguageSettings(language);
+    const dialectSettings = dialect ? this.getDialectSettings(language, dialect) : {};
+    
+    const options: SSMLOptions = {
+      ...languageSettings,
+      ...dialectSettings,
+      language: this.getLanguageCode(language),
+    };
+
+    const builder = new SSMLBuilder(text, options);
+    return builder.build();
+  }
+
+  // 言語別設定
+  private static getLanguageSettings(language: string): SSMLOptions {
+    const settings: Record<string, SSMLOptions> = {
+      japanese: {
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        language: 'ja-JP',
+        prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+      },
+      english: {
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        language: 'en-US',
+        prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+      },
+      chinese: {
+        rate: 0.9,
+        pitch: 1.0,
+        volume: 1.0,
+        language: 'zh-CN',
+        prosody: { rate: 0.9, pitch: 1.0, volume: 1.0 }
+      },
+      spanish: {
+        rate: 1.1,
+        pitch: 1.0,
+        volume: 1.0,
+        language: 'es-ES',
+        prosody: { rate: 1.1, pitch: 1.0, volume: 1.0 }
+      },
+      french: {
+        rate: 1.0,
+        pitch: 1.0,
+        volume: 1.0,
+        language: 'fr-FR',
+        prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+      },
+      arabic: {
+        rate: 0.9,
+        pitch: 1.0,
+        volume: 1.0,
+        language: 'ar-SA',
+        prosody: { rate: 0.9, pitch: 1.0, volume: 1.0 }
+      }
+    };
+
+    return settings[language] || settings.english;
+  }
+
+  // 方言別設定
+  private static getDialectSettings(language: string, dialect: string): SSMLOptions {
+    const dialectSettings: Record<string, Record<string, SSMLOptions>> = {
+      japanese: {
+        kansai: {
+          rate: 1.1,
+          pitch: 1.05,
+          volume: 1.0,
+          prosody: { rate: 1.1, pitch: 1.05, volume: 1.0 }
+        },
+        hakata: {
+          rate: 1.2,
+          pitch: 1.1,
+          volume: 1.0,
+          prosody: { rate: 1.2, pitch: 1.1, volume: 1.0 }
+        },
+        tsugaru: {
+          rate: 0.9,
+          pitch: 0.95,
+          volume: 1.0,
+          prosody: { rate: 0.9, pitch: 0.95, volume: 1.0 }
+        }
+      },
+      english: {
+        british: {
+          rate: 1.0,
+          pitch: 1.0,
+          volume: 1.0,
+          prosody: { rate: 1.0, pitch: 1.0, volume: 1.0 }
+        },
+        american: {
+          rate: 1.1,
+          pitch: 1.0,
+          volume: 1.0,
+          prosody: { rate: 1.1, pitch: 1.0, volume: 1.0 }
+        },
+        australian: {
+          rate: 1.0,
+          pitch: 1.05,
+          volume: 1.0,
+          prosody: { rate: 1.0, pitch: 1.05, volume: 1.0 }
+        }
+      }
+    };
+
+    return dialectSettings[language]?.[dialect] || {};
+  }
+
+  // 言語コード取得
+  private static getLanguageCode(language: string): string {
+    const codes: Record<string, string> = {
+      japanese: 'ja-JP',
+      english: 'en-US',
+      chinese: 'zh-CN',
+      spanish: 'es-ES',
+      french: 'fr-FR',
+      arabic: 'ar-SA',
+      german: 'de-DE',
+      italian: 'it-IT',
+      portuguese: 'pt-BR',
+      russian: 'ru-RU',
+      korean: 'ko-KR'
+    };
+
+    return codes[language] || 'en-US';
   }
 
   // 方言辞書を使用した語彙変換

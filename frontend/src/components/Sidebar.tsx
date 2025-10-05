@@ -89,7 +89,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     '日本語族',
     '朝鮮語族',
     'タイ・カダイ',
-    'オーストロアジア'
+    'オーストロアジア',
+    'アルタイ'
   ]);
   const hasBranches = familyFilter ? familiesWithBranches.has(familyFilter) : false;
   

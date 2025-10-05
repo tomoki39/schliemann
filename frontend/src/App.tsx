@@ -26,6 +26,9 @@ const App: React.FC = () => {
   const [dialectFilter, setDialectFilter] = useState('');
   const [colorMode] = useState<'family' | 'branch' | 'group' | 'subgroup' | 'language' | 'dialect'>('family');
   const [activeTab, setActiveTab] = useState<'map' | 'voice'>('map');
+  const [showVoiceTour, setShowVoiceTour] = useState(false);
+  const [showVoiceComparison, setShowVoiceComparison] = useState(false);
+  const [comparisonDialects, setComparisonDialects] = useState<string[]>([]);
 
   // 検索結果のキャッシュ
   const searchCache = useRef<Map<string, Language[]>>(new Map());
@@ -432,11 +435,73 @@ const App: React.FC = () => {
         
         {activeTab === 'voice' && (
           <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+            <div className="flex gap-4 mb-6">
+              <button
+                onClick={() => setShowVoiceTour(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                音声ツアー
+              </button>
+              <button
+                onClick={() => setShowVoiceComparison(true)}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+                音声比較
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <VoiceTour className="h-fit" />
-              <VoiceComparison className="h-fit" />
+              <div className="bg-white rounded-lg p-6 shadow-sm border">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">音声ツアー</h3>
+                <p className="text-gray-600 mb-4">
+                  地域別や語族別に言語を順番に体験できます。自動再生機能で連続して聞くことができます。
+                </p>
+                <button
+                  onClick={() => setShowVoiceTour(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium"
+                >
+                  ツアーを開始
+                </button>
+              </div>
+
+              <div className="bg-white rounded-lg p-6 shadow-sm border">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">音声比較</h3>
+                <p className="text-gray-600 mb-4">
+                  複数の方言や言語を同時に聞き比べることができます。違いを直感的に理解できます。
+                </p>
+                <button
+                  onClick={() => setShowVoiceComparison(true)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium"
+                >
+                  比較を開始
+                </button>
+              </div>
             </div>
           </div>
+        )}
+
+        {/* 音声ツアーモーダル */}
+        {showVoiceTour && (
+          <VoiceTour
+            languages={languages}
+            onClose={() => setShowVoiceTour(false)}
+          />
+        )}
+
+        {/* 音声比較モーダル */}
+        {showVoiceComparison && (
+          <VoiceComparison
+            text="こんにちは、音声比較のデモです"
+            language="japanese"
+            dialects={['kansai', 'hakata', 'tsugaru', 'okinawa']}
+            onClose={() => setShowVoiceComparison(false)}
+          />
         )}
       </div>
     </div>

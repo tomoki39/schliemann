@@ -1,261 +1,438 @@
-import React, { useState, useEffect } from 'react';
-import { webSpeechService, SpeechRequest } from '../services/webSpeechService';
-import { getVoiceSettings } from '../services/dialectVoiceSettings';
-import { WORLD_GREETING_TOUR, DIALECT_TOUR, VoiceSample, DEMO_VOICE_SAMPLES } from '../data/demoVoiceSamples';
-
-// カテゴリ別ツアーを取得する関数
-const getCategoryTour = (category: string): VoiceSample[] => {
-  return DEMO_VOICE_SAMPLES.filter(sample => sample.category === category);
-};
+import React, { useState, useRef, useEffect } from 'react';
+import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
+import { Language } from '../types/Language';
 
 interface VoiceTourProps {
-  className?: string;
+  languages: Language[];
+  onClose: () => void;
 }
 
-const VoiceTour: React.FC<VoiceTourProps> = ({ className = '' }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+interface TourItem {
+  language: Language;
+  dialect?: string;
+  text: string;
+  audioUrl?: string;
+  isPlaying: boolean;
+  isLoading: boolean;
+  error?: string;
+}
+
+interface TourCategory {
+  id: string;
+  name: string;
+  description: string;
+  languages: Language[];
+}
+
+const VoiceTour: React.FC<VoiceTourProps> = ({ languages, onClose }) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [tourItems, setTourItems] = useState<TourItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [tourType, setTourType] = useState<'world' | 'dialect' | 'category'>('world');
-  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
-  const [selectedCategory, setSelectedCategory] = useState<string>('greeting');
-  const [isWebSpeechAvailable, setIsWebSpeechAvailable] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isAutoPlay, setIsAutoPlay] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const currentTour = tourType === 'world' 
-    ? WORLD_GREETING_TOUR 
-    : tourType === 'dialect' 
-    ? DIALECT_TOUR[selectedLanguage] || []
-    : getCategoryTour(selectedCategory);
+  // ツアーカテゴリ
+  const tourCategories: TourCategory[] = [
+    {
+      id: 'all',
+      name: '全言語ツアー',
+      description: 'すべての言語を順番に体験',
+      languages: languages
+    },
+    {
+      id: 'indo-european',
+      name: 'インド・ヨーロッパ語族',
+      description: 'ヨーロッパからインドにかけての言語群',
+      languages: languages.filter(l => l.family === 'インド・ヨーロッパ')
+    },
+    {
+      id: 'sino-tibetan',
+      name: 'シナ・チベット語族',
+      description: '中国語とその関連言語',
+      languages: languages.filter(l => l.family === 'シナ・チベット')
+    },
+    {
+      id: 'afro-asiatic',
+      name: 'アフロ・アジア語族',
+      description: 'アラビア語とその関連言語',
+      languages: languages.filter(l => l.family === 'アフロ・アジア')
+    },
+    {
+      id: 'japanese',
+      name: '日本語方言',
+      description: '日本の各地域の方言',
+      languages: languages.filter(l => l.family === '日本語族')
+    },
+    {
+      id: 'asian',
+      name: 'アジア言語',
+      description: 'アジア地域の多様な言語',
+      languages: languages.filter(l => 
+        ['シナ・チベット', '日本語族', '朝鮮語族', 'タイ・カダイ', 'オーストロアジア'].includes(l.family)
+      )
+    }
+  ];
 
-  useEffect(() => {
-    setIsWebSpeechAvailable(webSpeechService.isWebSpeechSupported());
-  }, []);
+  // 選択されたカテゴリの言語を取得
+  const selectedLanguages = tourCategories.find(c => c.id === selectedCategory)?.languages || languages;
 
-  const playSample = async (sample: VoiceSample) => {
-    if (!isWebSpeechAvailable) return;
+  // ツアーアイテムを生成
+  const generateTourItems = () => {
+    const items: TourItem[] = selectedLanguages.map(language => {
+      // 方言がある場合は最初の方言を選択
+      const dialect = language.dialects && language.dialects.length > 0 ? language.dialects[0].name : undefined;
+      
+      // 言語に応じたサンプルテキスト
+      const sampleText = getSampleText(language.name_ja, dialect);
+      
+      return {
+        language,
+        dialect,
+        text: sampleText,
+        isPlaying: false,
+        isLoading: false,
+        error: undefined
+      };
+    });
 
-    const voiceSettings = getVoiceSettings(sample.dialect);
-    
-    const request: SpeechRequest = {
-      text: sample.text,
-      language: voiceSettings.language,
-      dialect: voiceSettings.dialect,
-      settings: {
-        rate: voiceSettings.rate,
-        pitch: voiceSettings.pitch,
-        volume: voiceSettings.volume,
-      },
+    setTourItems(items);
+    setCurrentIndex(0);
+  };
+
+  // 言語に応じたサンプルテキストを取得
+  const getSampleText = (languageName: string, dialect?: string): string => {
+    const sampleTexts: Record<string, string> = {
+      '日本語': dialect ? `こんにちは、${dialect}で話しています` : 'こんにちは、日本語です',
+      '英語': 'Hello, this is English',
+      '中国語': '你好，这是中文',
+      'スペイン語': 'Hola, esto es español',
+      'フランス語': 'Bonjour, c\'est le français',
+      'ドイツ語': 'Hallo, das ist Deutsch',
+      'イタリア語': 'Ciao, questo è italiano',
+      'ポルトガル語': 'Olá, isto é português',
+      'ロシア語': 'Привет, это русский',
+      'アラビア語': 'مرحبا، هذا عربي',
+      'ヒンディー語': 'नमस्ते, यह हिंदी है',
+      '韓国語': '안녕하세요, 이것은 한국어입니다',
+      'タイ語': 'สวัสดี นี่คือภาษาไทย',
+      'ベトナム語': 'Xin chào, đây là tiếng Việt',
+      'インドネシア語': 'Halo, ini bahasa Indonesia',
+      'マレー語': 'Halo, ini bahasa Melayu',
+      'タガログ語': 'Kumusta, ito ay Tagalog',
+      'スワヒリ語': 'Hujambo, hii ni Kiswahili',
+      'アムハラ語': 'ሰላም፣ ይህ አማርኛ ነው',
+      'ヨルバ語': 'Bawo, eyi ni Yoruba',
+      'イボ語': 'Ndewo, nke a bụ Igbo',
+      'ハウサ語': 'Sannu, wannan Hausa ne',
+      'ズールー語': 'Sawubona, lokhu isiZulu',
+      'コサ語': 'Molo, oku kwiXhosa',
+      'アフリカーンス語': 'Hallo, dit is Afrikaans',
+      'マダガスカル語': 'Salama, izany dia Malagasy',
+      'モンゴル語': 'Сайн байна уу, энэ бол монгол хэл',
+      'グリーンランド語': 'Haluu, uuma kalaallisut'
     };
 
-    await webSpeechService.speak(request);
+    return sampleTexts[languageName] || `Hello, this is ${languageName}`;
   };
 
-  const startTour = async () => {
-    if (currentTour.length === 0) return;
+  // 音声生成
+  const generateVoice = async (item: TourItem) => {
+    setTourItems(prev => prev.map(t => 
+      t.language.id === item.language.id ? { ...t, isLoading: true } : t
+    ));
 
-    setIsPlaying(true);
-    setCurrentIndex(0);
+    try {
+      const request: EnhancedVoiceRequest = {
+        text: item.text,
+        language: getLanguageName(item.language.name_ja),
+        dialect: item.dialect,
+        useElevenLabs: true
+      };
 
-    for (let i = 0; i < currentTour.length; i++) {
-      setCurrentIndex(i);
-      await playSample(currentTour[i]);
+      const response = await enhancedVoiceService.generateVoice(request);
       
-      // 各サンプルの間に少し間隔を空ける
-      if (i < currentTour.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      setTourItems(prev => prev.map(t => 
+        t.language.id === item.language.id ? {
+          ...t,
+          audioUrl: response.audioUrl,
+          isLoading: false,
+          error: response.error
+        } : t
+      ));
+    } catch (error) {
+      setTourItems(prev => prev.map(t => 
+        t.language.id === item.language.id ? {
+          ...t,
+          isLoading: false,
+          error: error instanceof Error ? error.message : '音声生成エラー'
+        } : t
+      ));
+    }
+  };
+
+  // 言語名を英語名に変換
+  const getLanguageName = (japaneseName: string): string => {
+    const languageMap: Record<string, string> = {
+      '日本語': 'japanese',
+      '英語': 'english',
+      '中国語': 'chinese',
+      'スペイン語': 'spanish',
+      'フランス語': 'french',
+      'ドイツ語': 'german',
+      'イタリア語': 'italian',
+      'ポルトガル語': 'portuguese',
+      'ロシア語': 'russian',
+      'アラビア語': 'arabic',
+      'ヒンディー語': 'hindi',
+      '韓国語': 'korean',
+      'タイ語': 'thai',
+      'ベトナム語': 'vietnamese',
+      'インドネシア語': 'indonesian',
+      'マレー語': 'malay',
+      'タガログ語': 'tagalog',
+      'スワヒリ語': 'swahili',
+      'アムハラ語': 'amharic',
+      'ヨルバ語': 'yoruba',
+      'イボ語': 'igbo',
+      'ハウサ語': 'hausa',
+      'ズールー語': 'zulu',
+      'コサ語': 'xhosa',
+      'アフリカーンス語': 'afrikaans',
+      'マダガスカル語': 'malagasy',
+      'モンゴル語': 'mongolian',
+      'グリーンランド語': 'greenlandic'
+    };
+
+    return languageMap[japaneseName] || 'english';
+  };
+
+  // 音声再生
+  const playCurrent = async () => {
+    const currentItem = tourItems[currentIndex];
+    if (!currentItem) return;
+
+    // 音声が未生成の場合は生成
+    if (!currentItem.audioUrl && !currentItem.isLoading) {
+      await generateVoice(currentItem);
+      return;
+    }
+
+    if (currentItem.audioUrl) {
+      if (audioRef.current) {
+        audioRef.current.pause();
       }
-    }
 
-    setIsPlaying(false);
-    setCurrentIndex(0);
-  };
+      const audio = new Audio(currentItem.audioUrl);
+      audio.playbackRate = playbackSpeed;
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        if (isAutoPlay && currentIndex < tourItems.length - 1) {
+          setTimeout(() => {
+            setCurrentIndex(prev => prev + 1);
+          }, 1000);
+        }
+      });
 
-  const stopTour = () => {
-    webSpeechService.stop();
-    setIsPlaying(false);
-    setCurrentIndex(0);
-  };
-
-  const playCurrentSample = () => {
-    if (currentTour[currentIndex]) {
-      playSample(currentTour[currentIndex]);
-    }
-  };
-
-  const nextSample = () => {
-    if (currentIndex < currentTour.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+      audioRef.current = audio;
+      await audio.play();
+      setIsPlaying(true);
     }
   };
 
-  const prevSample = () => {
+  // 音声停止
+  const stopCurrent = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
+  };
+
+  // 次の項目へ
+  const nextItem = () => {
+    if (currentIndex < tourItems.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
+  // 前の項目へ
+  const prevItem = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      setCurrentIndex(prev => prev - 1);
     }
   };
 
-  if (!isWebSpeechAvailable) {
-    return (
-      <div className={`p-4 border rounded-lg bg-gray-50 ${className}`}>
-        <p className="text-sm text-gray-500">Web Speech APIが利用できません</p>
-      </div>
-    );
-  }
+  // カテゴリ変更時の処理
+  useEffect(() => {
+    generateTourItems();
+  }, [selectedCategory]);
+
+  // クリーンアップ
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  const currentItem = tourItems[currentIndex];
 
   return (
-    <div className={`p-4 border rounded-lg ${className}`}>
-      <h3 className="text-lg font-semibold mb-4">音声ツアー</h3>
-      
-      {/* ツアータイプ選択 */}
-      <div className="mb-4">
-        <div className="flex space-x-4 mb-2">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="tourType"
-              value="world"
-              checked={tourType === 'world'}
-              onChange={(e) => setTourType(e.target.value as 'world')}
-              className="mr-2"
-            />
-            世界の挨拶
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="tourType"
-              value="dialect"
-              checked={tourType === 'dialect'}
-              onChange={(e) => setTourType(e.target.value as 'dialect')}
-              className="mr-2"
-            />
-            方言の旅
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="tourType"
-              value="category"
-              checked={tourType === 'category'}
-              onChange={(e) => setTourType(e.target.value as 'category')}
-              className="mr-2"
-            />
-            カテゴリ別
-          </label>
-        </div>
-        
-        {tourType === 'dialect' && (
-          <select
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value)}
-            className="px-3 py-1 border rounded text-sm"
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">音声ツアー</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
           >
-            <option value="en">英語</option>
-            <option value="es">スペイン語</option>
-            <option value="fr">フランス語</option>
-            <option value="zh">中国語</option>
-            <option value="ja">日本語</option>
-          </select>
-        )}
-        
-        {tourType === 'category' && (
+            ×
+          </button>
+        </div>
+
+        {/* カテゴリ選択 */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            ツアーカテゴリ
+          </label>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-1 border rounded text-sm"
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="greeting">挨拶</option>
-            <option value="numbers">数字</option>
-            <option value="emotions">感情表現</option>
-            <option value="food">食べ物</option>
-            <option value="family">家族</option>
-            <option value="cultural">文化的表現</option>
+            {tourCategories.map(category => (
+              <option key={category.id} value={category.id}>
+                {category.name} ({category.languages.length}言語)
+              </option>
+            ))}
           </select>
+          <p className="text-sm text-gray-500 mt-1">
+            {tourCategories.find(c => c.id === selectedCategory)?.description}
+          </p>
+        </div>
+
+        {/* 現在の項目 */}
+        {currentItem && (
+          <div className="bg-gray-100 p-6 rounded-lg mb-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-800">
+                  {currentItem.language.name_ja}
+                  {currentItem.dialect && (
+                    <span className="text-sm font-normal text-gray-600 ml-2">
+                      ({currentItem.dialect})
+                    </span>
+                  )}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {currentItem.language.family} • {currentItem.language.branch}
+                </p>
+              </div>
+              <div className="text-sm text-gray-500">
+                {currentIndex + 1} / {tourItems.length}
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-lg mb-4">
+              <p className="text-lg text-gray-800">{currentItem.text}</p>
+            </div>
+
+            {/* 音声生成・再生 */}
+            <div className="space-y-4">
+              {currentItem.isLoading && (
+                <div className="flex items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                  <span className="ml-2 text-gray-600">音声生成中...</span>
+                </div>
+              )}
+
+              {currentItem.error && (
+                <div className="text-red-500 text-sm">
+                  エラー: {currentItem.error}
+                </div>
+              )}
+
+              {currentItem.audioUrl && (
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={isPlaying ? stopCurrent : playCurrent}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+                  >
+                    {isPlaying ? '停止' : '再生'}
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">速度:</label>
+                    <select
+                      value={playbackSpeed}
+                      onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                      className="text-sm border border-gray-300 rounded px-2 py-1"
+                    >
+                      <option value={0.5}>0.5x</option>
+                      <option value={0.75}>0.75x</option>
+                      <option value={1.0}>1.0x</option>
+                      <option value={1.25}>1.25x</option>
+                      <option value={1.5}>1.5x</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {!currentItem.audioUrl && !currentItem.isLoading && (
+                <button
+                  onClick={() => generateVoice(currentItem)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium"
+                >
+                  音声生成
+                </button>
+              )}
+            </div>
+          </div>
         )}
+
+        {/* コントロール */}
+        <div className="flex justify-between items-center">
+          <div className="flex gap-2">
+            <button
+              onClick={prevItem}
+              disabled={currentIndex === 0}
+              className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg font-medium"
+            >
+              前へ
+            </button>
+            <button
+              onClick={nextItem}
+              disabled={currentIndex === tourItems.length - 1}
+              className="bg-gray-500 hover:bg-gray-600 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg font-medium"
+            >
+              次へ
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isAutoPlay}
+                onChange={(e) => setIsAutoPlay(e.target.checked)}
+                className="rounded"
+              />
+              <span className="text-sm text-gray-700">自動再生</span>
+            </label>
+
+            <button
+              onClick={isPlaying ? stopCurrent : playCurrent}
+              disabled={!currentItem?.audioUrl}
+              className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg font-medium"
+            >
+              {isPlaying ? '停止' : '再生'}
+            </button>
+          </div>
+        </div>
       </div>
-
-      {/* コントロール */}
-      <div className="flex items-center space-x-2 mb-4">
-        <button
-          onClick={isPlaying ? stopTour : startTour}
-          className={`px-4 py-2 rounded text-sm font-medium ${
-            isPlaying
-              ? 'bg-red-500 text-white hover:bg-red-600'
-              : 'bg-blue-500 text-white hover:bg-blue-600'
-          }`}
-        >
-          {isPlaying ? '停止' : 'ツアー開始'}
-        </button>
-        
-        <button
-          onClick={playCurrentSample}
-          disabled={currentTour.length === 0}
-          className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
-        >
-          現在のサンプルを再生
-        </button>
-      </div>
-
-      {/* ナビゲーション */}
-      {currentTour.length > 0 && (
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={prevSample}
-            disabled={currentIndex === 0}
-            className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
-          >
-            ← 前
-          </button>
-          
-          <span className="text-sm text-gray-600">
-            {currentIndex + 1} / {currentTour.length}
-          </span>
-          
-          <button
-            onClick={nextSample}
-            disabled={currentIndex === currentTour.length - 1}
-            className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50"
-          >
-            次 →
-          </button>
-        </div>
-      )}
-
-      {/* 現在のサンプル表示 */}
-      {currentTour[currentIndex] && (
-        <div className="p-3 bg-gray-50 rounded">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium">
-              {currentTour[currentIndex].description}
-            </h4>
-            <span className="text-xs text-gray-500">
-              {currentTour[currentIndex].language.toUpperCase()}
-            </span>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="text-sm">
-              <span className="font-medium">原文: </span>
-              {currentTour[currentIndex].text}
-            </div>
-            <div className="text-sm text-gray-600">
-              <span className="font-medium">訳: </span>
-              {currentTour[currentIndex].translatedText}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* プログレスバー */}
-      {isPlaying && currentTour.length > 0 && (
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentIndex + 1) / currentTour.length) * 100}%` }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

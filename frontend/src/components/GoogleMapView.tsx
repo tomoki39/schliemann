@@ -21,23 +21,25 @@ interface GoogleMapViewProps {
 const WORLD_GEOJSON_URL = 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
 
 // 固定カラー（実際のデータに基づく）
-const FAMILY_COLORS: Record<string, string> = {
-  'インド・ヨーロッパ': '#3B82F6',
-  'シナ・チベット': '#EF4444',
-  'アフロ・アジア': '#F59E0B',
-  'ウラル': '#10B981',
-  'オーストロアジア': '#8B5CF6',
-  'カルトヴェリ': '#F97316',
-  'ドラヴィダ': '#EC4899',
-  'テュルク': '#06B6D4',
-  '日本語族': '#DC2626',
-  '朝鮮語族': '#7C3AED',
-  'タイ・カダイ': '#059669',
-  'ニジェール・コンゴ': '#22C55E',
-  'クレオール': '#F43F5E',
-  'オーストロネシア': '#8B5CF6',
-  'その他': '#6B7280'
-};
+  const FAMILY_COLORS: Record<string, string> = {
+    'インド・ヨーロッパ': '#3B82F6',
+    'シナ・チベット': '#EF4444',
+    'アフロ・アジア': '#F59E0B',
+    'ウラル': '#10B981',
+    'オーストロアジア': '#8B5CF6',
+    'カルトヴェリ': '#F97316',
+    'ドラヴィダ': '#EC4899',
+    'テュルク': '#06B6D4',
+    '日本語族': '#DC2626',
+    '朝鮮語族': '#7C3AED',
+    'タイ・カダイ': '#059669',
+    'ニジェール・コンゴ': '#22C55E',
+    'クレオール': '#F43F5E',
+    'オーストロネシア': '#8B5CF6',
+    'エスキモー・アレウト': '#14B8A6',
+    'アルタイ': '#84CC16',
+    'その他': '#6B7280'
+  };
 
 const COLOR_PALETTE = [
   '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
@@ -78,10 +80,54 @@ const FALLBACK_A2_TO_LANGIDS: Record<string, string[]> = {
 };
 
 function getFeatureA2(feature: google.maps.Data.Feature): string | undefined {
-  const a2 = (feature.getProperty('ISO_A2') || feature.getProperty('iso_a2') || feature.getProperty('ISO3166-1-Alpha-2') || feature.getProperty('id')) as string | undefined;
-  if (a2 && typeof a2 === 'string' && a2.length === 2) return a2;
-  const a3 = (feature.getProperty('ISO_A3') || feature.getProperty('ISO3166-1-Alpha-3')) as string | undefined;
+  // 直接プロパティから取得を試行
+  const directA2 = (
+    feature.getProperty('ISO_A2') || 
+    feature.getProperty('iso_a2') || 
+    feature.getProperty('ISO3166-1-Alpha-2') || 
+    feature.getProperty('id') ||
+    feature.getProperty('ISO_A2_EH') ||
+    feature.getProperty('WB_A2') ||
+    feature.getProperty('ADM0_A3') ||
+    feature.getProperty('ADMIN')
+  ) as string | undefined;
+  if (directA2 && typeof directA2 === 'string' && directA2.length === 2) return directA2;
+  
+  // propertiesオブジェクトから取得を試行
+  const properties = feature.getProperty('properties');
+  if (properties && typeof properties === 'object') {
+    const propsA2 = (
+      properties.ISO_A2 || 
+      properties.iso_a2 || 
+      properties['ISO3166-1-Alpha-2'] || 
+      properties.id ||
+      properties.ISO_A2_EH ||
+      properties.WB_A2 ||
+      properties.ADM0_A3 ||
+      properties.ADMIN
+    ) as string | undefined;
+    if (propsA2 && typeof propsA2 === 'string' && propsA2.length === 2) return propsA2;
+  }
+  
+  // ISO A3コードから変換を試行
+  const a3 = (
+    feature.getProperty('ISO_A3') || 
+    feature.getProperty('ISO3166-1-Alpha-3') || 
+    (properties && properties.ISO_A3) || 
+    (properties && properties['ISO3166-1-Alpha-3']) ||
+    feature.getProperty('ADM0_A3') ||
+    (properties && properties.ADM0_A3)
+  ) as string | undefined;
   if (a3 && ISO_A3_TO_A2[a3]) return ISO_A3_TO_A2[a3];
+  
+  // 国名から国コードを推測（最後の手段）
+  const adminName = getPropCaseInsensitive(feature, ['ADMIN','NAME','name']);
+  if (adminName) {
+    if (/France/i.test(adminName)) return 'FR';
+    if (/Norway/i.test(adminName)) return 'NO';
+    if (/Svalbard/i.test(adminName)) return 'SJ';
+  }
+  
   return undefined;
 }
 
@@ -442,9 +488,9 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     if (mapInstanceRef.current && dataLoadedRef.current) {
       const currentColorMode = determineColorMode();
       mapInstanceRef.current.data.revertStyle();
-      mapInstanceRef.current.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f)));
+      mapInstanceRef.current.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f) || ''));
       mapInstanceRef.current.data.forEach((f) => {
-        const style = computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f));
+        const style = computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f) || '');
         mapInstanceRef.current!.data.overrideStyle(f, style);
       });
     }
@@ -462,7 +508,12 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     'テュルク',
     '日本語族',
     '朝鮮語族',
-    'タイ・カダイ'
+    'タイ・カダイ',
+    'ニジェール・コンゴ',
+    'クレオール',
+    'オーストロネシア',
+    'エスキモー・アレウト',
+    'アルタイ'
   ]);
 
   const normalizeFamily = (family: string | undefined): string => {
@@ -494,17 +545,6 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
         zIndex: 1
       };
     }
-    // クリティカルな暫定対処: FR/NO/SJ は強制的に適切なキーで着色（フィルタ適用時は無効）
-    if (!isFiltered) {
-      if (code === 'FR' || (adminName && /France/i.test(adminName))) {
-        const fill = colorForKey('インド・ヨーロッパ');
-        return { fillColor: fill, fillOpacity: 0.7, strokeColor: '#666', strokeOpacity: 0.6, strokeWeight: 1.1, visible: true, zIndex: 95 };
-      }
-      if (code === 'NO' || code === 'SJ' || (adminName && /(Norway|Svalbard)/i.test(adminName))) {
-        const fill = colorForKey('インド・ヨーロッパ');
-        return { fillColor: fill, fillOpacity: 0.7, strokeColor: '#666', strokeOpacity: 0.6, strokeWeight: 1.1, visible: true, zIndex: 95 };
-      }
-    }
 
     const families = new Set<string>();
     if (code) {
@@ -513,7 +553,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
         // 絞り込み時: 条件に合致する言語だけ濃色
         // フィルタ条件を事前に計算して最適化
         const hasDialectFilter = Boolean(dialectFilter);
-        const filtered = matchedLangs.filter(l => {
+        matchedLangs.filter(l => {
           // 早期リターンでパフォーマンス向上
           if (familyFilter && l.family !== familyFilter) return false;
           if (branchFilter && l.branch !== branchFilter) return false;
@@ -675,7 +715,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
       }
       // 公用語スタブのフォールバック（無絞り込み時のみ）
       if (!families.size && !isFiltered) {
-        const entry = (countryOfficialMap as Record<string, { official_languages: string[] }>)[code];
+        const entry = (countryOfficialLanguages as Record<string, { official_languages: string[] }>)[code];
         if (entry) {
           
           // 公用語データから該当する言語を取得し、話者数でソート
@@ -822,20 +862,25 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
       const z = map.getZoom() ?? 2;
       setZoomLevel(z);
     });
-    // 国境GeoJSONを読み込み
-    fetch(WORLD_GEOJSON_URL)
-      .then(r => r.json())
-      .then((geojson) => {
-        const added = map.data.addGeoJson(geojson);
-        dataLoadedRef.current = true;
-        console.info('[GoogleMapView] Loaded features:', added.length);
+        // 国境GeoJSONを読み込み
+        console.log('[DEBUG] Loading GeoJSON from:', WORLD_GEOJSON_URL);
+        fetch(WORLD_GEOJSON_URL)
+          .then(r => {
+            console.log('[DEBUG] GeoJSON fetch response:', r.status, r.statusText);
+            return r.json();
+          })
+          .then((geojson) => {
+            const added = map.data.addGeoJson(geojson);
+            dataLoadedRef.current = true;
+            console.info('[GoogleMapView] Loaded features:', added.length);
+            
         // setStyle と overrideStyle の両方を適用
         const currentColorMode = determineColorMode();
-        map.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f)));
-        map.data.forEach((f) => map.data.overrideStyle(f, computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f))));
+        map.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f) || ''));
+        map.data.forEach((f) => map.data.overrideStyle(f, computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f) || '')));
         // 後から追加される場合にも適用
         map.data.addListener('addfeature', (e) => {
-          const style = computeStyleForFeature(e.feature, visibleLanguages, currentColorMode, getFeatureA2(e.feature));
+          const style = computeStyleForFeature(e.feature, visibleLanguages, currentColorMode, getFeatureA2(e.feature) || '');
           map.data.overrideStyle(e.feature, style);
         });
         // ホバーでカーソル変更 + ツールチップ
@@ -844,10 +889,12 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           disableAutoPan: true
         });
 
+        // マウスオーバーイベントリスナーを設定
         map.data.addListener('mouseover', (ev) => {
           map.setOptions({ draggableCursor: 'pointer' });
           const feature = ev.feature;
           const code = getFeatureA2(feature);
+          
           if (code && hoverInfoRef.current) {
             // 国の公用語のみを表示
             const officialLanguageCodes = countryOfficialLanguages[code as keyof typeof countryOfficialLanguages] || [];
@@ -879,16 +926,25 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
                 ${allLanguages.length ? `<div>${allLanguages.slice(0, 5).join(' / ')}</div>` : '<div style="color:#666;">公用語データなし</div>'}
               </div>
             `;
+            
+            // 既存のInfoWindowを閉じる
+            if (hoverInfoRef.current) {
+              hoverInfoRef.current.close();
+            }
+            
             hoverInfoRef.current.setContent(html);
             if (ev.latLng) {
               hoverInfoRef.current.setPosition(ev.latLng);
-              hoverInfoRef.current.open({ map });
+              hoverInfoRef.current.open(map);
             }
           }
         });
-        map.data.addListener('mouseout',  () => {
+        
+        map.data.addListener('mouseout', () => {
           map.setOptions({ draggableCursor: undefined });
-          if (hoverInfoRef.current) hoverInfoRef.current.close();
+          if (hoverInfoRef.current) {
+            hoverInfoRef.current.close();
+          }
         });
 
         // クリック時: その国に紐づく可視言語の先頭を詳細表示
