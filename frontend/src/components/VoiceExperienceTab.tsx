@@ -45,10 +45,10 @@ const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) =>
   }, [languages, searchQuery]);
 
   const tabs = [
-    { id: 'popular', label: '主要言語', icon: '⭐' },
-    { id: 'regional', label: '地域別', icon: '🌍' },
-    { id: 'family', label: '語族別', icon: '🌳' },
-    { id: 'all', label: '全言語一覧', icon: '📚' }
+    { id: 'popular', label: '主要言語' },
+    { id: 'regional', label: '地域別' },
+    { id: 'family', label: '語族別' },
+    { id: 'all', label: '全言語一覧' }
   ] as const;
 
   const renderActiveTab = () => {
@@ -114,13 +114,12 @@ const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) =>
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-1.5 px-1 border-b-2 font-medium text-xs flex items-center gap-1 transition-colors ${
+              className={`py-1.5 px-1 border-b-2 font-medium text-xs flex items-center transition-colors ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <span className="text-sm">{tab.icon}</span>
               {tab.label}
             </button>
           ))}
