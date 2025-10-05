@@ -175,6 +175,19 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
     });
   };
 
+  // すべて展開/折りたたみ
+  const setAllExpanded = (expanded: boolean) => {
+    setLanguageTree(prev => {
+      const visit = (items: LanguageItem[]): LanguageItem[] =>
+        items.map(item => ({
+          ...item,
+          isExpanded: expanded,
+          children: item.children.length ? visit(item.children) : item.children,
+        }));
+      return visit(prev);
+    });
+  };
+
   // アイテムの選択/選択解除
   const toggleSelection = (itemId: string) => {
     setSelectedItems(prev => {
@@ -316,24 +329,20 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
     }
   };
 
-  // 語族選択時の一括再生
-  const playFamilyLanguages = async (familyId: string) => {
-    const family = findItemById(languageTree, familyId);
-    if (!family) return;
-
-    // 語族内のすべての言語と方言を収集
-    const allLanguages: LanguageItem[] = [];
-    const collectLanguages = (item: LanguageItem) => {
-      if (item.level === 'language' || item.level === 'dialect') {
-        allLanguages.push(item);
+  // 任意ノード配下の一括再生
+  const playSubtree = async (rootId: string) => {
+    const root = findItemById(languageTree, rootId);
+    if (!root) return;
+    const leaves: LanguageItem[] = [];
+    const collect = (node: LanguageItem) => {
+      if (node.level === 'language' || node.level === 'dialect') {
+        leaves.push(node);
       }
-      item.children.forEach(collectLanguages);
+      node.children.forEach(collect);
     };
-    collectLanguages(family);
-
-    // 順番に再生
-    for (const lang of allLanguages) {
-      await playAudio(lang);
+    collect(root);
+    for (const node of leaves) {
+      await playAudio(node);
       await new Promise(resolve => setTimeout(resolve, 1500));
     }
   };
@@ -381,9 +390,9 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
             checked={isSelected}
             onChange={() => {
               toggleSelection(item.id);
-              // 語族レベルの場合は一括再生も実行
-              if (item.level === 'family') {
-                playFamilyLanguages(item.id);
+              // 上位階層でもチェックで配下を一括再生
+              if (item.level !== 'dialect') {
+                playSubtree(item.id);
               }
             }}
             className="mr-2"
@@ -452,7 +461,7 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
       
       {/* コントロール */}
       <div className="p-4 border-b bg-gray-50">
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
           <button
             onClick={playComparison}
             disabled={selectedItems.size < 2}
@@ -466,9 +475,21 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
           >
             選択をクリア
           </button>
+          <button
+            onClick={() => setAllExpanded(true)}
+            className="px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+          >
+            すべて展開
+          </button>
+          <button
+            onClick={() => setAllExpanded(false)}
+            className="px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+          >
+            すべて折りたたみ
+          </button>
         </div>
         <div className="mt-2 text-xs text-gray-600">
-          💡 語族にチェックを入れると、その語族のすべての言語と方言を順番に再生します
+          💡 任意の階層でチェックすると、その配下の言語・方言を順番に再生します
         </div>
       </div>
       
