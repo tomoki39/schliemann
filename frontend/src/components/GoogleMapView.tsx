@@ -123,9 +123,34 @@ function getFeatureA2(feature: google.maps.Data.Feature): string | undefined {
   // 国名から国コードを推測（最後の手段）
   const adminName = getPropCaseInsensitive(feature, ['ADMIN','NAME','name']);
   if (adminName) {
-    if (/France/i.test(adminName)) return 'FR';
-    if (/Norway/i.test(adminName)) return 'NO';
-    if (/Svalbard/i.test(adminName)) return 'SJ';
+    // 主要国の国名マッピング
+    const countryNameMap: Record<string, string> = {
+      'France': 'FR',
+      'Norway': 'NO',
+      'Svalbard': 'SJ',
+      'United States': 'US',
+      'United Kingdom': 'GB',
+      'Germany': 'DE',
+      'Italy': 'IT',
+      'Spain': 'ES',
+      'Russia': 'RU',
+      'Japan': 'JP',
+      'Korea': 'KR',
+      'India': 'IN',
+      'Brazil': 'BR',
+      'Australia': 'AU',
+      'Canada': 'CA',
+      'China': 'CN',
+      'Malaysia': 'MY',
+      'Saudi Arabia': 'SA',
+      'Egypt': 'EG'
+    };
+    
+    for (const [name, code] of Object.entries(countryNameMap)) {
+      if (new RegExp(name, 'i').test(adminName)) {
+        return code;
+      }
+    }
   }
   
   return undefined;
@@ -767,9 +792,6 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
               
               if (key) {
                 families.add(key);
-                if (code && ['CN', 'MY', 'SA', 'EG', 'US', 'GB', 'FR', 'DE', 'IT', 'ES', 'RU', 'JP', 'KR', 'IN', 'BR', 'AU', 'CA', 'NO', 'SJ'].includes(code)) {
-                  console.log(`    -> 色分けキー: ${key}`);
-                }
               }
             }
           }
@@ -863,10 +885,8 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
       setZoomLevel(z);
     });
         // 国境GeoJSONを読み込み
-        console.log('[DEBUG] Loading GeoJSON from:', WORLD_GEOJSON_URL);
         fetch(WORLD_GEOJSON_URL)
           .then(r => {
-            console.log('[DEBUG] GeoJSON fetch response:', r.status, r.statusText);
             return r.json();
           })
           .then((geojson) => {
