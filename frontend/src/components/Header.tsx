@@ -7,9 +7,11 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   onToggleSidebar: () => void;
   languages: Language[];
+  activeTab: 'map' | 'voice';
+  onChangeTab: (tab: 'map' | 'voice') => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, languages }) => {
+const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, languages, activeTab, onChangeTab }) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -150,6 +152,21 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
                 ))}
               </div>
             )}
+          </div>
+          {/* ビュー切替（ヘッダー内） */}
+          <div className="hidden md:flex bg-blue-500/30 rounded overflow-hidden">
+            <button
+              onClick={() => onChangeTab('map')}
+              className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === 'map' ? 'bg-white text-blue-700' : 'text-white hover:bg-blue-500/50'}`}
+            >
+              地図表示
+            </button>
+            <button
+              onClick={() => onChangeTab('voice')}
+              className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === 'voice' ? 'bg-white text-blue-700' : 'text-white hover:bg-blue-500/50'}`}
+            >
+              音声体験
+            </button>
           </div>
           <button
             onClick={toggleMenu}

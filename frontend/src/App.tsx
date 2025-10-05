@@ -185,33 +185,11 @@ const App: React.FC = () => {
           onSearchChange={setSearchQuery}
           onToggleSidebar={toggleSidebar}
           languages={languages}
+          activeTab={activeTab}
+          onChangeTab={setActiveTab}
         />
         
-        {/* タブナビゲーション */}
-        <div className="border-b bg-white">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('map')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'map'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              地図表示
-            </button>
-            <button
-              onClick={() => setActiveTab('voice')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'voice'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              音声体験
-            </button>
-          </div>
-        </div>
+        {/* ヘッダー内に移動済み */}
       
       <div className="flex-1 flex min-h-0">
         {activeTab === 'map' && (
