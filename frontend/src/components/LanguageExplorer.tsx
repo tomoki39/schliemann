@@ -5,7 +5,6 @@ import { DEMO_CONFIG } from '../config/demo';
 
 interface LanguageExplorerProps {
   languages: Language[];
-  onClose: () => void;
 }
 
 interface LanguageItem {
@@ -21,7 +20,7 @@ interface LanguageItem {
   error?: string;
 }
 
-const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose }) => {
+const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
   const [languageTree, setLanguageTree] = useState<LanguageItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [playingItems, setPlayingItems] = useState<Set<string>>(new Set());
@@ -461,14 +460,6 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages, onClose 
               言語の分類を階層的に表示し、音声を聞くことができます。複数選択して比較も可能です。
             </p>
           </div>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-2xl"
-            >
-              ×
-            </button>
-          )}
         </div>
       </div>
       
