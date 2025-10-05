@@ -1,0 +1,850 @@
+{
+  "af": {
+    "name_ja": "アフリカーンス語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "西ゲルマン",
+    "subgroup": "低地ドイツ語",
+    "language": "アフリカーンス語"
+  },
+  "ar": {
+    "name_ja": "アラビア語",
+    "family": "アフロ・アジア",
+    "branch": "セム",
+    "group": "中央セム",
+    "subgroup": "中央セム",
+    "language": "アラビア語"
+  },
+  "am": {
+    "name_ja": "アムハラ語",
+    "family": "アフロ・アジア",
+    "branch": "セム",
+    "group": "南セム",
+    "subgroup": "エチオピア・セム",
+    "language": "アムハラ語"
+  },
+  "ay": {
+    "name_ja": "アイマラ語",
+    "family": "アイマラ",
+    "branch": "アイマラ",
+    "group": "アイマラ",
+    "subgroup": "アイマラ",
+    "language": "アイマラ語"
+  },
+  "az": {
+    "name_ja": "アゼルバイジャン語",
+    "family": "テュルク",
+    "branch": "オグズ",
+    "group": "西オグズ",
+    "subgroup": "西オグズ",
+    "language": "アゼルバイジャン語"
+  },
+  "be": {
+    "name_ja": "ベラルーシ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "東スラブ",
+    "subgroup": "東スラブ",
+    "language": "ベラルーシ語"
+  },
+  "bg": {
+    "name_ja": "ブルガリア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "南スラブ",
+    "subgroup": "南スラブ",
+    "language": "ブルガリア語"
+  },
+  "bn": {
+    "name_ja": "ベンガル語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "インド語群",
+    "subgroup": "インド語群",
+    "language": "ベンガル語"
+  },
+  "bs": {
+    "name_ja": "ボスニア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "南スラブ",
+    "subgroup": "南スラブ",
+    "language": "ボスニア語"
+  },
+  "ca": {
+    "name_ja": "カタルーニャ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ロマンス",
+    "group": "西ロマンス",
+    "subgroup": "イベロ・ロマンス",
+    "language": "カタルーニャ語"
+  },
+  "cs": {
+    "name_ja": "チェコ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "西スラブ",
+    "subgroup": "西スラブ",
+    "language": "チェコ語"
+  },
+  "cy": {
+    "name_ja": "ウェールズ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ケルト",
+    "group": "ブリソン",
+    "subgroup": "ブリソン",
+    "language": "ウェールズ語"
+  },
+  "da": {
+    "name_ja": "デンマーク語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "北ゲルマン",
+    "subgroup": "東スカンジナビア",
+    "language": "デンマーク語"
+  },
+  "de": {
+    "name_ja": "ドイツ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "西ゲルマン",
+    "subgroup": "高地ドイツ語",
+    "language": "ドイツ語"
+  },
+  "dv": {
+    "name_ja": "ディベヒ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "インド語群",
+    "subgroup": "インド語群",
+    "language": "ディベヒ語"
+  },
+  "dz": {
+    "name_ja": "ゾンカ語",
+    "family": "シナ・チベット",
+    "branch": "チベット・ビルマ",
+    "group": "チベット語群",
+    "subgroup": "チベット語",
+    "language": "ゾンカ語"
+  },
+  "el": {
+    "name_ja": "ギリシャ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ギリシャ",
+    "group": "ギリシャ",
+    "subgroup": "ギリシャ",
+    "language": "ギリシャ語"
+  },
+  "en": {
+    "name_ja": "英語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "西ゲルマン",
+    "subgroup": "アングロ・フリジア",
+    "language": "英語"
+  },
+  "es": {
+    "name_ja": "スペイン語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ロマンス",
+    "group": "西ロマンス",
+    "subgroup": "イベロ・ロマンス",
+    "language": "スペイン語"
+  },
+  "et": {
+    "name_ja": "エストニア語",
+    "family": "ウラル",
+    "branch": "フィン・ウゴル",
+    "group": "バルト・フィン",
+    "subgroup": "バルト・フィン",
+    "language": "エストニア語"
+  },
+  "fa": {
+    "name_ja": "ペルシア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "イラン語群",
+    "subgroup": "イラン語群",
+    "language": "ペルシア語"
+  },
+  "fi": {
+    "name_ja": "フィンランド語",
+    "family": "ウラル",
+    "branch": "フィン・ウゴル",
+    "group": "バルト・フィン",
+    "subgroup": "バルト・フィン",
+    "language": "フィンランド語"
+  },
+  "fj": {
+    "name_ja": "フィジー語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "フィジー語",
+    "language": "フィジー語"
+  },
+  "fr": {
+    "name_ja": "フランス語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ロマンス",
+    "group": "西ロマンス",
+    "subgroup": "ガロ・ロマンス",
+    "language": "フランス語"
+  },
+  "ga": {
+    "name_ja": "アイルランド語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ケルト",
+    "group": "ゴイデリック",
+    "subgroup": "ゴイデリック",
+    "language": "アイルランド語"
+  },
+  "gn": {
+    "name_ja": "グアラニー語",
+    "family": "トゥピ・グアラニー",
+    "branch": "トゥピ・グアラニー",
+    "group": "トゥピ・グアラニー",
+    "subgroup": "トゥピ・グアラニー",
+    "language": "グアラニー語"
+  },
+  "he": {
+    "name_ja": "ヘブライ語",
+    "family": "アフロ・アジア",
+    "branch": "セム",
+    "group": "中央セム",
+    "subgroup": "中央セム",
+    "language": "ヘブライ語"
+  },
+  "hi": {
+    "name_ja": "ヒンディー語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "インド語群",
+    "subgroup": "インド語群",
+    "language": "ヒンディー語"
+  },
+  "ho": {
+    "name_ja": "ヒリモツ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "ヒリモツ語",
+    "language": "ヒリモツ語"
+  },
+  "hr": {
+    "name_ja": "クロアチア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "南スラブ",
+    "subgroup": "南スラブ",
+    "language": "クロアチア語"
+  },
+  "ht": {
+    "name_ja": "ハイチ・クレオール語",
+    "family": "クレオール",
+    "branch": "フランス系クレオール",
+    "group": "カリブクレオール",
+    "subgroup": "ハイチクレオール",
+    "language": "ハイチ・クレオール語"
+  },
+  "hu": {
+    "name_ja": "ハンガリー語",
+    "family": "ウラル",
+    "branch": "フィン・ウゴル",
+    "group": "ウゴル",
+    "subgroup": "ウゴル",
+    "language": "ハンガリー語"
+  },
+  "hy": {
+    "name_ja": "アルメニア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "アルメニア",
+    "group": "アルメニア",
+    "subgroup": "アルメニア",
+    "language": "アルメニア語"
+  },
+  "id": {
+    "name_ja": "インドネシア語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "マレー・ポリネシア",
+    "subgroup": "マレー・ポリネシア",
+    "language": "インドネシア語"
+  },
+  "is": {
+    "name_ja": "アイスランド語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "北ゲルマン",
+    "subgroup": "西スカンジナビア",
+    "language": "アイスランド語"
+  },
+  "it": {
+    "name_ja": "イタリア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ロマンス",
+    "group": "イタロ・ロマンス",
+    "subgroup": "イタロ・ロマンス",
+    "language": "イタリア語"
+  },
+  "ja": {
+    "name_ja": "日本語",
+    "family": "日本語族",
+    "branch": "日本語",
+    "group": "日本語群",
+    "subgroup": "日本語支",
+    "language": "日本語"
+  },
+  "ka": {
+    "name_ja": "グルジア語",
+    "family": "カルトヴェリ",
+    "branch": "カルトヴェリ",
+    "group": "カルトヴェリ",
+    "subgroup": "カルトヴェリ",
+    "language": "グルジア語"
+  },
+  "kk": {
+    "name_ja": "カザフ語",
+    "family": "テュルク",
+    "branch": "キプチャク",
+    "group": "キプチャク",
+    "subgroup": "キプチャク",
+    "language": "カザフ語"
+  },
+  "km": {
+    "name_ja": "クメール語",
+    "family": "オーストロアジア",
+    "branch": "モン・クメール",
+    "group": "クメール",
+    "subgroup": "クメール",
+    "language": "クメール語"
+  },
+  "ko": {
+    "name_ja": "朝鮮語",
+    "family": "朝鮮語族",
+    "branch": "朝鮮語",
+    "group": "朝鮮語群",
+    "subgroup": "朝鮮語支",
+    "language": "朝鮮語"
+  },
+  "ku": {
+    "name_ja": "クルド語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "イラン語群",
+    "subgroup": "イラン語群",
+    "language": "クルド語"
+  },
+  "ky": {
+    "name_ja": "キルギス語",
+    "family": "テュルク",
+    "branch": "キプチャク",
+    "group": "キプチャク",
+    "subgroup": "キプチャク",
+    "language": "キルギス語"
+  },
+  "lb": {
+    "name_ja": "ルクセンブルク語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "西ゲルマン",
+    "subgroup": "高地ドイツ語",
+    "language": "ルクセンブルク語"
+  },
+  "lo": {
+    "name_ja": "ラオ語",
+    "family": "タイ・カダイ",
+    "branch": "タイ",
+    "group": "タイ",
+    "subgroup": "タイ",
+    "language": "ラオ語"
+  },
+  "lt": {
+    "name_ja": "リトアニア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "バルト",
+    "group": "バルト",
+    "subgroup": "バルト",
+    "language": "リトアニア語"
+  },
+  "lv": {
+    "name_ja": "ラトビア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "バルト",
+    "group": "バルト",
+    "subgroup": "バルト",
+    "language": "ラトビア語"
+  },
+  "mg": {
+    "name_ja": "マラガシ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "マレー・ポリネシア",
+    "subgroup": "マレー・ポリネシア",
+    "language": "マラガシ語"
+  },
+  "mi": {
+    "name_ja": "マオリ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "マオリ語",
+    "language": "マオリ語"
+  },
+  "mk": {
+    "name_ja": "マケドニア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "南スラブ",
+    "subgroup": "南スラブ",
+    "language": "マケドニア語"
+  },
+  "ml": {
+    "name_ja": "マラヤーラム語",
+    "family": "ドラヴィダ",
+    "branch": "ドラヴィダ",
+    "group": "ドラヴィダ",
+    "subgroup": "ドラヴィダ",
+    "language": "マラヤーラム語"
+  },
+  "mn": {
+    "name_ja": "モンゴル語",
+    "family": "モンゴル",
+    "branch": "モンゴル",
+    "group": "モンゴル",
+    "subgroup": "モンゴル",
+    "language": "モンゴル語"
+  },
+  "ms": {
+    "name_ja": "マレー語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "マレー・ポリネシア",
+    "subgroup": "マレー・ポリネシア",
+    "language": "マレー語"
+  },
+  "mt": {
+    "name_ja": "マルタ語",
+    "family": "アフロ・アジア",
+    "branch": "セム",
+    "group": "中央セム",
+    "subgroup": "中央セム",
+    "language": "マルタ語"
+  },
+  "my": {
+    "name_ja": "ビルマ語",
+    "family": "シナ・チベット",
+    "branch": "チベット・ビルマ",
+    "group": "ビルマ語群",
+    "subgroup": "ビルマ語",
+    "language": "ビルマ語"
+  },
+  "nd": {
+    "name_ja": "ンデベレ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ンデベレ",
+    "language": "ンデベレ語"
+  },
+  "ne": {
+    "name_ja": "ネパール語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "インド語群",
+    "subgroup": "インド語群",
+    "language": "ネパール語"
+  },
+  "nl": {
+    "name_ja": "オランダ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "西ゲルマン",
+    "subgroup": "低地ドイツ語",
+    "language": "オランダ語"
+  },
+  "no": {
+    "name_ja": "ノルウェー語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "北ゲルマン",
+    "subgroup": "西スカンジナビア",
+    "language": "ノルウェー語"
+  },
+  "nr": {
+    "name_ja": "南ンデベレ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ンデベレ",
+    "language": "南ンデベレ語"
+  },
+  "nso": {
+    "name_ja": "北ソト語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ソト",
+    "language": "北ソト語"
+  },
+  "ny": {
+    "name_ja": "チェワ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "チェワ",
+    "language": "チェワ語"
+  },
+  "pa": {
+    "name_ja": "パンジャブ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "インド語群",
+    "subgroup": "インド語群",
+    "language": "パンジャブ語"
+  },
+  "pl": {
+    "name_ja": "ポーランド語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "西スラブ",
+    "subgroup": "西スラブ",
+    "language": "ポーランド語"
+  },
+  "ps": {
+    "name_ja": "パシュトゥー語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "イラン語群",
+    "subgroup": "イラン語群",
+    "language": "パシュトゥー語"
+  },
+  "pt": {
+    "name_ja": "ポルトガル語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ロマンス",
+    "group": "西ロマンス",
+    "subgroup": "イベロ・ロマンス",
+    "language": "ポルトガル語"
+  },
+  "qu": {
+    "name_ja": "ケチュア語",
+    "family": "ケチュア",
+    "branch": "ケチュア",
+    "group": "ケチュア",
+    "subgroup": "ケチュア",
+    "language": "ケチュア語"
+  },
+  "rm": {
+    "name_ja": "ロマンシュ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ロマンス",
+    "group": "西ロマンス",
+    "subgroup": "ガロ・ロマンス",
+    "language": "ロマンシュ語"
+  },
+  "rn": {
+    "name_ja": "ルンディ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ルンディ",
+    "language": "ルンディ語"
+  },
+  "ro": {
+    "name_ja": "ルーマニア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ロマンス",
+    "group": "東ロマンス",
+    "subgroup": "東ロマンス",
+    "language": "ルーマニア語"
+  },
+  "ru": {
+    "name_ja": "ロシア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "東スラブ",
+    "subgroup": "東スラブ",
+    "language": "ロシア語"
+  },
+  "rw": {
+    "name_ja": "ルワンダ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ルワンダ",
+    "language": "ルワンダ語"
+  },
+  "sg": {
+    "name_ja": "サンゴ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "サンゴ",
+    "language": "サンゴ語"
+  },
+  "si": {
+    "name_ja": "シンハラ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "インド語群",
+    "subgroup": "インド語群",
+    "language": "シンハラ語"
+  },
+  "sk": {
+    "name_ja": "スロバキア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "西スラブ",
+    "subgroup": "西スラブ",
+    "language": "スロバキア語"
+  },
+  "sl": {
+    "name_ja": "スロベニア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "南スラブ",
+    "subgroup": "南スラブ",
+    "language": "スロベニア語"
+  },
+  "sm": {
+    "name_ja": "サモア語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "サモア語",
+    "language": "サモア語"
+  },
+  "sn": {
+    "name_ja": "ショナ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ショナ",
+    "language": "ショナ語"
+  },
+  "so": {
+    "name_ja": "ソマリ語",
+    "family": "アフロ・アジア",
+    "branch": "クシ",
+    "group": "クシ",
+    "subgroup": "クシ",
+    "language": "ソマリ語"
+  },
+  "sq": {
+    "name_ja": "アルバニア語",
+    "family": "アルバニア",
+    "branch": "アルバニア",
+    "group": "アルバニア",
+    "subgroup": "アルバニア",
+    "language": "アルバニア語"
+  },
+  "sr": {
+    "name_ja": "セルビア語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "南スラブ",
+    "subgroup": "南スラブ",
+    "language": "セルビア語"
+  },
+  "ss": {
+    "name_ja": "スワジ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "スワジ",
+    "language": "スワジ語"
+  },
+  "st": {
+    "name_ja": "ソト語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ソト",
+    "language": "ソト語"
+  },
+  "sv": {
+    "name_ja": "スウェーデン語",
+    "family": "インド・ヨーロッパ",
+    "branch": "ゲルマン",
+    "group": "北ゲルマン",
+    "subgroup": "東スカンジナビア",
+    "language": "スウェーデン語"
+  },
+  "sw": {
+    "name_ja": "スワヒリ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "東バントゥー",
+    "subgroup": "東バントゥー",
+    "language": "スワヒリ語"
+  },
+  "ta": {
+    "name_ja": "タミル語",
+    "family": "ドラヴィダ",
+    "branch": "ドラヴィダ",
+    "group": "ドラヴィダ",
+    "subgroup": "ドラヴィダ",
+    "language": "タミル語"
+  },
+  "tg": {
+    "name_ja": "タジク語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "イラン語群",
+    "subgroup": "イラン語群",
+    "language": "タジク語"
+  },
+  "th": {
+    "name_ja": "タイ語",
+    "family": "タイ・カダイ",
+    "branch": "タイ",
+    "group": "タイ",
+    "subgroup": "タイ",
+    "language": "タイ語"
+  },
+  "ti": {
+    "name_ja": "ティグリニャ語",
+    "family": "アフロ・アジア",
+    "branch": "セム",
+    "group": "南セム",
+    "subgroup": "エチオピア・セム",
+    "language": "ティグリニャ語"
+  },
+  "tk": {
+    "name_ja": "トルクメン語",
+    "family": "テュルク",
+    "branch": "オグズ",
+    "group": "東オグズ",
+    "subgroup": "東オグズ",
+    "language": "トルクメン語"
+  },
+  "tl": {
+    "name_ja": "タガログ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "マレー・ポリネシア",
+    "subgroup": "マレー・ポリネシア",
+    "language": "タガログ語"
+  },
+  "tn": {
+    "name_ja": "ツワナ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ツワナ",
+    "language": "ツワナ語"
+  },
+  "to": {
+    "name_ja": "トンガ語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "オセアニア",
+    "subgroup": "トンガ語",
+    "language": "トンガ語"
+  },
+  "tr": {
+    "name_ja": "トルコ語",
+    "family": "テュルク",
+    "branch": "オグズ",
+    "group": "西オグズ",
+    "subgroup": "西オグズ",
+    "language": "トルコ語"
+  },
+  "ts": {
+    "name_ja": "ツォンガ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ツォンガ",
+    "language": "ツォンガ語"
+  },
+  "tt": {
+    "name_ja": "タタール語",
+    "family": "テュルク",
+    "branch": "キプチャク",
+    "group": "キプチャク",
+    "subgroup": "キプチャク",
+    "language": "タタール語"
+  },
+  "tet": {
+    "name_ja": "テトゥン語",
+    "family": "オーストロネシア",
+    "branch": "マレー・ポリネシア",
+    "group": "マレー・ポリネシア",
+    "subgroup": "マレー・ポリネシア",
+    "language": "テトゥン語"
+  },
+  "tpi": {
+    "name_ja": "トク・ピシン",
+    "family": "クレオール",
+    "branch": "英語系クレオール",
+    "group": "太平洋クレオール",
+    "subgroup": "メラネシアクレオール",
+    "language": "トク・ピシン"
+  },
+  "uk": {
+    "name_ja": "ウクライナ語",
+    "family": "インド・ヨーロッパ",
+    "branch": "スラブ",
+    "group": "東スラブ",
+    "subgroup": "東スラブ",
+    "language": "ウクライナ語"
+  },
+  "ur": {
+    "name_ja": "ウルドゥー語",
+    "family": "インド・ヨーロッパ",
+    "branch": "インド・イラン",
+    "group": "インド語群",
+    "subgroup": "インド語群",
+    "language": "ウルドゥー語"
+  },
+  "uz": {
+    "name_ja": "ウズベク語",
+    "family": "テュルク",
+    "branch": "カルルク",
+    "group": "カルルク",
+    "subgroup": "カルルク",
+    "language": "ウズベク語"
+  },
+  "ve": {
+    "name_ja": "ベンダ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ベンダ",
+    "language": "ベンダ語"
+  },
+  "vi": {
+    "name_ja": "ベトナム語",
+    "family": "オーストロアジア",
+    "branch": "モン・クメール",
+    "group": "ベトナム",
+    "subgroup": "ベトナム",
+    "language": "ベトナム語"
+  },
+  "xh": {
+    "name_ja": "コサ語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "コサ",
+    "language": "コサ語"
+  },
+  "zh": {
+    "name_ja": "中国語",
+    "family": "シナ・チベット",
+    "branch": "シナ",
+    "group": "官話",
+    "subgroup": "官話",
+    "language": "中国語"
+  },
+  "zu": {
+    "name_ja": "ズールー語",
+    "family": "ニジェール・コンゴ",
+    "branch": "バントゥー",
+    "group": "南バントゥー",
+    "subgroup": "ズールー",
+    "language": "ズールー語"
+  }
+}

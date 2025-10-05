@@ -9,6 +9,7 @@ export interface Language {
   language?: string;   // 言語 (Individual Language)
   dialect?: string;    // 方言 (Dialect) - オプション
   countries?: string[]; // ISO 3166-1 alpha-2 codes
+  official_languages?: string[]; // 公用語として使用される国コード
   total_speakers?: number;
   center?: {
     lat: number;

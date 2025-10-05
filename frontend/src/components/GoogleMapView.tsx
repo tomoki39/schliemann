@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { Wrapper, Status } from '@googlemaps/react-wrapper';
 import { Language } from '../types/Language';
-import countryOfficialMap from '../data/countries_official_languages.json';
+import countryOfficialLanguages from '../data/country_official_languages.json';
+import languageCodeMapping from '../data/language_code_mapping.json';
 
 interface GoogleMapViewProps {
   languages: Language[];
@@ -32,6 +33,9 @@ const FAMILY_COLORS: Record<string, string> = {
   '日本語族': '#DC2626',
   '朝鮮語族': '#7C3AED',
   'タイ・カダイ': '#059669',
+  'ニジェール・コンゴ': '#22C55E',
+  'クレオール': '#F43F5E',
+  'オーストロネシア': '#8B5CF6',
   'その他': '#6B7280'
 };
 
@@ -438,9 +442,9 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     if (mapInstanceRef.current && dataLoadedRef.current) {
       const currentColorMode = determineColorMode();
       mapInstanceRef.current.data.revertStyle();
-      mapInstanceRef.current.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, currentColorMode));
+      mapInstanceRef.current.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f)));
       mapInstanceRef.current.data.forEach((f) => {
-        const style = computeStyleForFeature(f, visibleLanguages, currentColorMode);
+        const style = computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f));
         mapInstanceRef.current!.data.overrideStyle(f, style);
       });
     }
@@ -470,7 +474,8 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
   const computeStyleForFeature = (
     feature: google.maps.Data.Feature,
     langs: Language[],
-    mode: 'family' | 'branch' | 'group' | 'subgroup' | 'language' | 'dialect'
+    mode: 'family' | 'branch' | 'group' | 'subgroup' | 'language' | 'dialect',
+    countryCode: string
   ): google.maps.Data.StyleOptions => {
     const isFiltered = Boolean(familyFilter || branchFilter || groupFilter || subgroupFilter || languageFilter || dialectFilter);
     const code = getFeatureA2(feature);
@@ -519,15 +524,58 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           return true;
         });
         
-        // 複数言語がある場合は、話者数が最も多い言語を優先
-        if (filtered.length > 1) {
-          filtered.sort((a, b) => (b.total_speakers || 0) - (a.total_speakers || 0));
+        // フィルタ条件に合致する言語の中から公用語のみを抽出
+        // 国の公用語データを使用して言語を決定
+        const officialLanguageCodes = countryOfficialLanguages[code as keyof typeof countryOfficialLanguages] || [];
+        
+        // 公用語コードから言語情報を取得し、フィルタ条件に合致するものを抽出
+        const officialLangs = officialLanguageCodes.map(langCode => {
+          const langInfo = languageCodeMapping[langCode as keyof typeof languageCodeMapping];
+          if (langInfo) {
+            return {
+              id: langCode,
+              name_ja: langInfo.name_ja,
+              family: langInfo.family,
+              branch: langInfo.branch,
+              group: langInfo.group,
+              subgroup: langInfo.subgroup,
+              language: langInfo.language,
+              countries: [code],
+              official_languages: [code],
+              total_speakers: 0 // デフォルト値
+            };
+          }
+          return null;
+        }).filter(Boolean) as Language[];
+        
+        // フィルタ条件に合致する公用語を抽出
+        const officialFiltered = officialLangs.filter(lang => {
+          if (familyFilter && lang.family !== familyFilter) return false;
+          if (branchFilter && lang.branch !== branchFilter) return false;
+          if (groupFilter && lang.group !== groupFilter) return false;
+          if (subgroupFilter && lang.subgroup !== subgroupFilter) return false;
+          if (languageFilter && lang.language !== languageFilter) return false;
+          if (hasDialectFilter && (!lang.dialects || !lang.dialects.some(d => d.name === dialectFilter))) return false;
+          return true;
+        });
+        
+        // 公用語がない場合は、その国を色分けしない
+        if (officialFiltered.length === 0) {
+          return {
+            fillColor: '#f0f0f0',
+            fillOpacity: 0.1,
+            strokeColor: '#ccc',
+            strokeOpacity: 0.3,
+            strokeWeight: 0.5,
+            visible: true,
+            zIndex: 1
+          };
         }
         
-        // フィルタ条件に合致する言語が1つでもあれば、その国を色分け
-        if (filtered.length > 0) {
-          // 主言語（話者数が最も多い言語）がフィルタ条件に合致する場合のみ色分け
-          const primaryLanguage = filtered.reduce((prev, current) => 
+        // フィルタ条件に合致する公用語が1つでもあれば、その国を色分け
+        if (officialFiltered.length > 0) {
+          // 主言語（公用語の中で話者数が最も多い言語）がフィルタ条件に合致する場合のみ色分け
+          const primaryLanguage = officialFiltered.reduce((prev, current) => 
             (current.total_speakers || 0) > (prev.total_speakers || 0) ? current : prev
           );
           
@@ -570,8 +618,44 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
         }
       } else {
         // 無絞り込み時: colorModeに応じた色分け
-        // 複数言語がある場合は、話者数が最も多い言語を優先
-        const sortedLangs = matchedLangs.sort((a, b) => (b.total_speakers || 0) - (a.total_speakers || 0));
+        // 国の公用語データを使用して言語を決定
+        const officialLanguageCodes = countryOfficialLanguages[code as keyof typeof countryOfficialLanguages] || [];
+        
+        // 公用語コードから言語情報を取得
+        const officialLangs = officialLanguageCodes.map(langCode => {
+          const langInfo = languageCodeMapping[langCode as keyof typeof languageCodeMapping];
+          if (langInfo) {
+            return {
+              id: langCode,
+              name_ja: langInfo.name_ja,
+              family: langInfo.family,
+              branch: langInfo.branch,
+              group: langInfo.group,
+              subgroup: langInfo.subgroup,
+              language: langInfo.language,
+              countries: [code],
+              official_languages: [code],
+              total_speakers: 0 // デフォルト値
+            };
+          }
+          return null;
+        }).filter(Boolean) as Language[];
+        
+        // 公用語がない場合は、その国を色分けしない
+        if (officialLangs.length === 0) {
+          return {
+            fillColor: '#f0f0f0',
+            fillOpacity: 0.1,
+            strokeColor: '#ccc',
+            strokeOpacity: 0.3,
+            strokeWeight: 0.5,
+            visible: true,
+            zIndex: 1
+          };
+        }
+        
+        // 公用語の中で話者数が多い順にソート
+        const sortedLangs = officialLangs.sort((a, b) => (b.total_speakers || 0) - (a.total_speakers || 0));
         
         for (const l of sortedLangs) {
           if (mode === 'family') {
@@ -747,11 +831,11 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
         console.info('[GoogleMapView] Loaded features:', added.length);
         // setStyle と overrideStyle の両方を適用
         const currentColorMode = determineColorMode();
-        map.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, currentColorMode));
-        map.data.forEach((f) => map.data.overrideStyle(f, computeStyleForFeature(f, visibleLanguages, currentColorMode)));
+        map.data.setStyle((f) => computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f)));
+        map.data.forEach((f) => map.data.overrideStyle(f, computeStyleForFeature(f, visibleLanguages, currentColorMode, getFeatureA2(f))));
         // 後から追加される場合にも適用
         map.data.addListener('addfeature', (e) => {
-          const style = computeStyleForFeature(e.feature, visibleLanguages, currentColorMode);
+          const style = computeStyleForFeature(e.feature, visibleLanguages, currentColorMode, getFeatureA2(e.feature));
           map.data.overrideStyle(e.feature, style);
         });
         // ホバーでカーソル変更 + ツールチップ
@@ -765,21 +849,34 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           const feature = ev.feature;
           const code = getFeatureA2(feature);
           if (code && hoverInfoRef.current) {
-            // 該当国の可視言語（最大5件）。無ければ公用語フォールバック
-            let list = visibleLanguages.filter(l => l.countries?.includes(code)).slice(0, 5).map(l => l.name_ja);
-            if (!list.length) {
-              const entry = (countryOfficialMap as Record<string, { official_languages: string[] }>)[code];
-              if (entry) {
-                list = entry.official_languages.slice(0,5).map((lid) => {
-                  const byId = visibleLanguages.find(l => l.id === lid);
-                  return byId ? byId.name_ja : lid.toUpperCase();
+            // 国の公用語のみを表示
+            const officialLanguageCodes = countryOfficialLanguages[code as keyof typeof countryOfficialLanguages] || [];
+            
+            // 公用語コードから言語名を取得
+            const officialLanguageNames = officialLanguageCodes.map(langCode => {
+              const langInfo = languageCodeMapping[langCode as keyof typeof languageCodeMapping];
+              return langInfo ? langInfo.name_ja : langCode.toUpperCase();
+            });
+            
+            // 方言も含めて表示（最大5件）
+            const allLanguages = [...officialLanguageNames];
+            
+            // 公用語に対応する方言を追加（languages.jsonから取得）
+            officialLanguageCodes.forEach(langCode => {
+              const langData = languages.find(l => l.id === langCode);
+              if (langData && langData.dialects) {
+                langData.dialects.forEach(dialect => {
+                  if (allLanguages.length < 5) {
+                    allLanguages.push(`${langData.name_ja} (${dialect.name})`);
+                  }
                 });
               }
-            }
+            });
+            
             const html = `
               <div style="font-size:12px;line-height:1.4;">
                 <div style="font-weight:600;margin-bottom:4px;">${code}</div>
-                ${list.length ? `<div>${list.join(' / ')}</div>` : '<div style="color:#666;">公用語データなし</div>'}
+                ${allLanguages.length ? `<div>${allLanguages.slice(0, 5).join(' / ')}</div>` : '<div style="color:#666;">公用語データなし</div>'}
               </div>
             `;
             hoverInfoRef.current.setContent(html);
