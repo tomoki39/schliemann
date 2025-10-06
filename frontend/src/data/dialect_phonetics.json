@@ -1,0 +1,138 @@
+{
+  "jpn": {
+    "standard": {
+      "phonetic_changes": {
+        "vowel_shifts": [],
+        "consonant_changes": [],
+        "accent_pattern": "平板",
+        "tone_system": "標準アクセント",
+        "unique_features": ["標準的な発音", "外来語の受容", "丁寧語体系"]
+      }
+    },
+    "osaka": {
+      "phonetic_changes": {
+        "vowel_shifts": ["e → ɛ (え音の変化)", "o → ɔ (お音の変化)"],
+        "consonant_changes": ["h → ʔ (は行の無声化)", "r → ɾ (ら行の軽音化)"],
+        "accent_pattern": "高低アクセント",
+        "tone_system": "関西式高低アクセント",
+        "unique_features": ["語尾の「や」「で」", "「え」音の特徴的発音", "商人言葉の影響"]
+      }
+    },
+    "hakata": {
+      "phonetic_changes": {
+        "vowel_shifts": ["i → ɪ (い音の変化)", "u → ʊ (う音の変化)"],
+        "consonant_changes": ["k → ʔ (か行の無声化)", "g → ɣ (が行の有声化)"],
+        "accent_pattern": "九州式アクセント",
+        "tone_system": "九州方言アクセント",
+        "unique_features": ["「ばい」語尾", "「と」の多用", "商人町の影響"]
+      }
+    },
+    "tsugaru": {
+      "phonetic_changes": {
+        "vowel_shifts": ["a → ɑ (あ音の変化)", "e → æ (え音の変化)"],
+        "consonant_changes": ["s → ʃ (さ行の変化)", "t → ʦ (た行の変化)"],
+        "accent_pattern": "津軽式アクセント",
+        "tone_system": "東北方言アクセント",
+        "unique_features": ["「どご」語彙", "東北特有の発音", "雪国文化の影響"]
+      }
+    }
+  },
+  "eng": {
+    "british": {
+      "phonetic_changes": {
+        "vowel_shifts": ["ɑ → ɑː (RP母音)", "æ → ɑː (bath-trap split)"],
+        "consonant_changes": ["r → ∅ (R音脱落)", "t → ʔ (glottal stop)"],
+        "accent_pattern": "RP (Received Pronunciation)",
+        "tone_system": "イギリス式イントネーション",
+        "unique_features": ["R音脱落", "RP母音", "BBC英語"]
+      }
+    },
+    "american": {
+      "phonetic_changes": {
+        "vowel_shifts": ["ɑ → æ (cot-caught merger)", "ɔ → ɑ (lot-cloth split)"],
+        "consonant_changes": ["t → ɾ (flapping)", "r → ɹ (rhotic R)"],
+        "accent_pattern": "General American",
+        "tone_system": "アメリカ式イントネーション",
+        "unique_features": ["R音保持", "flapping", "アメリカ式母音"]
+      }
+    },
+    "australian": {
+      "phonetic_changes": {
+        "vowel_shifts": ["eɪ → æɪ (face vowel)", "aɪ → ɑɪ (price vowel)"],
+        "consonant_changes": ["t → ʔ (glottal stop)", "h → ∅ (h-dropping)"],
+        "accent_pattern": "Australian English",
+        "tone_system": "オーストラリア式イントネーション",
+        "unique_features": ["語尾上昇", "独特の母音", "オーストラリア語彙"]
+      }
+    }
+  },
+  "cmn": {
+    "beijing": {
+      "phonetic_changes": {
+        "vowel_shifts": [],
+        "consonant_changes": ["ts → tʂ (巻舌音化)", "s → ʂ (巻舌音化)"],
+        "accent_pattern": "北京式声調",
+        "tone_system": "四声 + 軽声",
+        "unique_features": ["巻舌音 (zh, ch, sh, r)", "北京特有語彙", "標準語基盤"]
+      }
+    },
+    "taiwan": {
+      "phonetic_changes": {
+        "vowel_shifts": [],
+        "consonant_changes": ["ʂ → s (巻舌音の平舌化)", "ʐ → ɻ (r音の変化)"],
+        "accent_pattern": "台湾式声調",
+        "tone_system": "四声 + 軽声",
+        "unique_features": ["繁体字使用", "台湾特有語彙", "閩南語の影響"]
+      }
+    }
+  },
+  "spa": {
+    "castilian": {
+      "phonetic_changes": {
+        "vowel_shifts": [],
+        "consonant_changes": ["s → θ (distinción)", "z → θ (distinción)"],
+        "accent_pattern": "スペイン式強勢",
+        "tone_system": "スペイン式イントネーション",
+        "unique_features": ["θ音 (th音)", "vosotros使用", "スペイン語彙"]
+      }
+    },
+    "mexican": {
+      "phonetic_changes": {
+        "vowel_shifts": [],
+        "consonant_changes": ["θ → s (seseo)", "z → s (seseo)"],
+        "accent_pattern": "メキシコ式強勢",
+        "tone_system": "メキシコ式イントネーション",
+        "unique_features": ["s音統一", "メキシコ語彙", "先住民語の影響"]
+      }
+    },
+    "argentine": {
+      "phonetic_changes": {
+        "vowel_shifts": [],
+        "consonant_changes": ["ʎ → ʃ (yeísmo)", "j → ʃ (yeísmo)"],
+        "accent_pattern": "アルゼンチン式強勢",
+        "tone_system": "アルゼンチン式イントネーション",
+        "unique_features": ["sh音 (yeísmo)", "vos使用", "イタリア語の影響"]
+      }
+    }
+  },
+  "fra": {
+    "parisian": {
+      "phonetic_changes": {
+        "vowel_shifts": [],
+        "consonant_changes": ["ʁ → ʁ (標準R音)", "h → ∅ (h-muet)"],
+        "accent_pattern": "パリ式強勢",
+        "tone_system": "フランス式イントネーション",
+        "unique_features": ["標準フランス語", "パリ語彙", "鼻母音"]
+      }
+    },
+    "quebec": {
+      "phonetic_changes": {
+        "vowel_shifts": ["ɛ̃ → ẽ (鼻母音の変化)", "ɔ̃ → õ (鼻母音の変化)"],
+        "consonant_changes": ["ʁ → r (R音の変化)", "t → ʦ (t音の変化)"],
+        "accent_pattern": "ケベック式強勢",
+        "tone_system": "ケベック式イントネーション",
+        "unique_features": ["古いフランス語特徴", "ケベック語彙", "英語の影響"]
+      }
+    }
+  }
+}

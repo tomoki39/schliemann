@@ -7,8 +7,8 @@ interface HeaderProps {
   onSearchChange: (query: string) => void;
   onToggleSidebar: () => void;
   languages: Language[];
-  activeTab: 'map' | 'voice';
-  onChangeTab: (tab: 'map' | 'voice') => void;
+  activeTab: 'map' | 'voice' | 'insights';
+  onChangeTab: (tab: 'map' | 'voice' | 'insights') => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSidebar, languages, activeTab, onChangeTab }) => {
@@ -166,6 +166,12 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
               className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === 'voice' ? 'bg-white text-blue-700' : 'text-white hover:bg-blue-500/50'}`}
             >
               音声体験
+            </button>
+            <button
+              onClick={() => onChangeTab('insights')}
+              className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === 'insights' ? 'bg-white text-blue-700' : 'text-white hover:bg-blue-500/50'}`}
+            >
+              言語インサイト
             </button>
           </div>
           <button

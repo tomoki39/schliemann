@@ -6,10 +6,12 @@ import JapaneseDialectSidebar from './components/JapaneseDialectSidebar';
 import GoogleMapView from './components/GoogleMapView';
 import JapaneseDialectMap from './components/JapaneseDialectMap';
 import DetailPanel from './components/DetailPanel';
+import CountryDetailPanel from './components/CountryDetailPanel';
 import ComparePanel from './components/ComparePanel';
 import DialectPlayer from './components/DialectPlayer';
 import DialectDetailPanel from './components/DialectDetailPanel';
 import VoiceExperienceTab from './components/VoiceExperienceTab';
+import InsightsTab from './components/InsightsTab';
 import { useBookmarks } from './hooks/useBookmarks';
 import { Language } from './types/Language';
 import languagesData from './data/languages.json';
@@ -24,7 +26,7 @@ const App: React.FC = () => {
   const [languageFilter, setLanguageFilter] = useState('');
   const [dialectFilter, setDialectFilter] = useState('');
   const [colorMode] = useState<'family' | 'branch' | 'group' | 'subgroup' | 'language' | 'dialect'>('family');
-  const [activeTab, setActiveTab] = useState<'map' | 'voice'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'voice' | 'insights'>('map');
 
   
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
@@ -33,6 +35,7 @@ const App: React.FC = () => {
   const [leftLanguage, setLeftLanguage] = useState<Language | null>(null);
   const [rightLanguage, setRightLanguage] = useState<Language | null>(null);
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   
   // 方言地図用の状態
   const [isJapaneseDialectMode, setIsJapaneseDialectMode] = useState(false);
@@ -64,6 +67,7 @@ const App: React.FC = () => {
   const handleDetailClose = () => {
     setShowDetail(false);
     setSelectedLanguage(null);
+    setSelectedCountry(null);
   };
 
   const handleCompareClose = () => {
@@ -252,6 +256,10 @@ const App: React.FC = () => {
             languages={languages}
             selectedLanguage={selectedLanguage}
             onLanguageClick={handleLanguageSelect}
+            onCountryClick={(code) => {
+              setSelectedCountry(code);
+              setShowDetail(false);
+            }}
             colorMode={colorMode}
             familyFilter={familyFilter}
             branchFilter={branchFilter}
@@ -268,6 +276,14 @@ const App: React.FC = () => {
                 onClose={handleDetailClose}
                 isBookmarked={isBookmarked(selectedLanguage.id)}
                 onToggleBookmark={toggleBookmark}
+              />
+            )}
+
+            {selectedCountry && !showDetail && (
+              <CountryDetailPanel
+                countryCode={selectedCountry}
+                languages={languages}
+                onClose={() => setSelectedCountry(null)}
               />
             )}
       
@@ -364,6 +380,12 @@ const App: React.FC = () => {
             <VoiceExperienceTab
               languages={languages}
             />
+          </div>
+        )}
+
+        {activeTab === 'insights' && (
+          <div className="flex-1 overflow-hidden">
+            <InsightsTab languages={languages} />
           </div>
         )}
 

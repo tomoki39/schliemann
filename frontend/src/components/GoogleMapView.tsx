@@ -8,6 +8,7 @@ interface GoogleMapViewProps {
   languages: Language[];
   selectedLanguage: Language | null;
   onLanguageClick: (language: Language) => void;
+  onCountryClick?: (countryCode: string) => void;
   colorMode: 'family' | 'branch' | 'group' | 'subgroup' | 'language' | 'dialect';
   familyFilter?: string;
   branchFilter?: string;
@@ -21,10 +22,10 @@ interface GoogleMapViewProps {
 const WORLD_GEOJSON_URL = 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
 
 // 固定カラー（実際のデータに基づく）
-  const FAMILY_COLORS: Record<string, string> = {
-    'インド・ヨーロッパ': '#3B82F6',
-    'シナ・チベット': '#EF4444',
-    'アフロ・アジア': '#F59E0B',
+const FAMILY_COLORS: Record<string, string> = {
+  'インド・ヨーロッパ': '#3B82F6',
+  'シナ・チベット': '#EF4444',
+  'アフロ・アジア': '#F59E0B',
     'ウラル': '#10B981',
     'オーストロアジア': '#8B5CF6',
     'カルトヴェリ': '#F97316',
@@ -35,11 +36,11 @@ const WORLD_GEOJSON_URL = 'https://raw.githubusercontent.com/datasets/geo-countr
     'タイ・カダイ': '#059669',
     'ニジェール・コンゴ': '#22C55E',
     'クレオール': '#F43F5E',
-    'オーストロネシア': '#8B5CF6',
+  'オーストロネシア': '#8B5CF6',
     'エスキモー・アレウト': '#14B8A6',
     'アルタイ': '#84CC16',
-    'その他': '#6B7280'
-  };
+  'その他': '#6B7280'
+};
 
 const COLOR_PALETTE = [
   '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
@@ -258,6 +259,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
   languages, 
   selectedLanguage, 
   onLanguageClick,
+  onCountryClick,
   colorMode,
   familyFilter,
   branchFilter,
@@ -724,7 +726,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
         
         for (const l of sortedLangs) {
           if (mode === 'family') {
-            families.add(normalizeFamily(l.family));
+          families.add(normalizeFamily(l.family));
           } else if (mode === 'branch') {
             families.add(l.branch || '未分類');
           } else if (mode === 'group') {
@@ -845,15 +847,15 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
       }
     } else {
       // フィルタが適用されていない場合は通常の色分け
-      return {
-        fillColor: fill,
-        fillOpacity: familyKey ? 0.7 : 0.12,
-        strokeColor: '#666',
-        strokeOpacity: 0.6,
-        strokeWeight: familyKey ? 1.1 : 0.6,
-        visible: true,
-        zIndex: familyKey ? 80 : 10
-      };
+    return {
+      fillColor: fill,
+      fillOpacity: familyKey ? 0.7 : 0.12,
+      strokeColor: '#666',
+      strokeOpacity: 0.6,
+      strokeWeight: familyKey ? 1.1 : 0.6,
+      visible: true,
+      zIndex: familyKey ? 80 : 10
+    };
     }
   };
 
@@ -884,15 +886,15 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
       const z = map.getZoom() ?? 2;
       setZoomLevel(z);
     });
-        // 国境GeoJSONを読み込み
-        fetch(WORLD_GEOJSON_URL)
+    // 国境GeoJSONを読み込み
+    fetch(WORLD_GEOJSON_URL)
           .then(r => {
             return r.json();
           })
-          .then((geojson) => {
-            const added = map.data.addGeoJson(geojson);
-            dataLoadedRef.current = true;
-            console.info('[GoogleMapView] Loaded features:', added.length);
+      .then((geojson) => {
+        const added = map.data.addGeoJson(geojson);
+        dataLoadedRef.current = true;
+        console.info('[GoogleMapView] Loaded features:', added.length);
             
         // setStyle と overrideStyle の両方を適用
         const currentColorMode = determineColorMode();
@@ -967,11 +969,15 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
           }
         });
 
-        // クリック時: その国に紐づく可視言語の先頭を詳細表示
+        // クリック時: 国コードを渡し、必要なら国別パネルを開く
         map.data.addListener('click', (ev) => {
           const feature = ev.feature;
           const code = getFeatureA2(feature);
           if (!code) return;
+          if (onCountryClick) {
+            onCountryClick(code);
+            return;
+          }
           const lang = visibleLanguages.find(l => l.countries?.includes(code));
           if (lang) onLanguageClick(lang);
         });

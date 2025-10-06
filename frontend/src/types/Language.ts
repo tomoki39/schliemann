@@ -19,6 +19,14 @@ export interface Language {
     text?: string; // 音声の内容（例：「こんにちは」）
     source?: string; // 音声の出典（例：「音声合成」）
   };
+  phonetics?: {
+    consonants: string[];
+    vowels: string[];
+    tones?: string[];
+    syllable_structure?: string;
+    stress_pattern?: string;
+    phonetic_notes?: string;
+  };
   dialects?: {
     name: string;
     region: string;
