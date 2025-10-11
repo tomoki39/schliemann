@@ -142,111 +142,270 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
     }
   };
 
-  // conversion_modelから言語コード（ISO 639-3）を取得 - 完全版
+  // conversion_modelから言語コード（ISO 639-3）を取得 - 完全版（138個全対応）
   const getLanguageCodeFromConversionModel = (conversionModel: string): string => {
     const modelToLanguage: Record<string, string> = {
-      // 日本語
+      // 日本語（13方言）
       'standard': 'jpn', 'tokyo': 'jpn', 'osaka': 'jpn', 'kyoto': 'jpn', 'kansai': 'jpn',
       'hakata': 'jpn', 'tsugaru': 'jpn', 'nagoya': 'jpn', 'hiroshima': 'jpn', 
       'kagoshima': 'jpn', 'okinawa': 'jpn', 'sendai': 'jpn', 'sapporo': 'jpn',
       
-      // 英語
+      // 英語（5方言）
       'british': 'eng', 'american': 'eng', 'australian': 'eng', 'canadian': 'eng',
       'english_indian': 'eng',
       
-      // 中国語
-      'beijing': 'cmn', 'taiwan': 'cmn', 'singapore': 'cmn', 'mandarin': 'cmn',
-      'cantonese': 'yue', 'cantonese_standard': 'yue',
+      // 中国語（3方言）
+      'beijing': 'cmn', 'taiwan': 'cmn', 'singapore': 'cmn',
       
-      // スペイン語
+      // スペイン語（6方言）
       'castilian': 'spa', 'mexican': 'spa', 'argentine': 'spa', 
       'spanish_colombia': 'spa', 'spanish_andalusian': 'spa', 'spanish_caribbean': 'spa',
       
-      // フランス語
+      // フランス語（5方言）
       'parisian': 'fra', 'quebec': 'fra', 'african': 'fra',
       'french_belgian': 'fra', 'french_swiss': 'fra',
       
-      // ポルトガル語
+      // ポルトガル語（4方言）
       'portuguese_br': 'por', 'portuguese_pt': 'por', 'portuguese_angola': 'por',
       'portuguese_mozambique': 'por',
       
-      // アラビア語
+      // アラビア語（4方言）
       'egyptian': 'arb', 'gulf': 'arb', 'levantine': 'arb', 'arabic_maghrebi': 'arb',
       
-      // ロシア語
+      // ロシア語（3方言）
       'russian_standard': 'rus', 'russian_spb': 'rus', 'russian_south': 'rus',
       
-      // ドイツ語
+      // ドイツ語（4方言）
       'german_standard': 'deu', 'german_austrian': 'deu', 'german_swiss': 'deu',
       'german_bavarian': 'deu',
       
-      // イタリア語
+      // イタリア語（7方言）
       'italian_standard': 'ita', 'italian_neapolitan': 'ita', 'italian_romanesco': 'ita',
       'italian_sicilian': 'ita', 'italian_venetian': 'ita', 'italian_milanese': 'ita',
       'italian_sardinian': 'ita',
       
-      // 韓国語
+      // 韓国語（3方言）
       'korean_seoul': 'kor', 'korean_busan': 'kor', 'korean_jeju': 'kor',
       
-      // ヒンディー語
+      // ヒンディー語（3方言）
       'hindi_standard': 'hin', 'hindi_bhojpuri': 'hin', 'hindi_awadhi': 'hin',
       
-      // ベトナム語
+      // ベトナム語（3方言）
       'vietnamese_hanoi': 'vie', 'vietnamese_saigon': 'vie', 'vietnamese_hue': 'vie',
       
-      // タイ語
-      'thai_central': 'tha', 'thai_northern': 'tha', 'thai_isan': 'tha',
+      // タイ語（3方言）
+      'thai_standard': 'tha', 'thai_northern': 'tha', 'thai_southern': 'tha',
       
-      // インドネシア語
-      'indonesian_jakarta': 'ind', 'indonesian_javanese': 'ind', 'indonesian_surabaya': 'ind',
+      // インドネシア語（3方言）
+      'indonesian_standard': 'ind', 'indonesian_jakarta': 'ind', 'indonesian_surabaya': 'ind',
       
-      // トルコ語
-      'turkish_istanbul': 'tur', 'turkish_anatolian': 'tur',
+      // トルコ語（3方言）
+      'turkish_istanbul': 'tur', 'turkish_aegean': 'tur', 'turkish_east_anatolia': 'tur',
       
-      // ベンガル語
-      'bengali_standard': 'ben', 'bengali_sylheti': 'ben',
+      // ベンガル語（3方言）
+      'bengali_in': 'ben', 'bengali_bd': 'ben', 'bengali_sylheti': 'ben',
       
-      // インド諸語
-      'punjabi_standard': 'pan', 'tamil_standard': 'tam', 'telugu_standard': 'tel',
-      'marathi_standard': 'mar', 'urdu_standard': 'urd', 'gujarati_standard': 'guj',
-      'kannada_standard': 'kan', 'malayalam_standard': 'mal', 'oriya_standard': 'ori',
+      // パンジャブ語（2方言）
+      'punjabi_east': 'pan', 'punjabi_west': 'pan',
+      
+      // タミル語（2方言）
+      'tamil_standard': 'tam', 'tamil_jaffna': 'tam',
+      
+      // テルグ語（2方言）
+      'telugu_standard': 'tel', 'telugu_telangana': 'tel',
+      
+      // マラーティー語（2方言）
+      'marathi_standard': 'mar', 'marathi_varhadi': 'mar',
+      
+      // ウルドゥー語（2方言）
+      'urdu_standard': 'urd', 'urdu_delhi': 'urd',
+      
+      // グジャラート語（2方言）
+      'gujarati_standard': 'guj', 'gujarati_surti': 'guj',
+      
+      // カンナダ語（2方言）
+      'kannada_standard': 'kan', 'kannada_mysore': 'kan',
+      
+      // マラヤーラム語（2方言）
+      'malayalam_standard': 'mal', 'malayalam_malabar': 'mal',
+      
+      // オディア語（1方言）
+      'odia_standard': 'ori',
+      
+      // アッサム語（1方言）
       'assamese_standard': 'asm',
       
-      // その他アジア
-      'mongolian_khalkha': 'mon', 'tibetan_lhasa': 'bod', 'burmese_yangon': 'mya',
-      'khmer_standard': 'khm', 'lao_standard': 'lao',
+      // ビルマ語（2方言）
+      'burmese_rangoon': 'mya', 'burmese_mandalay': 'mya',
       
-      // 中央アジア
-      'azerbaijani_baku': 'aze', 'kazakh_standard': 'kaz', 'uzbek_tashkent': 'uzb',
-      'pashto_standard': 'pus', 'kurdish_kurmanji': 'kur',
+      // モンゴル語（1方言）
+      'mongolian_khalkha': 'mon',
       
-      // アフリカ
-      'amharic_standard': 'amh', 'swahili_standard': 'swa', 'yoruba_standard': 'yor',
-      'igbo_standard': 'ibo', 'zulu_standard': 'zul', 'xhosa_standard': 'xho',
-      'afrikaans_standard': 'afr', 'hausa_standard': 'hau', 'somali_standard': 'som',
+      // チベット語（1方言）
+      'tibetan_lhasa': 'bod',
       
-      // その他
-      'malagasy_standard': 'mlg', 'icelandic_standard': 'isl', 'tok_pisin': 'tpi',
-      'greenlandic_west': 'kal', 'maori_standard': 'mri',
+      // アゼルバイジャン語（2方言）
+      'azerbaijani_north': 'aze', 'azerbaijani_south': 'aze',
       
-      // ヨーロッパ諸語
-      'polish_standard': 'pol', 'ukrainian_standard': 'ukr', 'czech_standard': 'ces',
-      'hungarian_standard': 'hun', 'romanian_standard': 'ron', 'greek_standard': 'ell',
-      'swedish_standard': 'swe', 'danish_standard': 'dan', 'norwegian_standard': 'nor',
-      'finnish_standard': 'fin', 'dutch_standard': 'nld', 'catalan_standard': 'cat',
-      'lithuanian_standard': 'lit', 'latvian_standard': 'lav', 'estonian_standard': 'est',
-      'albanian_standard': 'sqi', 'bulgarian_standard': 'bul', 'croatian_standard': 'hrv',
-      'serbian_standard': 'srp', 'slovenian_standard': 'slv', 'macedonian_standard': 'mkd',
-      'slovak_standard': 'slk', 'basque_standard': 'eus', 'galician_standard': 'glg',
+      // カザフ語（1方言）
+      'kazakh_standard': 'kaz',
       
-      // 東南アジア
-      'malay_standard': 'msa', 'filipino_standard': 'fil', 'javanese_standard': 'jav',
-      'sundanese_standard': 'sun', 'cebuano_standard': 'ceb',
+      // ウズベク語（1方言）
+      'uzbek_standard': 'uzb',
       
-      // 中東
-      'hebrew_standard': 'heb', 'persian_standard': 'fas', 'armenian_standard': 'hye',
-      'georgian_standard': 'kat'
+      // タジク語（1方言）
+      'tajik_standard': 'tgk',
+      
+      // パシュトー語（2方言）
+      'pashto_north': 'pus', 'pashto_south': 'pus',
+      
+      // クルド語（2方言）
+      'kurdish_kurmanji': 'kur', 'kurdish_sorani': 'kur',
+      
+      // アムハラ語（1方言）
+      'amharic_standard': 'amh',
+      
+      // スワヒリ語（2方言）
+      'swahili_standard': 'swa', 'swahili_kenya': 'swa',
+      
+      // ヨルバ語（5方言）
+      'yoruba_standard': 'yor', 'yoruba_egba': 'yor', 'yoruba_ekiti': 'yor',
+      'yoruba_ijebu': 'yor', 'yoruba_ondo': 'yor',
+      
+      // イボ語（1方言）
+      'igbo_standard': 'ibo',
+      
+      // ズールー語（3方言）
+      'zulu_standard': 'zul', 'zulu_north': 'zul', 'zulu_urban': 'zul',
+      
+      // コサ語（3方言）
+      'xhosa_standard': 'xho', 'xhosa_ngq': 'xho', 'xhosa_west': 'xho',
+      
+      // アフリカーンス語（1方言）
+      'afrikaans_standard': 'afr',
+      
+      // ハウサ語（2方言）
+      'hausa_standard': 'hau', 'hausa_niger': 'hau',
+      
+      // マダガスカル語（1方言）
+      'malagasy_merina': 'mlg',
+      
+      // アイスランド語（1方言）
+      'icelandic_standard': 'isl',
+      
+      // トクピシン（1方言）
+      'tokpisin_standard': 'tpi',
+      
+      // グリーンランド語（1方言）
+      'greenlandic_west': 'kal',
+      
+      // ポーランド語（2方言）
+      'polish_standard': 'pol', 'polish_lesser': 'pol',
+      
+      // ウクライナ語（2方言）
+      'ukrainian_standard': 'ukr', 'ukrainian_west': 'ukr',
+      
+      // チェコ語（1方言）
+      'czech_standard': 'ces',
+      
+      // ハンガリー語（1方言）
+      'hungarian_standard': 'hun',
+      
+      // ルーマニア語（1方言）
+      'romanian_standard': 'ron',
+      
+      // ギリシャ語（2方言）
+      'greek_standard': 'ell', 'greek_cyprus': 'ell',
+      
+      // スウェーデン語（2方言）
+      'swedish_standard': 'swe', 'swedish_finland': 'swe',
+      
+      // デンマーク語（2方言）
+      'danish_standard': 'dan', 'danish_jutland': 'dan',
+      
+      // ノルウェー語（2方言）
+      'norwegian_bokmal': 'nor', 'norwegian_nynorsk': 'nor',
+      
+      // フィンランド語（2方言）
+      'finnish_standard': 'fin', 'finnish_west': 'fin',
+      
+      // オランダ語（2方言）
+      'dutch_standard': 'nld', 'dutch_flemish': 'nld',
+      
+      // カタルーニャ語（1方言）
+      'catalan_standard': 'cat',
+      
+      // リトアニア語（1方言）
+      'lithuanian_standard': 'lit',
+      
+      // ラトビア語（1方言）
+      'latvian_standard': 'lav',
+      
+      // エストニア語（1方言）
+      'estonian_standard': 'est',
+      
+      // アルバニア語（2方言）
+      'albanian_gheg': 'sqi', 'albanian_tosk': 'sqi',
+      
+      // ブルガリア語（1方言）
+      'bulgarian_standard': 'bul',
+      
+      // クロアチア語（1方言）
+      'croatian_standard': 'hrv',
+      
+      // セルビア語（1方言）
+      'serbian_standard': 'srp',
+      
+      // スロベニア語（1方言）
+      'slovene_standard': 'slv',
+      
+      // マケドニア語（1方言）
+      'macedonian_standard': 'mkd',
+      
+      // スロバキア語（1方言）
+      'slovak_standard': 'slk',
+      
+      // バスク語（1方言）
+      'basque_standard': 'eus',
+      
+      // ガリシア語（1方言）
+      'galician_standard': 'glg',
+      
+      // マレー語（1方言）
+      'malay_standard': 'msa',
+      
+      // フィリピン語（1方言）
+      'filipino_standard': 'fil',
+      
+      // ジャワ語（1方言）
+      'javanese_standard': 'jav',
+      
+      // スンダ語（1方言）
+      'sundanese_standard': 'sun',
+      
+      // セブアノ語（1方言）
+      'cebuano_standard': 'ceb',
+      
+      // ヘブライ語（1方言）
+      'hebrew_standard': 'heb',
+      
+      // ペルシャ語（2方言）
+      'persian_tehran': 'fas', 'persian_dari': 'fas',
+      
+      // アルメニア語（2方言）
+      'armenian_eastern': 'hye', 'armenian_western': 'hye',
+      
+      // グルジア語（1方言）
+      'georgian_standard': 'kat',
+      
+      // マオリ語（1方言）
+      'maori_standard': 'mri'
     };
+    
+    // マッピングがない場合は警告してデフォルト
+    if (!modelToLanguage[conversionModel]) {
+      console.warn(`⚠️ Unknown conversion_model: "${conversionModel}" - using default 'eng'`);
+    }
     
     return modelToLanguage[conversionModel] || 'eng';
   };

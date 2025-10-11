@@ -150,6 +150,28 @@ export class EnhancedVoiceService {
 
     // 言語コードを取得（BCP-47形式）
     const languageCode = this.getLanguageCode(request.language, request.dialect);
+    
+    // Google Cloud TTSでサポートされていない言語のリスト
+    const unsupportedLanguages = [
+      'kk-KZ', // カザフ語
+      'tg-TJ', // タジク語
+      'ps-AF', // パシュトー語
+      'ku-TR', // クルド語
+      'so-SO', // ソマリ語
+      'mg-MG', // マダガスカル語
+      'tpi',   // トクピシン
+      'kal',   // グリーンランド語
+      'mi-NZ', // マオリ語
+      'jv-ID', // ジャワ語
+      'su-ID', // スンダ語
+      'ceb-PH' // セブアノ語
+    ];
+    
+    // サポートされていない言語の場合はスキップ
+    if (unsupportedLanguages.some(lang => languageCode.startsWith(lang.split('-')[0]))) {
+      console.log(`⚠️ Google Cloud TTS does not support ${languageCode}, skipping to next provider`);
+      throw new Error(`Language ${languageCode} not supported by Google Cloud TTS`);
+    }
 
     const googleRequest: GoogleCloudTTSRequest = {
       text: dialectText,
@@ -160,6 +182,10 @@ export class EnhancedVoiceService {
     };
 
     const ok = await googleCloudTTSService.speak(googleRequest);
+    
+    if (!ok) {
+      throw new Error(`Google Cloud TTS failed for ${languageCode}`);
+    }
 
     return {
       success: ok,
@@ -259,8 +285,8 @@ export class EnhancedVoiceService {
       // ポルトガル語方言
       'brazilian': 'pt-BR', 'european': 'pt-PT',
       
-      // 中国語方言
-      'beijing': 'zh-CN', 'taiwan': 'zh-TW', 'singapore': 'zh-CN',
+      // 中国語方言（Google Cloud TTSの正確なコード）
+      'beijing': 'cmn-CN', 'taiwan': 'cmn-TW', 'singapore': 'cmn-CN',
       
       // アラビア語方言
       'egyptian': 'ar-EG', 'gulf': 'ar-SA', 'levantine': 'ar-LB', 'maghrebi': 'ar-MA'
@@ -276,15 +302,20 @@ export class EnhancedVoiceService {
       // ISO 639-3 → BCP-47（Google Cloud TTS対応）
       jpn: 'ja-JP', eng: 'en-US', fra: 'fr-FR', fre: 'fr-FR', spa: 'es-ES', 
       deu: 'de-DE', ger: 'de-DE', ita: 'it-IT', por: 'pt-PT', ptb: 'pt-BR', 
-      rus: 'ru-RU', cmn: 'zh-CN', zho: 'zh-CN', yue: 'yue-HK', wuu: 'zh-CN', 
-      hak: 'zh-TW', min: 'zh-TW', nan: 'zh-TW',
+      rus: 'ru-RU', 
+      // 中国語系統（Google Cloud TTSの正確なコード）
+      cmn: 'cmn-CN', zho: 'cmn-CN', yue: 'yue-HK', wuu: 'cmn-CN', 
+      hak: 'cmn-TW', min: 'cmn-TW', nan: 'cmn-TW',
       arb: 'ar-XA', ara: 'ar-XA', hin: 'hi-IN', kor: 'ko-KR', vie: 'vi-VN', 
       tha: 'th-TH', ben: 'bn-IN', pan: 'pa-IN', guj: 'gu-IN', mar: 'mr-IN',
       tel: 'te-IN', tam: 'ta-IN', kan: 'kn-IN', mal: 'ml-IN', ori: 'or-IN', 
       asm: 'as-IN', urd: 'ur-IN', nep: 'ne-NP', sin: 'si-LK', mya: 'my-MM', 
       bur: 'my-MM', khm: 'km-KH', lao: 'lo-LA', mon: 'mn-MN', bod: 'bo-CN',
-      tib: 'bo-CN',
-      tur: 'tr-TR', aze: 'az-AZ', kaz: 'kk-KZ', uzb: 'uz-UZ', pus: 'ps-AF', 
+      tib: 'bo-CN', tgk: 'tg-TJ',
+      tur: 'tr-TR', aze: 'az-AZ', 
+      // カザフ語はGoogle Cloud TTSで未対応の可能性 → ロシア語で代替
+      kaz: 'ru-RU', 
+      uzb: 'uz-UZ', pus: 'ps-AF', 
       kur: 'ku-TR', amh: 'am-ET', swa: 'sw-KE', hau: 'ha-NG', yor: 'yo-NG',
       ibo: 'ig-NG', zul: 'zu-ZA', xho: 'xh-ZA', afr: 'af-ZA', som: 'so-SO',
       ind: 'id-ID', msa: 'ms-MY', may: 'ms-MY', fil: 'fil-PH', tgl: 'tl-PH',
@@ -300,8 +331,9 @@ export class EnhancedVoiceService {
       mao: 'mi-NZ'
     };
     const byName: Record<string, string> = {
-      japanese: 'ja-JP', english: 'en-US', chinese: 'zh-CN', mandarin: 'zh-CN', 
-      cantonese: 'yue-HK', spanish: 'es-ES', french: 'fr-FR', arabic: 'ar-XA', 
+      japanese: 'ja-JP', english: 'en-US', 
+      chinese: 'cmn-CN', mandarin: 'cmn-CN', cantonese: 'yue-HK', 
+      spanish: 'es-ES', french: 'fr-FR', arabic: 'ar-XA', 
       german: 'de-DE', italian: 'it-IT', portuguese: 'pt-PT', russian: 'ru-RU', 
       korean: 'ko-KR', vietnamese: 'vi-VN', thai: 'th-TH', hindi: 'hi-IN',
       bengali: 'bn-IN', turkish: 'tr-TR', indonesian: 'id-ID', malay: 'ms-MY'
