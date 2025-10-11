@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音声テストツール - Schliemann</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; margin-bottom: 10px; }
+    h2 { color: #555; margin-top: 30px; margin-bottom: 15px; font-size: 1.3em; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .test-card {
+      border: 1px solid #e0e0e0;
+      padding: 15px;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+    .test-card h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.1em;
+      color: #333;
+    }
+    .test-text {
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-size: 0.9em;
+      color: #555;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      margin-top: 10px;
+    }
+    button:hover { background: #45a049; }
+    button.secondary {
+      background: #2196F3;
+    }
+    button.secondary:hover { background: #0b7dda; }
+    .info {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-size: 0.85em;
+    }
+    .success { background: #c8e6c9; }
+    .warning { background: #fff9c4; }
+    .error { background: #ffcdd2; }
+    .status {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎤 音声品質テストツール</h1>
+    <p class="subtitle">各言語のネイティブ発音が正しく選択されているか確認できます</p>
+
+    <div class="info">
+      <strong>📌 使い方:</strong><br>
+      1. 「全音声を確認」ボタンでブラウザに何の音声があるか確認<br>
+      2. 各言語の「テスト」ボタンで音声選択をテスト<br>
+      3. 「再生」ボタンで実際の発音を確認
+    </div>
+
+    <button class="secondary" onclick="logAllVoices()">📢 全音声を確認（コンソール）</button>
+    <button class="secondary" onclick="showVoiceStats()">📊 音声統計を表示</button>
+
+    <h2>🌏 アジア言語</h2>
+    <div class="test-grid" id="asian-languages"></div>
+
+    <h2>🌍 ヨーロッパ言語</h2>
+    <div class="test-grid" id="european-languages"></div>
+
+    <h2>🌍 中東・アフリカ言語</h2>
+    <div class="test-grid" id="middle-east-languages"></div>
+
+    <div id="stats" class="info" style="margin-top: 30px; display: none;"></div>
+  </div>
+
+  <script>
+    // 言語テストデータ
+    const testLanguages = {
+      asian: [
+        { code: 'vie', name: 'ベトナム語', text: 'Xin chào, bạn khỏe không?', locale: 'vi-VN' },
+        { code: 'tha', name: 'タイ語', text: 'สวัสดีครับ คุณสบายดีไหม', locale: 'th-TH' },
+        { code: 'kor', name: '韓国語', text: '안녕하세요, 오늘 어떠세요?', locale: 'ko-KR' },
+        { code: 'hin', name: 'ヒンディー語', text: 'नमस्कार, आप आज कैसे हैं?', locale: 'hi-IN' },
+        { code: 'ben', name: 'ベンガル語', text: 'হ্যালো, আপনি কেমন আছেন?', locale: 'bn-IN' },
+        { code: 'ind', name: 'インドネシア語', text: 'Halo, apa kabar?', locale: 'id-ID' },
+        { code: 'msa', name: 'マレー語', text: 'Hai, apa khabar?', locale: 'ms-MY' },
+        { code: 'fil', name: 'フィリピン語', text: 'Kumusta ka?', locale: 'fil-PH' },
+      ],
+      european: [
+        { code: 'fra', name: 'フランス語', text: 'Bonjour, comment allez-vous?', locale: 'fr-FR' },
+        { code: 'deu', name: 'ドイツ語', text: 'Hallo, wie geht es Ihnen?', locale: 'de-DE' },
+        { code: 'ita', name: 'イタリア語', text: 'Ciao, come stai?', locale: 'it-IT' },
+        { code: 'rus', name: 'ロシア語', text: 'Здравствуйте, как дела?', locale: 'ru-RU' },
+        { code: 'pol', name: 'ポーランド語', text: 'Cześć, jak się masz?', locale: 'pl-PL' },
+        { code: 'nld', name: 'オランダ語', text: 'Hallo, hoe gaat het?', locale: 'nl-NL' },
+        { code: 'swe', name: 'スウェーデン語', text: 'Hej, hur mår du?', locale: 'sv-SE' },
+        { code: 'ell', name: 'ギリシャ語', text: 'Γεια σας, τι κάνετε;', locale: 'el-GR' },
+      ],
+      middleEast: [
+        { code: 'arb', name: 'アラビア語', text: 'مرحباً، كيف حالك؟', locale: 'ar-SA' },
+        { code: 'tur', name: 'トルコ語', text: 'Merhaba, nasılsınız?', locale: 'tr-TR' },
+        { code: 'heb', name: 'ヘブライ語', text: 'שלום, מה שלומך?', locale: 'he-IL' },
+        { code: 'fas', name: 'ペルシャ語', text: 'سلام، چطورید؟', locale: 'fa-IR' },
+      ]
+    };
+
+    const isoMap = {
+      eng: 'en-US', fra: 'fr-FR', fre: 'fr-FR', spa: 'es-ES', por: 'pt-PT', 
+      deu: 'de-DE', ger: 'de-DE', ita: 'it-IT', rus: 'ru-RU', 
+      nld: 'nl-NL', dut: 'nl-NL', pol: 'pl-PL', ukr: 'uk-UA',
+      jpn: 'ja-JP', kor: 'ko-KR', vie: 'vi-VN', tha: 'th-TH', 
+      hin: 'hi-IN', ben: 'bn-IN', cmn: 'zh-CN', yue: 'zh-HK',
+      arb: 'ar-SA', ara: 'ar-SA', heb: 'he-IL', tur: 'tr-TR', 
+      fas: 'fa-IR', per: 'fa-IR', ind: 'id-ID', msa: 'ms-MY', fil: 'fil-PH',
+      ell: 'el-GR', swe: 'sv-SE', nld: 'nl-NL', pol: 'pl-PL'
+    };
+
+    function selectVoice(languageCode) {
+      const voices = speechSynthesis.getVoices();
+      const normalized = isoMap[languageCode] || languageCode;
+      const normalizedPrimary = normalized.split('-')[0];
+
+      // クラウド音声を優先的に選択
+      let voice = voices.find(v => 
+        v.lang.toLowerCase() === normalized.toLowerCase() && !v.localService
+      );
+      if (!voice) {
+        voice = voices.find(v => 
+          v.lang.toLowerCase() === normalized.toLowerCase()
+        );
+      }
+      if (!voice) {
+        voice = voices.find(v => 
+          v.lang.toLowerCase().startsWith(normalizedPrimary + '-') && !v.localService
+        );
+      }
+      if (!voice) {
+        voice = voices.find(v => 
+          v.lang.toLowerCase().startsWith(normalizedPrimary)
+        );
+      }
+
+      return voice || voices[0];
+    }
+
+    function testVoiceSelection(code, name, locale) {
+      const voice = selectVoice(code);
+      const statusId = `status-${code}`;
+      const statusEl = document.getElementById(statusId);
+      
+      if (voice) {
+        const isCorrect = voice.lang.toLowerCase().startsWith(locale.split('-')[0]);
+        const isCloud = !voice.localService;
+        const className = isCorrect ? (isCloud ? 'success' : 'warning') : 'error';
+        statusEl.className = `status ${className}`;
+        statusEl.innerHTML = `
+          ✅ 選択: ${voice.name}<br>
+          🌐 言語: ${voice.lang}<br>
+          ${isCloud ? '☁️ Cloud音声' : '💻 Local音声'}
+        `;
+        console.log(`✅ ${name} (${code}): ${voice.name} (${voice.lang}) ${isCloud ? '[Cloud]' : '[Local]'}`);
+      } else {
+        statusEl.className = 'status error';
+        statusEl.innerHTML = '❌ 音声が見つかりません';
+        console.log(`❌ ${name} (${code}): No voice found`);
+      }
+    }
+
+    function playVoice(code, text) {
+      const voice = selectVoice(code);
+      if (!voice) {
+        alert('音声が見つかりません');
+        return;
+      }
+
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      console.log(`🎤 Playing: ${text}`);
+      console.log(`   Voice: ${voice.name} (${voice.lang})`);
+
+      speechSynthesis.speak(utterance);
+    }
+
+    function createTestCard(lang, containerId) {
+      const card = document.createElement('div');
+      card.className = 'test-card';
+      card.innerHTML = `
+        <h3>${lang.name}</h3>
+        <div class="test-text">${lang.text}</div>
+        <button onclick="testVoiceSelection('${lang.code}', '${lang.name}', '${lang.locale}')">🔍 テスト</button>
+        <button onclick="playVoice('${lang.code}', '${lang.text}')">▶️ 再生</button>
+        <div id="status-${lang.code}" class="status info">「テスト」ボタンを押してください</div>
+      `;
+      document.getElementById(containerId).appendChild(card);
+    }
+
+    function logAllVoices() {
+      const voices = speechSynthesis.getVoices();
+      const byLang = {};
+      voices.forEach(v => {
+        const lang = v.lang.split('-')[0];
+        if (!byLang[lang]) byLang[lang] = [];
+        byLang[lang].push(v);
+      });
+
+      console.log('📢 Available Voices by Language:');
+      Object.keys(byLang).sort().forEach(lang => {
+        console.log(`\n${lang}:`);
+        byLang[lang].forEach(v => {
+          console.log(`  - ${v.name} (${v.lang}) ${v.localService ? '[Local]' : '[Cloud]'}`);
+        });
+      });
+    }
+
+    function showVoiceStats() {
+      const voices = speechSynthesis.getVoices();
+      const cloudVoices = voices.filter(v => !v.localService);
+      const localVoices = voices.filter(v => v.localService);
+      const languages = new Set(voices.map(v => v.lang.split('-')[0]));
+
+      const statsEl = document.getElementById('stats');
+      statsEl.style.display = 'block';
+      statsEl.innerHTML = `
+        <strong>📊 音声統計:</strong><br>
+        合計音声数: ${voices.length}個<br>
+        クラウド音声: ${cloudVoices.length}個<br>
+        ローカル音声: ${localVoices.length}個<br>
+        対応言語数: ${languages.size}言語
+      `;
+      
+      console.log('📊 Voice Statistics:', {
+        total: voices.length,
+        cloud: cloudVoices.length,
+        local: localVoices.length,
+        languages: languages.size
+      });
+    }
+
+    // ページ読み込み時に音声リストを準備
+    function init() {
+      // 音声読み込み待機
+      let loaded = false;
+      speechSynthesis.onvoiceschanged = () => {
+        if (!loaded) {
+          loaded = true;
+          testLanguages.asian.forEach(lang => createTestCard(lang, 'asian-languages'));
+          testLanguages.european.forEach(lang => createTestCard(lang, 'european-languages'));
+          testLanguages.middleEast.forEach(lang => createTestCard(lang, 'middle-east-languages'));
+        }
+      };
+      
+      // 即座に実行も試みる
+      setTimeout(() => {
+        if (speechSynthesis.getVoices().length > 0 && !loaded) {
+          loaded = true;
+          testLanguages.asian.forEach(lang => createTestCard(lang, 'asian-languages'));
+          testLanguages.european.forEach(lang => createTestCard(lang, 'european-languages'));
+          testLanguages.middleEast.forEach(lang => createTestCard(lang, 'middle-east-languages'));
+        }
+      }, 100);
+    }
+
+    init();
+  </script>
+</body>
+</html>
