@@ -87,24 +87,30 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
         setIsPlaying(true);
       }
 
-      if (selectedProvider === 'elevenlabs') {
-        // ElevenLabsを使用
-        const request: EnhancedVoiceRequest = {
-          text: textToSpeak,
-          language: getLanguageName(dialect.conversion_model),
-          dialect: dialect.name,
-          useElevenLabs: true,
-          voiceSettings: {
-            stability: 0.5 + styleDegree * 0.2,
-            similarity_boost: 0.5 + styleDegree * 0.3,
-            style: styleDegree * 0.5,
-            use_speaker_boost: true
-          }
-        };
+      // enhancedVoiceServiceを使用（自動的に最適なプロバイダーを選択）
+      // 優先順位: Google Cloud TTS > ElevenLabs > Web Speech API
+      const languageCode = getLanguageCodeFromConversionModel(dialect.conversion_model);
+      
+      const request: EnhancedVoiceRequest = {
+        text: textToSpeak,
+        language: languageCode,
+        dialect: dialect.conversion_model,
+        useElevenLabs: selectedProvider === 'elevenlabs',
+        voiceSettings: {
+          stability: 0.5 + styleDegree * 0.2,
+          similarity_boost: 0.5 + styleDegree * 0.3,
+          style: styleDegree * 0.5,
+          use_speaker_boost: true
+        }
+      };
 
-        const response = await enhancedVoiceService.generateVoice(request);
+      const response = await enhancedVoiceService.generateVoice(request);
+      
+      if (response.success) {
+        console.log(`✅ 音声生成成功 (${response.provider}): ${dialect.name}`);
         
-        if (response.success && response.audioUrl) {
+        // Google Cloud TTS または ElevenLabs の場合
+        if (response.audioUrl) {
           const audio = new Audio(response.audioUrl);
           audio.playbackRate = playbackRate;
           audio.volume = volume;
@@ -116,35 +122,10 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
             }
           });
           await audio.play();
-        } else {
-          throw new Error(response.error || '音声生成に失敗しました');
         }
+        // Web Speech APIの場合は既に再生済み
       } else {
-        // Web Speech APIを使用
-        if (!webSpeechAvailable) {
-          throw new Error('Web Speech APIが利用できません');
-        }
-
-        const voiceSettings = getVoiceSettings(dialect.conversion_model);
-        const adjustedRate = voiceSettings.rate * (0.8 + styleDegree * 0.2) * playbackRate;
-        const adjustedPitch = voiceSettings.pitch * (0.9 + styleDegree * 0.1);
-        
-        const request: SpeechRequest = {
-          text: textToSpeak,
-          language: voiceSettings.language,
-          dialect: voiceSettings.dialect,
-          settings: {
-            rate: adjustedRate,
-            pitch: adjustedPitch,
-            volume: voiceSettings.volume * volume,
-          },
-        };
-        
-        const success = await webSpeechService.speak(request);
-        
-        if (!success) {
-          throw new Error('音声再生に失敗しました');
-        }
+        throw new Error(response.error || '音声生成に失敗しました');
       }
       
       setIsLoading(false);
@@ -161,7 +142,116 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
     }
   };
 
-  // 方言名から言語名を取得
+  // conversion_modelから言語コード（ISO 639-3）を取得 - 完全版
+  const getLanguageCodeFromConversionModel = (conversionModel: string): string => {
+    const modelToLanguage: Record<string, string> = {
+      // 日本語
+      'standard': 'jpn', 'tokyo': 'jpn', 'osaka': 'jpn', 'kyoto': 'jpn', 'kansai': 'jpn',
+      'hakata': 'jpn', 'tsugaru': 'jpn', 'nagoya': 'jpn', 'hiroshima': 'jpn', 
+      'kagoshima': 'jpn', 'okinawa': 'jpn', 'sendai': 'jpn', 'sapporo': 'jpn',
+      
+      // 英語
+      'british': 'eng', 'american': 'eng', 'australian': 'eng', 'canadian': 'eng',
+      'english_indian': 'eng',
+      
+      // 中国語
+      'beijing': 'cmn', 'taiwan': 'cmn', 'singapore': 'cmn', 'mandarin': 'cmn',
+      'cantonese': 'yue', 'cantonese_standard': 'yue',
+      
+      // スペイン語
+      'castilian': 'spa', 'mexican': 'spa', 'argentine': 'spa', 
+      'spanish_colombia': 'spa', 'spanish_andalusian': 'spa', 'spanish_caribbean': 'spa',
+      
+      // フランス語
+      'parisian': 'fra', 'quebec': 'fra', 'african': 'fra',
+      'french_belgian': 'fra', 'french_swiss': 'fra',
+      
+      // ポルトガル語
+      'portuguese_br': 'por', 'portuguese_pt': 'por', 'portuguese_angola': 'por',
+      'portuguese_mozambique': 'por',
+      
+      // アラビア語
+      'egyptian': 'arb', 'gulf': 'arb', 'levantine': 'arb', 'arabic_maghrebi': 'arb',
+      
+      // ロシア語
+      'russian_standard': 'rus', 'russian_spb': 'rus', 'russian_south': 'rus',
+      
+      // ドイツ語
+      'german_standard': 'deu', 'german_austrian': 'deu', 'german_swiss': 'deu',
+      'german_bavarian': 'deu',
+      
+      // イタリア語
+      'italian_standard': 'ita', 'italian_neapolitan': 'ita', 'italian_romanesco': 'ita',
+      'italian_sicilian': 'ita', 'italian_venetian': 'ita', 'italian_milanese': 'ita',
+      'italian_sardinian': 'ita',
+      
+      // 韓国語
+      'korean_seoul': 'kor', 'korean_busan': 'kor', 'korean_jeju': 'kor',
+      
+      // ヒンディー語
+      'hindi_standard': 'hin', 'hindi_bhojpuri': 'hin', 'hindi_awadhi': 'hin',
+      
+      // ベトナム語
+      'vietnamese_hanoi': 'vie', 'vietnamese_saigon': 'vie', 'vietnamese_hue': 'vie',
+      
+      // タイ語
+      'thai_central': 'tha', 'thai_northern': 'tha', 'thai_isan': 'tha',
+      
+      // インドネシア語
+      'indonesian_jakarta': 'ind', 'indonesian_javanese': 'ind', 'indonesian_surabaya': 'ind',
+      
+      // トルコ語
+      'turkish_istanbul': 'tur', 'turkish_anatolian': 'tur',
+      
+      // ベンガル語
+      'bengali_standard': 'ben', 'bengali_sylheti': 'ben',
+      
+      // インド諸語
+      'punjabi_standard': 'pan', 'tamil_standard': 'tam', 'telugu_standard': 'tel',
+      'marathi_standard': 'mar', 'urdu_standard': 'urd', 'gujarati_standard': 'guj',
+      'kannada_standard': 'kan', 'malayalam_standard': 'mal', 'oriya_standard': 'ori',
+      'assamese_standard': 'asm',
+      
+      // その他アジア
+      'mongolian_khalkha': 'mon', 'tibetan_lhasa': 'bod', 'burmese_yangon': 'mya',
+      'khmer_standard': 'khm', 'lao_standard': 'lao',
+      
+      // 中央アジア
+      'azerbaijani_baku': 'aze', 'kazakh_standard': 'kaz', 'uzbek_tashkent': 'uzb',
+      'pashto_standard': 'pus', 'kurdish_kurmanji': 'kur',
+      
+      // アフリカ
+      'amharic_standard': 'amh', 'swahili_standard': 'swa', 'yoruba_standard': 'yor',
+      'igbo_standard': 'ibo', 'zulu_standard': 'zul', 'xhosa_standard': 'xho',
+      'afrikaans_standard': 'afr', 'hausa_standard': 'hau', 'somali_standard': 'som',
+      
+      // その他
+      'malagasy_standard': 'mlg', 'icelandic_standard': 'isl', 'tok_pisin': 'tpi',
+      'greenlandic_west': 'kal', 'maori_standard': 'mri',
+      
+      // ヨーロッパ諸語
+      'polish_standard': 'pol', 'ukrainian_standard': 'ukr', 'czech_standard': 'ces',
+      'hungarian_standard': 'hun', 'romanian_standard': 'ron', 'greek_standard': 'ell',
+      'swedish_standard': 'swe', 'danish_standard': 'dan', 'norwegian_standard': 'nor',
+      'finnish_standard': 'fin', 'dutch_standard': 'nld', 'catalan_standard': 'cat',
+      'lithuanian_standard': 'lit', 'latvian_standard': 'lav', 'estonian_standard': 'est',
+      'albanian_standard': 'sqi', 'bulgarian_standard': 'bul', 'croatian_standard': 'hrv',
+      'serbian_standard': 'srp', 'slovenian_standard': 'slv', 'macedonian_standard': 'mkd',
+      'slovak_standard': 'slk', 'basque_standard': 'eus', 'galician_standard': 'glg',
+      
+      // 東南アジア
+      'malay_standard': 'msa', 'filipino_standard': 'fil', 'javanese_standard': 'jav',
+      'sundanese_standard': 'sun', 'cebuano_standard': 'ceb',
+      
+      // 中東
+      'hebrew_standard': 'heb', 'persian_standard': 'fas', 'armenian_standard': 'hye',
+      'georgian_standard': 'kat'
+    };
+    
+    return modelToLanguage[conversionModel] || 'eng';
+  };
+
+  // 方言名から言語名を取得（後方互換性のため残す）
   const getLanguageName = (conversionModel: string): string => {
     const dialectToLanguage: Record<string, string> = {
       'kansai': 'japanese',

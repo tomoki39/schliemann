@@ -1,5 +1,6 @@
 // 統合された高品質音声サービス
 import { elevenLabsService, ElevenLabsRequest } from './elevenLabsService';
+import { googleCloudTTSService, GoogleCloudTTSRequest } from './googleCloudTTSService';
 import { VoiceQualityService } from './ssmlBuilder';
 import { webSpeechService } from './webSpeechService';
 
@@ -24,21 +25,36 @@ export interface EnhancedVoiceResponse {
   audioData?: ArrayBuffer;
   error?: string;
   duration?: number;
-  provider: 'elevenlabs' | 'webspeech' | 'fallback';
+  provider: 'googlecloud' | 'elevenlabs' | 'webspeech' | 'fallback';
 }
 
 export class EnhancedVoiceService {
   private elevenLabsApiKey: string | null = null;
   private isElevenLabsAvailable: boolean = false;
+  private googleCloudApiKey: string | null = null;
+  private isGoogleCloudAvailable: boolean = false;
 
   constructor() {
     // 環境変数からAPIキーを取得
     // Vite 環境を想定。型は any で吸収
     const viteEnv: any = (import.meta as any).env || {};
+    
+    // ElevenLabs
     this.elevenLabsApiKey = viteEnv.VITE_ELEVENLABS_API_KEY || null;
     if (this.elevenLabsApiKey) {
       elevenLabsService.setApiKey(this.elevenLabsApiKey);
       this.isElevenLabsAvailable = true;
+    }
+    
+    // Google Cloud TTS
+    this.googleCloudApiKey = viteEnv.VITE_GOOGLE_CLOUD_TTS_API_KEY || null;
+    if (this.googleCloudApiKey) {
+      this.isGoogleCloudAvailable = true;
+      // Google Cloud TTSの音声リストを事前読み込み
+      googleCloudTTSService.loadVoices().catch(err => {
+        console.warn('Failed to load Google Cloud TTS voices:', err);
+        this.isGoogleCloudAvailable = false;
+      });
     }
   }
 
@@ -48,11 +64,30 @@ export class EnhancedVoiceService {
     this.isElevenLabsAvailable = true;
   }
 
-  // 高品質音声生成
+  // 高品質音声生成（優先順位: Google Cloud > ElevenLabs > Web Speech）
   async generateVoice(request: EnhancedVoiceRequest): Promise<EnhancedVoiceResponse> {
     const text = request.customText || request.text;
     
-    // 1. ElevenLabsが利用可能な場合は優先使用
+    console.log(`🎙️ Voice generation request:`, {
+      text: text.substring(0, 50) + '...',
+      language: request.language,
+      dialect: request.dialect,
+      providers: this.getAvailableProviders()
+    });
+    
+    // 1. Google Cloud TTSが利用可能な場合は最優先（無料枠あり、高品質）
+    if (this.isGoogleCloudAvailable) {
+      console.log('🌐 Trying Google Cloud TTS...');
+      try {
+        return await this.generateWithGoogleCloud(text, request);
+      } catch (error) {
+        console.warn('⚠️ Google Cloud TTS failed, trying next provider:', error);
+      }
+    } else {
+      console.log('⚠️ Google Cloud TTS not available');
+    }
+    
+    // 2. ElevenLabsが利用可能な場合は次に使用
     if (this.isElevenLabsAvailable && request.useElevenLabs !== false) {
       try {
         return await this.generateWithElevenLabs(text, request);
@@ -61,7 +96,7 @@ export class EnhancedVoiceService {
       }
     }
 
-    // 2. Web Speech APIにフォールバック
+    // 3. Web Speech APIにフォールバック
     try {
       return await this.generateWithWebSpeech(text, request);
     } catch (error) {
@@ -104,6 +139,31 @@ export class EnhancedVoiceService {
       audioData: response.audio,
       provider: 'elevenlabs',
       duration: response.audio.byteLength / 16000 // 概算
+    };
+  }
+
+  // Google Cloud TTSを使用した音声生成
+  private async generateWithGoogleCloud(text: string, request: EnhancedVoiceRequest): Promise<EnhancedVoiceResponse> {
+    // 方言辞書を適用
+    const dialectText = request.dialect ? 
+      VoiceQualityService.applyDialectDictionary(text, request.dialect) : text;
+
+    // 言語コードを取得（BCP-47形式）
+    const languageCode = this.getLanguageCode(request.language, request.dialect);
+
+    const googleRequest: GoogleCloudTTSRequest = {
+      text: dialectText,
+      languageCode: languageCode,
+      speakingRate: this.getRateForDialect(request.dialect),
+      pitch: (this.getPitchForDialect(request.dialect) - 1.0) * 20, // Google Cloud uses semitones
+      volumeGainDb: 0
+    };
+
+    const ok = await googleCloudTTSService.speak(googleRequest);
+
+    return {
+      success: ok,
+      provider: 'googlecloud'
     };
   }
 
@@ -176,20 +236,75 @@ export class EnhancedVoiceService {
            'pNInz6obpgDQGcFmaJgB'; // デフォルト
   }
 
-  // 言語コードを取得
+  // 言語コードを取得（Google Cloud TTS用のBCP-47形式）
   private getLanguageCode(language: string, dialect?: string): string {
+    // 方言別の詳細マッピング
+    const dialectMap: Record<string, string> = {
+      // 日本語方言
+      'standard': 'ja-JP', 'tokyo': 'ja-JP', 'osaka': 'ja-JP', 'kyoto': 'ja-JP',
+      'kansai': 'ja-JP', 'hakata': 'ja-JP', 'tsugaru': 'ja-JP', 'okinawa': 'ja-JP',
+      
+      // 英語方言
+      'british': 'en-GB', 'american': 'en-US', 'australian': 'en-AU', 
+      'canadian': 'en-CA', 'indian': 'en-IN',
+      
+      // スペイン語方言
+      'castilian': 'es-ES', 'mexican': 'es-MX', 'argentine': 'es-AR',
+      'colombian': 'es-CO', 'andalusian': 'es-ES', 'caribbean': 'es-PR',
+      
+      // フランス語方言
+      'parisian': 'fr-FR', 'quebec': 'fr-CA', 'african': 'fr-FR',
+      'belgian': 'fr-BE', 'swiss': 'fr-CH',
+      
+      // ポルトガル語方言
+      'brazilian': 'pt-BR', 'european': 'pt-PT',
+      
+      // 中国語方言
+      'beijing': 'zh-CN', 'taiwan': 'zh-TW', 'singapore': 'zh-CN',
+      
+      // アラビア語方言
+      'egyptian': 'ar-EG', 'gulf': 'ar-SA', 'levantine': 'ar-LB', 'maghrebi': 'ar-MA'
+    };
+
+    // 方言が指定されている場合は方言マッピングを使用
+    if (dialect && dialectMap[dialect]) {
+      return dialectMap[dialect];
+    }
+
     // 入力はISO 639-3のidや英語名の可能性がある
     const map: Record<string, string> = {
-      // ISO 639-3 → BCP-47
-      jpn: 'ja-JP', eng: 'en-US', fra: 'fr-FR', fre: 'fr-FR', spa: 'es-ES', deu: 'de-DE', ger: 'de-DE', ita: 'it-IT', por: 'pt-PT',
-      ptb: 'pt-BR', rus: 'ru-RU', cmn: 'zh-CN', zho: 'zh-CN', yue: 'zh-HK', wuu: 'zh-CN', hak: 'zh-CN', min: 'zh-CN',
-      arb: 'ar-SA', hin: 'hi-IN', kor: 'ko-KR', vie: 'vi-VN', tha: 'th-TH', ben: 'bn-IN', pan: 'pa-IN', guj: 'gu-IN',
-      mar: 'mr-IN', tel: 'te-IN', tam: 'ta-IN', kan: 'kn-IN', mal: 'ml-IN', ori: 'or-IN', asm: 'as-IN',
-      tur: 'tr-TR', aze: 'az-AZ', kaz: 'kk-KZ', uzb: 'uz-UZ', pus: 'ps-AF', kur: 'ku-TR', amh: 'am-ET', swa: 'sw-KE'
+      // ISO 639-3 → BCP-47（Google Cloud TTS対応）
+      jpn: 'ja-JP', eng: 'en-US', fra: 'fr-FR', fre: 'fr-FR', spa: 'es-ES', 
+      deu: 'de-DE', ger: 'de-DE', ita: 'it-IT', por: 'pt-PT', ptb: 'pt-BR', 
+      rus: 'ru-RU', cmn: 'zh-CN', zho: 'zh-CN', yue: 'yue-HK', wuu: 'zh-CN', 
+      hak: 'zh-TW', min: 'zh-TW', nan: 'zh-TW',
+      arb: 'ar-XA', ara: 'ar-XA', hin: 'hi-IN', kor: 'ko-KR', vie: 'vi-VN', 
+      tha: 'th-TH', ben: 'bn-IN', pan: 'pa-IN', guj: 'gu-IN', mar: 'mr-IN',
+      tel: 'te-IN', tam: 'ta-IN', kan: 'kn-IN', mal: 'ml-IN', ori: 'or-IN', 
+      asm: 'as-IN', urd: 'ur-IN', nep: 'ne-NP', sin: 'si-LK', mya: 'my-MM', 
+      bur: 'my-MM', khm: 'km-KH', lao: 'lo-LA', mon: 'mn-MN', bod: 'bo-CN',
+      tib: 'bo-CN',
+      tur: 'tr-TR', aze: 'az-AZ', kaz: 'kk-KZ', uzb: 'uz-UZ', pus: 'ps-AF', 
+      kur: 'ku-TR', amh: 'am-ET', swa: 'sw-KE', hau: 'ha-NG', yor: 'yo-NG',
+      ibo: 'ig-NG', zul: 'zu-ZA', xho: 'xh-ZA', afr: 'af-ZA', som: 'so-SO',
+      ind: 'id-ID', msa: 'ms-MY', may: 'ms-MY', fil: 'fil-PH', tgl: 'tl-PH',
+      nld: 'nl-NL', dut: 'nl-NL', pol: 'pl-PL', ukr: 'uk-UA', ces: 'cs-CZ',
+      cze: 'cs-CZ', hun: 'hu-HU', ron: 'ro-RO', rum: 'ro-RO', ell: 'el-GR',
+      gre: 'el-GR', swe: 'sv-SE', dan: 'da-DK', nor: 'nb-NO', fin: 'fi-FI',
+      cat: 'ca-ES', eus: 'eu-ES', baq: 'eu-ES', glg: 'gl-ES', isl: 'is-IS',
+      ice: 'is-IS', mlg: 'mg-MG', heb: 'he-IL', fas: 'fa-IR', per: 'fa-IR',
+      lit: 'lt-LT', lav: 'lv-LV', est: 'et-EE', sqi: 'sq-AL', alb: 'sq-AL',
+      bul: 'bg-BG', hrv: 'hr-HR', srp: 'sr-RS', slv: 'sl-SI', mkd: 'mk-MK',
+      slk: 'sk-SK', slo: 'sk-SK', hye: 'hy-AM', arm: 'hy-AM', kat: 'ka-GE',
+      geo: 'ka-GE', jav: 'jv-ID', sun: 'su-ID', ceb: 'ceb-PH', mri: 'mi-NZ',
+      mao: 'mi-NZ'
     };
     const byName: Record<string, string> = {
-      japanese: 'ja-JP', english: 'en-US', chinese: 'zh-CN', mandarin: 'zh-CN', cantonese: 'zh-HK', spanish: 'es-ES',
-      french: 'fr-FR', arabic: 'ar-SA', german: 'de-DE', italian: 'it-IT', portuguese: 'pt-PT', russian: 'ru-RU', korean: 'ko-KR'
+      japanese: 'ja-JP', english: 'en-US', chinese: 'zh-CN', mandarin: 'zh-CN', 
+      cantonese: 'yue-HK', spanish: 'es-ES', french: 'fr-FR', arabic: 'ar-XA', 
+      german: 'de-DE', italian: 'it-IT', portuguese: 'pt-PT', russian: 'ru-RU', 
+      korean: 'ko-KR', vietnamese: 'vi-VN', thai: 'th-TH', hindi: 'hi-IN',
+      bengali: 'bn-IN', turkish: 'tr-TR', indonesian: 'id-ID', malay: 'ms-MY'
     };
     const key = (language || '').toLowerCase();
     return map[key] || byName[key] || 'en-US';
@@ -228,6 +343,9 @@ export class EnhancedVoiceService {
     const providers = ['webspeech'];
     if (this.isElevenLabsAvailable) {
       providers.unshift('elevenlabs');
+    }
+    if (this.isGoogleCloudAvailable) {
+      providers.unshift('googlecloud'); // 最優先
     }
     return providers;
   }

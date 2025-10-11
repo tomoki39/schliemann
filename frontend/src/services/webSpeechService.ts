@@ -94,31 +94,95 @@ export class WebSpeechService {
     const lc = (language || '').toLowerCase();
     const primary = lc.split(/[-_]/)[0];
 
-    // 追加マッピング（ISO639-3等 → 2文字/BCP）
+    // 拡張ISO639-3 → BCP-47 ロケールマッピング（ネイティブ発音優先）
     const isoMap: Record<string, string> = {
-      eng: 'en', fra: 'fr', fre: 'fr', spa: 'es', por: 'pt', deu: 'de', ger: 'de', ita: 'it', rus: 'ru', jpn: 'ja', kor: 'ko',
-      // Chinese macro and major regional varieties
-      cmn: 'zh-CN', zho: 'zh-CN', yue: 'zh-HK', wuu: 'zh-CN', hak: 'zh-CN',
-      // Southern Min / Minnan: prefer Taiwan voice when available
-      min: 'zh-TW', nan: 'zh-TW',
-      // Others
-      arb: 'ar', hin: 'hi', vie: 'vi', tha: 'th', ben: 'bn', tur: 'tr', ind: 'id'
+      // ヨーロッパ言語
+      eng: 'en-US', fra: 'fr-FR', fre: 'fr-FR', spa: 'es-ES', por: 'pt-PT', 
+      deu: 'de-DE', ger: 'de-DE', ita: 'it-IT', rus: 'ru-RU', 
+      nld: 'nl-NL', dut: 'nl-NL', pol: 'pl-PL', ukr: 'uk-UA',
+      ces: 'cs-CZ', cze: 'cs-CZ', hun: 'hu-HU', ron: 'ro-RO', rum: 'ro-RO',
+      ell: 'el-GR', gre: 'el-GR', swe: 'sv-SE', dan: 'da-DK', nor: 'no-NO',
+      fin: 'fi-FI', cat: 'ca-ES', eus: 'eu-ES', baq: 'eu-ES', glg: 'gl-ES',
+      
+      // アジア言語（ネイティブロケール指定）
+      jpn: 'ja-JP', kor: 'ko-KR', vie: 'vi-VN', tha: 'th-TH', 
+      hin: 'hi-IN', ben: 'bn-IN', tam: 'ta-IN', tel: 'te-IN', mar: 'mr-IN',
+      guj: 'gu-IN', kan: 'kn-IN', mal: 'ml-IN', pan: 'pa-IN',
+      urd: 'ur-PK', nep: 'ne-NP', sin: 'si-LK', mya: 'my-MM', bur: 'my-MM',
+      khm: 'km-KH', lao: 'lo-LA', mon: 'mn-MN',
+      
+      // 中国語系統（地域別ネイティブ音声）
+      cmn: 'zh-CN', zho: 'zh-CN', yue: 'zh-HK', wuu: 'zh-CN', 
+      hak: 'zh-TW', min: 'zh-TW', nan: 'zh-TW',
+      
+      // 中東・アフリカ言語
+      arb: 'ar-SA', ara: 'ar-SA', heb: 'he-IL', tur: 'tr-TR', 
+      fas: 'fa-IR', per: 'fa-IR', swa: 'sw-KE', amh: 'am-ET',
+      hau: 'ha-NG', yor: 'yo-NG', ibo: 'ig-NG', zul: 'zu-ZA',
+      xho: 'xh-ZA', afr: 'af-ZA', som: 'so-SO',
+      
+      // 東南アジア
+      ind: 'id-ID', msa: 'ms-MY', may: 'ms-MY', fil: 'fil-PH', tgl: 'tl-PH',
+      
+      // その他
+      isl: 'is-IS', ice: 'is-IS', mlg: 'mg-MG', mao: 'mi-NZ', mri: 'mi-NZ',
+      
+      // 補助的マッピング（方言・変種）
+      'osaka': 'ja-JP', 'tokyo': 'ja-JP', 'kyoto': 'ja-JP',
+      'british': 'en-GB', 'american': 'en-US', 'australian': 'en-AU',
+      'castilian': 'es-ES', 'mexican': 'es-MX', 'argentine': 'es-AR',
+      'parisian': 'fr-FR', 'quebec': 'fr-CA', 'african': 'fr-FR',
+      'brazilian': 'pt-BR', 'european': 'pt-PT',
+      'egyptian': 'ar-EG', 'gulf': 'ar-SA', 'levantine': 'ar-LB',
+      'beijing': 'zh-CN', 'taiwan': 'zh-TW', 'singapore': 'zh-CN'
     };
     const normalized = isoMap[lc] || isoMap[primary] || lc;
     const normalizedPrimary = normalized.split(/[-_]/)[0];
 
-    // 1) 完全一致（ケース無視）
-    let voice = this.voices.find(v => v.lang.toLowerCase() === normalized);
-    // 2) BCP-47の前方一致（例: ja-JP → ja）
-    if (!voice) voice = this.voices.find(v => v.lang.toLowerCase().startsWith(normalizedPrimary));
-    // 3) 地域コードが含まれる場合は地域も考慮した startsWith
-    if (!voice && normalized.includes('-')) {
-      const regionPrefix = normalized.split('-').slice(0, 2).join('-');
-      voice = this.voices.find(v => v.lang.toLowerCase().startsWith(regionPrefix));
+    // ネイティブ音声を優先的に選択（クラウド音声 > ローカル音声）
+    
+    // 1) クラウドのネイティブ音声（完全一致）- 最優先
+    let voice = this.voices.find(v => 
+      v.lang.toLowerCase() === normalized.toLowerCase() && !v.localService
+    );
+    
+    // 2) ローカルのネイティブ音声（完全一致）
+    if (!voice) {
+      voice = this.voices.find(v => 
+        v.lang.toLowerCase() === normalized.toLowerCase() && v.localService
+      );
     }
-
-    // 最終フォールバック: プライマリだけで再検索 → 既定 → 先頭
-    return voice || this.voices.find(v => v.lang.toLowerCase().startsWith(primary)) || this.voices.find(v => v.default) || this.voices[0] || null;
+    
+    // 3) クラウド音声（言語コードが一致）
+    if (!voice) {
+      voice = this.voices.find(v => 
+        v.lang.toLowerCase().startsWith(normalizedPrimary + '-') && !v.localService
+      );
+    }
+    
+    // 4) ローカル音声（言語コードが一致）
+    if (!voice) {
+      voice = this.voices.find(v => 
+        v.lang.toLowerCase().startsWith(normalizedPrimary + '-') && v.localService
+      );
+    }
+    
+    // 5) クラウド音声（言語コードのみ）
+    if (!voice) {
+      voice = this.voices.find(v => 
+        v.lang.toLowerCase().startsWith(normalizedPrimary) && !v.localService
+      );
+    }
+    
+    // 6) ローカル音声（言語コードのみ）
+    if (!voice) {
+      voice = this.voices.find(v => 
+        v.lang.toLowerCase().startsWith(normalizedPrimary)
+      );
+    }
+    
+    // 7) 最終フォールバック（デフォルト音声または最初の音声）
+    return voice || this.voices.find(v => v.default) || this.voices[0] || null;
   }
 
   // 音声合成の実行
@@ -148,6 +212,11 @@ export class WebSpeechService {
       const selectedVoice = this.selectVoiceForLanguage(request.language, request.dialect);
       if (selectedVoice) {
         utterance.voice = selectedVoice;
+        // 選択した音声の言語コードを明示的に設定（ネイティブ発音を保証）
+        utterance.lang = selectedVoice.lang;
+        console.log(`🎤 Voice selected: ${selectedVoice.name} (${selectedVoice.lang}), Cloud: ${!selectedVoice.localService}`);
+      } else {
+        console.warn(`⚠️ No suitable voice found for language: ${request.language}, dialect: ${request.dialect}`);
       }
 
       // 音声設定の適用
@@ -210,6 +279,44 @@ export class WebSpeechService {
   // サポート状況の確認
   isWebSpeechSupported(): boolean {
     return this.isSupported;
+  }
+
+  // デバッグ用: 利用可能な音声を言語別に表示
+  logAvailableVoices(): void {
+    if (!this.isSupported) {
+      console.warn('Web Speech API is not supported');
+      return;
+    }
+
+    const voicesByLang: Record<string, SpeechSynthesisVoice[]> = {};
+    this.voices.forEach(voice => {
+      const lang = voice.lang.split('-')[0];
+      if (!voicesByLang[lang]) {
+        voicesByLang[lang] = [];
+      }
+      voicesByLang[lang].push(voice);
+    });
+
+    console.log('📢 Available Voices by Language:');
+    Object.keys(voicesByLang).sort().forEach(lang => {
+      console.log(`\n${lang}:`);
+      voicesByLang[lang].forEach(v => {
+        console.log(`  - ${v.name} (${v.lang}) ${v.localService ? '[Local]' : '[Cloud]'}`);
+      });
+    });
+  }
+
+  // デバッグ用: 特定言語の音声選択をテスト
+  testVoiceSelection(languageCode: string, dialect?: string): void {
+    const voice = this.selectVoiceForLanguage(languageCode, dialect);
+    if (voice) {
+      console.log(`✅ Voice for "${languageCode}" ${dialect ? `(${dialect})` : ''}:`);
+      console.log(`   Name: ${voice.name}`);
+      console.log(`   Lang: ${voice.lang}`);
+      console.log(`   Type: ${voice.localService ? 'Local' : 'Cloud'}`);
+    } else {
+      console.log(`❌ No voice found for "${languageCode}" ${dialect ? `(${dialect})` : ''}`);
+    }
   }
 }
 
