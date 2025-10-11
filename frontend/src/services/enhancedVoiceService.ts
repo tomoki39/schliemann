@@ -82,25 +82,37 @@ export class EnhancedVoiceService {
         return await this.generateWithGoogleCloud(text, request);
       } catch (error) {
         console.warn('⚠️ Google Cloud TTS failed, trying next provider:', error);
+        
+        // Google Cloud TTS失敗時、ElevenLabsが利用可能ならそちらを試す
+        if (this.isElevenLabsAvailable) {
+          console.log('🎵 Falling back to ElevenLabs...');
+          try {
+            return await this.generateWithElevenLabs(text, request);
+          } catch (elevenLabsError) {
+            console.warn('⚠️ ElevenLabs also failed, trying Web Speech API:', elevenLabsError);
+          }
+        }
       }
     } else {
       console.log('⚠️ Google Cloud TTS not available');
     }
     
-    // 2. ElevenLabsが利用可能な場合は次に使用
+    // 2. Google Cloudが使えない場合、ElevenLabsを試す
     if (this.isElevenLabsAvailable && request.useElevenLabs !== false) {
+      console.log('🎵 Trying ElevenLabs...');
       try {
         return await this.generateWithElevenLabs(text, request);
       } catch (error) {
-        console.warn('ElevenLabs failed, falling back to Web Speech API:', error);
+        console.warn('⚠️ ElevenLabs failed, falling back to Web Speech API:', error);
       }
     }
 
-    // 3. Web Speech APIにフォールバック
+    // 3. 最終フォールバック: Web Speech API
+    console.log('🔊 Falling back to Web Speech API...');
     try {
       return await this.generateWithWebSpeech(text, request);
     } catch (error) {
-      console.error('All voice services failed:', error);
+      console.error('❌ All voice services failed:', error);
       return {
         success: false,
         error: '音声生成に失敗しました',
