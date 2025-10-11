@@ -12,12 +12,15 @@ import DialectPlayer from './components/DialectPlayer';
 import DialectDetailPanel from './components/DialectDetailPanel';
 import VoiceExperienceTab from './components/VoiceExperienceTab';
 import InsightsTab from './components/InsightsTab';
+import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSpinner from './components/LoadingSpinner';
 import { useBookmarks } from './hooks/useBookmarks';
 import { Language } from './types/Language';
 import languagesData from './data/languages.json';
 
 const App: React.FC = () => {
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [familyFilter, setFamilyFilter] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
@@ -47,7 +50,21 @@ const App: React.FC = () => {
   const { isBookmarked, toggleBookmark } = useBookmarks();
 
   useEffect(() => {
-    setLanguages(languagesData as Language[]);
+    // データ読み込みをシミュレート
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        // 実際の環境では、ここでAPIからデータを取得
+        await new Promise(resolve => setTimeout(resolve, 500)); // 最小ローディング時間
+        setLanguages(languagesData as Language[]);
+      } catch (error) {
+        console.error('Failed to load languages:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
   }, []);
 
   const handleLanguageSelect = (language: Language) => {
@@ -390,8 +407,18 @@ const App: React.FC = () => {
         )}
 
       </div>
+      
+      {isLoading && (
+        <LoadingSpinner fullScreen text="言語データを読み込んでいます..." />
+      )}
     </div>
   );
 };
 
-export default App;
+const AppWithErrorBoundary: React.FC = () => (
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
+
+export default AppWithErrorBoundary;

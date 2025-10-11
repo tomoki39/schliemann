@@ -4,6 +4,7 @@ import DialectPlayer from './DialectPlayer';
 import LanguageInsightDetail from './LanguageInsightDetail';
 import PhoneticFilter from './PhoneticFilter';
 import PhoneticMap from './PhoneticMap';
+import EmptyState from './EmptyState';
 
 interface InsightsTabProps {
   languages: Language[];
@@ -126,9 +127,15 @@ const InsightsTab: React.FC<InsightsTabProps> = ({ languages }) => {
       ))}
 
       {viewMode === 'list' && items.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          フィルター条件に一致する言語が見つかりませんでした。
-        </div>
+        <EmptyState
+          icon="🔍"
+          title="該当する言語が見つかりません"
+          description="フィルター条件を変更するか、リセットボタンを押して再度お試しください。"
+          action={{
+            label: "フィルターをリセット",
+            onClick: () => setFilteredLanguages(languages)
+          }}
+        />
       )}
 
       {showDetail && selectedLanguage && (
