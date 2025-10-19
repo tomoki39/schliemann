@@ -1,0 +1,43 @@
+# 上海語方言TTS開発用パッケージ
+torch>=2.0.0
+torchaudio>=2.0.0
+transformers>=4.30.0
+librosa>=0.10.0
+soundfile>=0.12.0
+numpy>=1.24.0
+scipy>=1.10.0
+noisereduce>=3.0.0
+yt-dlp>=2023.7.6
+requests>=2.31.0
+pathlib>=1.0.1
+json5>=0.9.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+tqdm>=4.65.0
+jupyter>=1.0.0
+ipykernel>=6.25.0
+
+# 音声処理関連（必須）
+pydub>=0.25.1
+speechrecognition>=3.10.0
+whisper>=1.0.0
+
+# 音声処理関連（オプショナル - インストールに失敗する場合はスキップ可能）
+# pyaudio>=0.2.11
+# webrtcvad>=2.0.10
+
+# 機械学習関連
+scikit-learn>=1.3.0
+tensorboard>=2.13.0
+wandb>=0.15.0
+
+# データ処理関連
+pandas>=2.0.0
+h5py>=3.9.0
+tqdm>=4.65.0
+
+# 開発・デバッグ用
+pytest>=7.4.0
+black>=23.7.0
+flake8>=6.0.0
+mypy>=1.5.0

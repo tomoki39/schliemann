@@ -5,6 +5,8 @@ import { webSpeechService, SpeechRequest } from '../services/webSpeechService';
 import { getDialectVoiceSettings as getVoiceSettings } from '../services/dialectVoiceSettings';
 import { VoiceQualityService } from '../services/ssmlBuilder';
 import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
+import { getDialectTTS, synthesizeDialectText, synthesizeDialectTextSimple } from '../services/dialectTTSService';
+import { aiTtsService } from '../services/aiTtsService';
 
 interface Dialect {
   id: string;
@@ -87,10 +89,26 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
         setIsPlaying(true);
       }
 
+      // すべての方言で同じ音声生成システムを使用
+
       // enhancedVoiceServiceを使用（自動的に最適なプロバイダーを選択）
       // 優先順位: Google Cloud TTS > ElevenLabs > Web Speech API
       const languageCode = getLanguageCodeFromConversionModel(dialect.conversion_model);
+      console.log(`🎵 音声生成開始: ${dialect.name} (${dialect.conversion_model} -> ${languageCode})`);
       
+      // 再生完了時のコールバックを定義
+      const onEnd = () => {
+        console.log('🎵 音声再生完了 - コールバック実行');
+        console.log('🎵 現在の状態:', { isCustom, isPlaying: isCustom ? isPlayingCustom : isPlaying });
+        if (isCustom) {
+          setIsPlayingCustom(false);
+          console.log('🎵 setIsPlayingCustom(false) 実行');
+        } else {
+          setIsPlaying(false);
+          console.log('🎵 setIsPlaying(false) 実行');
+        }
+      };
+
       const request: EnhancedVoiceRequest = {
         text: textToSpeak,
         language: languageCode,
@@ -101,10 +119,13 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
           similarity_boost: 0.5 + styleDegree * 0.3,
           style: styleDegree * 0.5,
           use_speaker_boost: true
-        }
+        },
+        onEnd: onEnd // コールバックを設定
       };
 
+      console.log('🎵 enhancedVoiceService.generateVoice を呼び出し中...');
       const response = await enhancedVoiceService.generateVoice(request);
+      console.log('🎵 enhancedVoiceService レスポンス:', response);
       
       if (response.success) {
         console.log(`✅ 音声生成成功 (${response.provider}): ${dialect.name}`);
@@ -114,17 +135,70 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
           const audio = new Audio(response.audioUrl);
           audio.playbackRate = playbackRate;
           audio.volume = volume;
+          
+          // 再生完了時のコールバックを設定
           audio.addEventListener('ended', () => {
+            console.log('🎵 音声再生完了 (ElevenLabs)');
             if (isCustom) {
               setIsPlayingCustom(false);
             } else {
               setIsPlaying(false);
             }
           });
+          
+          // エラー時のコールバックも設定
+          audio.addEventListener('error', (error) => {
+            console.error('音声再生エラー:', error);
+            if (isCustom) {
+              setIsPlayingCustom(false);
+            } else {
+              setIsPlaying(false);
+            }
+          });
+          
           await audio.play();
+        } else if (response.audioData) {
+          // dialect_tts の場合、audioData を使用
+          console.log('🎵 dialect_tts音声再生開始');
+          
+          // Base64データをBlobに変換
+          const audioBlob = new Blob([Uint8Array.from(atob(response.audioData), c => c.charCodeAt(0))], { type: 'audio/wav' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = new Audio(audioUrl);
+          audio.playbackRate = playbackRate;
+          audio.volume = volume;
+          
+          // 再生完了時のコールバックを設定
+          audio.addEventListener('ended', () => {
+            console.log('🎵 音声再生完了 (dialect_tts)');
+            URL.revokeObjectURL(audioUrl); // メモリリークを防ぐ
+            if (isCustom) {
+              setIsPlayingCustom(false);
+            } else {
+              setIsPlaying(false);
+            }
+          });
+          
+          // エラー時のコールバックも設定
+          audio.addEventListener('error', (error) => {
+            console.error('音声再生エラー:', error);
+            URL.revokeObjectURL(audioUrl); // メモリリークを防ぐ
+            if (isCustom) {
+              setIsPlayingCustom(false);
+            } else {
+              setIsPlaying(false);
+            }
+          });
+          
+          await audio.play();
+        } else {
+          // Google Cloud TTS または Web Speech APIの場合は既に再生済み
+          // コールバックで再生完了が検知される
+          console.log(`🎵 ${response.provider}音声再生開始`);
         }
-        // Web Speech APIの場合は既に再生済み
       } else {
+        console.warn(`❌ 音声生成失敗 (${response.provider}): ${response.error}`);
+        console.log('🎵 エラーの詳細:', response);
         throw new Error(response.error || '音声生成に失敗しました');
       }
       
@@ -154,8 +228,9 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
       'british': 'eng', 'american': 'eng', 'australian': 'eng', 'canadian': 'eng',
       'english_indian': 'eng',
       
-      // 中国語（3方言）
-      'beijing': 'cmn', 'taiwan': 'cmn', 'singapore': 'cmn',
+      // 中国語（4方言）
+      'chinese_standard': 'cmn', 'mandarin_standard': 'cmn', 'beijing': 'cmn', 'taiwan': 'cmn', 'singapore': 'cmn',
+      'shanghai': 'cmn',
       
       // スペイン語（6方言）
       'castilian': 'spa', 'mexican': 'spa', 'argentine': 'spa', 

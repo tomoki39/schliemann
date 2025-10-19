@@ -19,6 +19,7 @@ export interface SpeechRequest {
   language: string;
   dialect?: string;
   settings?: SpeechSettings;
+  onEnd?: () => void; // 再生完了時のコールバック
 }
 
 export class WebSpeechService {
@@ -232,6 +233,9 @@ export class WebSpeechService {
 
       utterance.onend = () => {
         console.log('Speech ended');
+        if (request.onEnd) {
+          request.onEnd();
+        }
         resolve(true);
       };
 

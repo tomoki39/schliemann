@@ -1,0 +1,10 @@
+元のテキスト: 你好，今天天气很好。
+上海語変換: 侬好，今朝天气蛮好。
+SSML: <speak>
+            <prosody rate="0.85" pitch="+10%" volume="loud">
+                <prosody pitch="+20%" rate="0.8">
+                    侬好，今朝天气蛮好。
+                </prosody>
+            </prosody>
+            <break time="0.3s"/>
+        </speak>

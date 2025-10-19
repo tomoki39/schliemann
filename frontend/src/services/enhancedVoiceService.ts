@@ -3,6 +3,7 @@ import { elevenLabsService, ElevenLabsRequest } from './elevenLabsService';
 import { googleCloudTTSService, GoogleCloudTTSRequest } from './googleCloudTTSService';
 import { VoiceQualityService } from './ssmlBuilder';
 import { webSpeechService } from './webSpeechService';
+import { getDialectTTS, DialectTTSConfig, initializeDialectTTS } from './dialectTTSService';
 
 export interface EnhancedVoiceRequest {
   text: string;
@@ -17,6 +18,7 @@ export interface EnhancedVoiceRequest {
     use_speaker_boost?: boolean;
   };
   customText?: string;
+  onEnd?: () => void; // 再生完了時のコールバック
 }
 
 export interface EnhancedVoiceResponse {
@@ -33,6 +35,7 @@ export class EnhancedVoiceService {
   private isElevenLabsAvailable: boolean = false;
   private googleCloudApiKey: string | null = null;
   private isGoogleCloudAvailable: boolean = false;
+  private dialectTTSInitialized: boolean = false;
 
   constructor() {
     // 環境変数からAPIキーを取得
@@ -55,6 +58,9 @@ export class EnhancedVoiceService {
         console.warn('Failed to load Google Cloud TTS voices:', err);
         this.isGoogleCloudAvailable = false;
       });
+      
+      // 方言TTSサービスを初期化
+      this.initializeDialectTTS();
     }
   }
 
@@ -64,7 +70,27 @@ export class EnhancedVoiceService {
     this.isElevenLabsAvailable = true;
   }
 
-  // 高品質音声生成（優先順位: Google Cloud > ElevenLabs > Web Speech）
+  private initializeDialectTTS() {
+    if (this.googleCloudApiKey && !this.dialectTTSInitialized) {
+      try {
+        const config: DialectTTSConfig = {
+          googleCloudApiKey: this.googleCloudApiKey,
+          googleCloudProjectId: 'your-project-id', // 実際のプロジェクトIDに置き換え
+          voiceConversionEnabled: true,
+          autoDialectDetection: true,
+          confidenceThreshold: 0.3
+        };
+        
+        initializeDialectTTS(config);
+        this.dialectTTSInitialized = true;
+        console.log('方言TTSサービスを初期化しました');
+      } catch (error) {
+        console.warn('方言TTSサービス初期化エラー:', error);
+      }
+    }
+  }
+
+  // 高品質音声生成（優先順位: 方言TTS > Google Cloud > ElevenLabs > Web Speech）
   async generateVoice(request: EnhancedVoiceRequest): Promise<EnhancedVoiceResponse> {
     const text = request.customText || request.text;
     
@@ -74,6 +100,16 @@ export class EnhancedVoiceService {
       dialect: request.dialect,
       providers: this.getAvailableProviders()
     });
+    
+    // 0. 方言TTSが利用可能な場合は最優先（上海語のみ）
+    if (this.dialectTTSInitialized && this.shouldUseDialectTTS(request)) {
+      console.log('🗣️ Trying Dialect TTS for Shanghai dialect...');
+      try {
+        return await this.generateWithDialectTTS(text, request);
+      } catch (error) {
+        console.warn('⚠️ Dialect TTS failed, trying next provider:', error);
+      }
+    }
     
     // 1. Google Cloud TTSが利用可能な場合は最優先（無料枠あり、高品質）
     if (this.isGoogleCloudAvailable) {
@@ -110,7 +146,7 @@ export class EnhancedVoiceService {
     // 3. 最終フォールバック: Web Speech API
     console.log('🔊 Falling back to Web Speech API...');
     try {
-      return await this.generateWithWebSpeech(text, request);
+      return await this.generateWithWebSpeech(text, request, request.onEnd);
     } catch (error) {
       console.error('❌ All voice services failed:', error);
       return {
@@ -193,7 +229,7 @@ export class EnhancedVoiceService {
       volumeGainDb: 0
     };
 
-    const ok = await googleCloudTTSService.speak(googleRequest);
+    const ok = await googleCloudTTSService.speak(googleRequest, request.onEnd);
     
     if (!ok) {
       throw new Error(`Google Cloud TTS failed for ${languageCode}`);
@@ -201,12 +237,13 @@ export class EnhancedVoiceService {
 
     return {
       success: ok,
-      provider: 'googlecloud'
+      provider: 'googlecloud',
+      audioUrl: null // Google Cloud TTSは直接再生するためURLなし
     };
   }
 
   // Web Speech APIを使用した音声生成
-  private async generateWithWebSpeech(text: string, request: EnhancedVoiceRequest): Promise<EnhancedVoiceResponse> {
+  private async generateWithWebSpeech(text: string, request: EnhancedVoiceRequest, onEnd?: () => void): Promise<EnhancedVoiceResponse> {
     // 方言辞書を適用
     const dialectText = request.dialect ? 
       VoiceQualityService.applyDialectDictionary(text, request.dialect) : text;
@@ -221,12 +258,14 @@ export class EnhancedVoiceService {
         rate: this.getRateForDialect(request.dialect),
         pitch: this.getPitchForDialect(request.dialect),
         volume: 1.0
-      }
+      },
+      onEnd: onEnd // コールバックを渡す
     });
 
     return {
       success: ok,
-      provider: 'webspeech'
+      provider: 'webspeech',
+      audioUrl: null // Web Speech APIは直接再生するためURLなし
     };
   }
 
@@ -299,6 +338,32 @@ export class EnhancedVoiceService {
       
       // 中国語方言（Google Cloud TTSの正確なコード）
       'beijing': 'cmn-CN', 'taiwan': 'cmn-TW', 'singapore': 'cmn-CN',
+      'northeast': 'cmn-CN', 'sichuan': 'cmn-CN', 'shandong': 'cmn-CN', 'henan': 'cmn-CN',
+      'jianghuai': 'cmn-CN', 'yunnan': 'cmn-CN', 'xinjiang': 'cmn-CN',
+      
+      // 呉語方言（Google Cloud TTSでは官話で代替）
+      'shanghai': 'cmn-CN', 'suzhou': 'cmn-CN', 'hangzhou': 'cmn-CN', 'ningbo': 'cmn-CN',
+      
+      // 粤語方言
+      'cantonese': 'yue-HK', 'hongkong': 'yue-HK', 'macau': 'yue-HK',
+      
+      // 閩語方言（Google Cloud TTSでは官話で代替）
+      'hokkien': 'cmn-CN', 'taiwanese': 'cmn-TW', 'teochew': 'cmn-CN',
+      
+      // 客家語方言（Google Cloud TTSでは官話で代替）
+      'meixian': 'cmn-CN', 'taiwan_hakka': 'cmn-TW',
+      
+      // 湘語方言（Google Cloud TTSでは官話で代替）
+      'changsha': 'cmn-CN', 'xiangtan': 'cmn-CN',
+      
+      // 贛語方言（Google Cloud TTSでは官話で代替）
+      'nanchang': 'cmn-CN', 'jiujiang': 'cmn-CN',
+      
+      // 韓国語方言
+      'korean_seoul': 'ko-KR', 'korean_gyeonggi': 'ko-KR', 'korean_gangwon': 'ko-KR',
+      'korean_chungcheong': 'ko-KR', 'korean_jeolla': 'ko-KR', 'korean_gyeongsang': 'ko-KR',
+      'korean_busan': 'ko-KR', 'korean_daegu': 'ko-KR', 'korean_ulsan': 'ko-KR',
+      'korean_jeju': 'ko-KR', 'korean_north': 'ko-KR', 'korean_hamgyong': 'ko-KR', 'korean_pyeongan': 'ko-KR',
       
       // アラビア語方言
       'egyptian': 'ar-EG', 'gulf': 'ar-SA', 'levantine': 'ar-LB', 'maghrebi': 'ar-MA'
@@ -317,7 +382,7 @@ export class EnhancedVoiceService {
       rus: 'ru-RU', 
       // 中国語系統（Google Cloud TTSの正確なコード）
       cmn: 'cmn-CN', zho: 'cmn-CN', yue: 'yue-HK', wuu: 'cmn-CN', 
-      hak: 'cmn-TW', min: 'cmn-TW', nan: 'cmn-TW',
+      hak: 'cmn-TW', min: 'cmn-TW', nan: 'cmn-TW', xiang: 'cmn-CN', gan: 'cmn-CN',
       arb: 'ar-XA', ara: 'ar-XA', hin: 'hi-IN', kor: 'ko-KR', vie: 'vi-VN', 
       tha: 'th-TH', ben: 'bn-IN', pan: 'pa-IN', guj: 'gu-IN', mar: 'mr-IN',
       tel: 'te-IN', tam: 'ta-IN', kan: 'kn-IN', mal: 'ml-IN', ori: 'or-IN', 
@@ -345,6 +410,7 @@ export class EnhancedVoiceService {
     const byName: Record<string, string> = {
       japanese: 'ja-JP', english: 'en-US', 
       chinese: 'cmn-CN', mandarin: 'cmn-CN', cantonese: 'yue-HK', 
+      wu: 'cmn-CN', min: 'cmn-CN', hakka: 'cmn-CN', xiang: 'cmn-CN', gan: 'cmn-CN',
       spanish: 'es-ES', french: 'fr-FR', arabic: 'ar-XA', 
       german: 'de-DE', italian: 'it-IT', portuguese: 'pt-PT', russian: 'ru-RU', 
       korean: 'ko-KR', vietnamese: 'vi-VN', thai: 'th-TH', hindi: 'hi-IN',
@@ -382,6 +448,41 @@ export class EnhancedVoiceService {
     return pitches[dialect || 'standard'] || 1.0;
   }
 
+  // 方言TTSを使用すべきか判定
+  private shouldUseDialectTTS(request: EnhancedVoiceRequest): boolean {
+    // 上海語のみ方言TTSを使用
+    const shouldUse = request.dialect === 'shanghai' || request.dialect === 'shanghainese';
+    console.log(`🔍 Dialect TTS check: ${request.dialect} -> ${shouldUse ? 'USE' : 'SKIP'}`);
+    return shouldUse;
+  }
+
+  // 方言TTSを使用した音声生成
+  private async generateWithDialectTTS(text: string, request: EnhancedVoiceRequest): Promise<EnhancedVoiceResponse> {
+    try {
+      const dialectTTS = getDialectTTS();
+      
+      // 方言を判定（上海語のみ）
+      let dialect: 'auto' | 'standard' | 'shanghai' = 'shanghai';
+      
+      // 音声合成
+      const result = await dialectTTS.synthesize(text, dialect);
+      
+      if (result.success && result.audioData) {
+        return {
+          success: true,
+          audioData: result.audioData,
+          provider: 'dialect_tts',
+          duration: result.audioData.byteLength / (22050 * 2) // 概算
+        };
+      } else {
+        throw new Error(result.error || '方言TTS音声生成に失敗しました');
+      }
+    } catch (error) {
+      console.error('方言TTS音声生成エラー:', error);
+      throw error;
+    }
+  }
+
   // 利用可能な音声プロバイダーを取得
   getAvailableProviders(): string[] {
     const providers = ['webspeech'];
@@ -389,7 +490,10 @@ export class EnhancedVoiceService {
       providers.unshift('elevenlabs');
     }
     if (this.isGoogleCloudAvailable) {
-      providers.unshift('googlecloud'); // 最優先
+      providers.unshift('googlecloud');
+    }
+    if (this.dialectTTSInitialized) {
+      providers.unshift('dialect_tts'); // 最優先
     }
     return providers;
   }

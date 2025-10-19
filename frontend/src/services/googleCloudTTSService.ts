@@ -9,6 +9,7 @@ export interface GoogleCloudTTSRequest {
   speakingRate?: number;
   pitch?: number;
   volumeGainDb?: number;
+  useSSML?: boolean; // SSMLを使用するかどうか
 }
 
 export interface GoogleCloudTTSVoice {
@@ -135,8 +136,13 @@ export class GoogleCloudTTSService {
     }
 
     try {
+      // SSMLを使用するかどうかでinputの形式を変更
+      const input = request.useSSML 
+        ? { ssml: request.text }
+        : { text: request.text };
+
       const requestBody = {
-        input: { text: request.text },
+        input: input,
         voice: {
           languageCode: request.languageCode,
           name: selectedVoice.name,
@@ -153,6 +159,7 @@ export class GoogleCloudTTSService {
       console.log(`🎤 Google Cloud TTS synthesizing:`, {
         voice: selectedVoice.name,
         language: request.languageCode,
+        useSSML: request.useSSML,
         text: request.text.substring(0, 50) + '...'
       });
 
@@ -179,7 +186,7 @@ export class GoogleCloudTTSService {
   }
 
   // Base64音声データを再生
-  async playAudioContent(audioContent: string): Promise<void> {
+  async playAudioContent(audioContent: string, onEnd?: () => void): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         // Base64をBlobに変換
@@ -195,6 +202,9 @@ export class GoogleCloudTTSService {
         const audio = new Audio(url);
         audio.onended = () => {
           URL.revokeObjectURL(url);
+          if (onEnd) {
+            onEnd();
+          }
           resolve();
         };
         audio.onerror = (error) => {
@@ -209,14 +219,14 @@ export class GoogleCloudTTSService {
   }
 
   // テキストを音声に変換して再生（統合メソッド）
-  async speak(request: GoogleCloudTTSRequest): Promise<boolean> {
+  async speak(request: GoogleCloudTTSRequest, onEnd?: () => void): Promise<boolean> {
     try {
       const audioContent = await this.synthesizeSpeech(request);
       if (!audioContent) {
         return false;
       }
 
-      await this.playAudioContent(audioContent);
+      await this.playAudioContent(audioContent, onEnd);
       return true;
     } catch (error) {
       console.error('Failed to speak with Google Cloud TTS:', error);
