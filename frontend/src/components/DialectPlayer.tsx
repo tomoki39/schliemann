@@ -161,22 +161,270 @@ const DialectPlayer: React.FC<DialectPlayerProps> = ({
     }
   };
 
-  // 方言名から言語名を取得
+  // 方言名から言語名を取得（包括版）
   const getLanguageName = (conversionModel: string): string => {
     const dialectToLanguage: Record<string, string> = {
-      'kansai': 'japanese',
-      'hakata': 'japanese',
-      'tsugaru': 'japanese',
-      'okinawa': 'japanese',
-      'british': 'english',
-      'american': 'english',
-      'australian': 'english',
-      'mandarin': 'chinese',
-      'cantonese': 'chinese',
-      'castilian': 'spanish',
-      'mexican': 'spanish',
-      'parisian': 'french',
-      'quebec': 'french'
+      // 日本語（13方言）
+      'standard': 'japanese', 'tokyo': 'japanese', 'osaka': 'japanese', 'kyoto': 'japanese', 'kansai': 'japanese',
+      'hakata': 'japanese', 'tsugaru': 'japanese', 'nagoya': 'japanese', 'hiroshima': 'japanese', 
+      'kagoshima': 'japanese', 'okinawa': 'japanese', 'sendai': 'japanese', 'sapporo': 'japanese',
+      
+      // 英語（5方言）
+      'british': 'english', 'american': 'english', 'australian': 'english', 'canadian': 'english',
+      'english_indian': 'english',
+      
+      // 中国語（20方言）- 大幅拡張
+      'chinese_standard': 'chinese', 'mandarin_standard': 'chinese', 'mandarin': 'chinese', 'beijing': 'chinese', 
+      'taiwan': 'chinese', 'singapore': 'chinese', 'shanghai': 'chinese', 'cantonese': 'chinese',
+      'hakka': 'chinese', 'hokkien': 'chinese', 'teochew': 'chinese', 'hainanese': 'chinese',
+      'wenzhou': 'chinese', 'suzhou': 'chinese', 'hangzhou': 'chinese', 'ningbo': 'chinese',
+      'fuzhou': 'chinese', 'xiamen': 'chinese', 'nanchang': 'chinese', 'changsha': 'chinese',
+      'wuhan': 'chinese', 'chengdu': 'chinese', 'kunming': 'chinese', 'guiyang': 'chinese',
+      'nanning': 'chinese', 'haikou': 'chinese', 'taipei': 'chinese', 'hongkong': 'chinese',
+      
+      // スペイン語（6方言）
+      'castilian': 'spanish', 'mexican': 'spanish', 'argentine': 'spanish', 
+      'spanish_colombia': 'spanish', 'spanish_andalusian': 'spanish', 'spanish_caribbean': 'spanish',
+      
+      // フランス語（5方言）
+      'parisian': 'french', 'quebec': 'french', 'african': 'french',
+      'french_belgian': 'french', 'french_swiss': 'french',
+      
+      // ポルトガル語（4方言）
+      'portuguese_br': 'portuguese', 'portuguese_pt': 'portuguese', 'portuguese_angola': 'portuguese',
+      'portuguese_mozambique': 'portuguese',
+      
+      // アラビア語（4方言）
+      'egyptian': 'arabic', 'gulf': 'arabic', 'levantine': 'arabic', 'arabic_maghrebi': 'arabic',
+      
+      // ロシア語（3方言）
+      'russian_standard': 'russian', 'russian_spb': 'russian', 'russian_south': 'russian',
+      
+      // ドイツ語（4方言）
+      'german_standard': 'german', 'german_austrian': 'german', 'german_swiss': 'german',
+      'german_bavarian': 'german',
+      
+      // イタリア語（7方言）
+      'italian_standard': 'italian', 'italian_neapolitan': 'italian', 'italian_romanesco': 'italian',
+      'italian_sicilian': 'italian', 'italian_venetian': 'italian', 'italian_milanese': 'italian',
+      'italian_sardinian': 'italian',
+      
+      // 韓国語（3方言）
+      'korean_seoul': 'korean', 'korean_busan': 'korean', 'korean_jeju': 'korean',
+      
+      // ヒンディー語（3方言）
+      'hindi_standard': 'hindi', 'hindi_bhojpuri': 'hindi', 'hindi_awadhi': 'hindi',
+      
+      // ベトナム語（3方言）
+      'vietnamese_hanoi': 'vietnamese', 'vietnamese_saigon': 'vietnamese', 'vietnamese_hue': 'vietnamese',
+      
+      // タイ語（3方言）
+      'thai_standard': 'thai', 'thai_northern': 'thai', 'thai_southern': 'thai',
+      
+      // インドネシア語（3方言）
+      'indonesian_standard': 'indonesian', 'indonesian_jakarta': 'indonesian', 'indonesian_surabaya': 'indonesian',
+      
+      // トルコ語（3方言）
+      'turkish_istanbul': 'turkish', 'turkish_aegean': 'turkish', 'turkish_east_anatolia': 'turkish',
+      
+      // ベンガル語（3方言）
+      'bengali_in': 'bengali', 'bengali_bd': 'bengali', 'bengali_sylheti': 'bengali',
+      
+      // パンジャブ語（2方言）
+      'punjabi_east': 'punjabi', 'punjabi_west': 'punjabi',
+      
+      // タミル語（2方言）
+      'tamil_standard': 'tamil', 'tamil_jaffna': 'tamil',
+      
+      // テルグ語（2方言）
+      'telugu_standard': 'telugu', 'telugu_telangana': 'telugu',
+      
+      // マラーティー語（2方言）
+      'marathi_standard': 'marathi', 'marathi_varhadi': 'marathi',
+      
+      // ウルドゥー語（2方言）
+      'urdu_standard': 'urdu', 'urdu_delhi': 'urdu',
+      
+      // グジャラート語（2方言）
+      'gujarati_standard': 'gujarati', 'gujarati_surti': 'gujarati',
+      
+      // カンナダ語（2方言）
+      'kannada_standard': 'kannada', 'kannada_mysore': 'kannada',
+      
+      // マラヤーラム語（2方言）
+      'malayalam_standard': 'malayalam', 'malayalam_malabar': 'malayalam',
+      
+      // オディア語（1方言）
+      'odia_standard': 'odia',
+      
+      // アッサム語（1方言）
+      'assamese_standard': 'assamese',
+      
+      // ビルマ語（2方言）
+      'burmese_rangoon': 'burmese', 'burmese_mandalay': 'burmese',
+      
+      // モンゴル語（1方言）
+      'mongolian_khalkha': 'mongolian',
+      
+      // チベット語（1方言）
+      'tibetan_lhasa': 'tibetan',
+      
+      // アゼルバイジャン語（2方言）
+      'azerbaijani_north': 'azerbaijani', 'azerbaijani_south': 'azerbaijani',
+      
+      // カザフ語（1方言）
+      'kazakh_standard': 'kazakh',
+      
+      // ウズベク語（1方言）
+      'uzbek_standard': 'uzbek',
+      
+      // タジク語（1方言）
+      'tajik_standard': 'tajik',
+      
+      // パシュトー語（2方言）
+      'pashto_north': 'pashto', 'pashto_south': 'pashto',
+      
+      // クルド語（2方言）
+      'kurdish_kurmanji': 'kurdish', 'kurdish_sorani': 'kurdish',
+      
+      // アムハラ語（1方言）
+      'amharic_standard': 'amharic',
+      
+      // スワヒリ語（2方言）
+      'swahili_standard': 'swahili', 'swahili_kenya': 'swahili',
+      
+      // ヨルバ語（5方言）
+      'yoruba_standard': 'yoruba', 'yoruba_egba': 'yoruba', 'yoruba_ekiti': 'yoruba',
+      'yoruba_ijebu': 'yoruba', 'yoruba_ondo': 'yoruba',
+      
+      // イボ語（1方言）
+      'igbo_standard': 'igbo',
+      
+      // ズールー語（3方言）
+      'zulu_standard': 'zulu', 'zulu_north': 'zulu', 'zulu_urban': 'zulu',
+      
+      // コサ語（3方言）
+      'xhosa_standard': 'xhosa', 'xhosa_ngq': 'xhosa', 'xhosa_west': 'xhosa',
+      
+      // アフリカーンス語（1方言）
+      'afrikaans_standard': 'afrikaans',
+      
+      // ハウサ語（2方言）
+      'hausa_standard': 'hausa', 'hausa_niger': 'hausa',
+      
+      // マダガスカル語（1方言）
+      'malagasy_merina': 'malagasy',
+      
+      // アイスランド語（1方言）
+      'icelandic_standard': 'icelandic',
+      
+      // トクピシン（1方言）
+      'tokpisin_standard': 'tokpisin',
+      
+      // グリーンランド語（1方言）
+      'greenlandic_west': 'greenlandic',
+      
+      // ポーランド語（2方言）
+      'polish_standard': 'polish', 'polish_lesser': 'polish',
+      
+      // ウクライナ語（2方言）
+      'ukrainian_standard': 'ukrainian', 'ukrainian_west': 'ukrainian',
+      
+      // チェコ語（1方言）
+      'czech_standard': 'czech',
+      
+      // ハンガリー語（1方言）
+      'hungarian_standard': 'hungarian',
+      
+      // ルーマニア語（1方言）
+      'romanian_standard': 'romanian',
+      
+      // ギリシャ語（2方言）
+      'greek_standard': 'greek', 'greek_cyprus': 'greek',
+      
+      // スウェーデン語（2方言）
+      'swedish_standard': 'swedish', 'swedish_finland': 'swedish',
+      
+      // デンマーク語（2方言）
+      'danish_standard': 'danish', 'danish_jutland': 'danish',
+      
+      // ノルウェー語（2方言）
+      'norwegian_bokmal': 'norwegian', 'norwegian_nynorsk': 'norwegian',
+      
+      // フィンランド語（2方言）
+      'finnish_standard': 'finnish', 'finnish_west': 'finnish',
+      
+      // オランダ語（2方言）
+      'dutch_standard': 'dutch', 'dutch_flemish': 'dutch',
+      
+      // カタルーニャ語（1方言）
+      'catalan_standard': 'catalan',
+      
+      // リトアニア語（1方言）
+      'lithuanian_standard': 'lithuanian',
+      
+      // ラトビア語（1方言）
+      'latvian_standard': 'latvian',
+      
+      // エストニア語（1方言）
+      'estonian_standard': 'estonian',
+      
+      // アルバニア語（2方言）
+      'albanian_gheg': 'albanian', 'albanian_tosk': 'albanian',
+      
+      // ブルガリア語（1方言）
+      'bulgarian_standard': 'bulgarian',
+      
+      // クロアチア語（1方言）
+      'croatian_standard': 'croatian',
+      
+      // セルビア語（1方言）
+      'serbian_standard': 'serbian',
+      
+      // スロベニア語（1方言）
+      'slovene_standard': 'slovene',
+      
+      // マケドニア語（1方言）
+      'macedonian_standard': 'macedonian',
+      
+      // スロバキア語（1方言）
+      'slovak_standard': 'slovak',
+      
+      // バスク語（1方言）
+      'basque_standard': 'basque',
+      
+      // ガリシア語（1方言）
+      'galician_standard': 'galician',
+      
+      // マレー語（1方言）
+      'malay_standard': 'malay',
+      
+      // フィリピン語（1方言）
+      'filipino_standard': 'filipino',
+      
+      // ジャワ語（1方言）
+      'javanese_standard': 'javanese',
+      
+      // スンダ語（1方言）
+      'sundanese_standard': 'sundanese',
+      
+      // セブアノ語（1方言）
+      'cebuano_standard': 'cebuano',
+      
+      // ヘブライ語（1方言）
+      'hebrew_standard': 'hebrew',
+      
+      // ペルシャ語（2方言）
+      'persian_tehran': 'persian', 'persian_dari': 'persian',
+      
+      // アルメニア語（2方言）
+      'armenian_eastern': 'armenian', 'armenian_western': 'armenian',
+      
+      // グルジア語（1方言）
+      'georgian_standard': 'georgian',
+      
+      // マオリ語（1方言）
+      'maori_standard': 'maori'
     };
 
     return dialectToLanguage[conversionModel] || 'japanese';
