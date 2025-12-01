@@ -1,6 +1,10 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Language } from '../types/Language';
 import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { getLanguageName, getFamilyName, getBranchName, getGroupName, getSubgroupName, getDialectName } from '../utils/languageNames';
+import { getRegionName } from '../utils/countryNames';
 
 interface AllLanguagesTabProps {
   languages: Language[];
@@ -8,6 +12,7 @@ interface AllLanguagesTabProps {
 }
 
 const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuery }) => {
+  const { t } = useTranslation();
   const [playingItems, setPlayingItems] = useState<Set<string>>(new Set());
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
   const [errorItems, setErrorItems] = useState<Map<string, string>>(new Map());
@@ -17,38 +22,53 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
   // 言語をソート
   const sortedLanguages = useMemo(() => {
     const filtered = searchQuery 
-      ? languages.filter(lang => 
-          lang.name_ja.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (lang as any).name_en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (lang as any).name_native?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          lang.family.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          lang.branch?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          lang.group?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          lang.subgroup?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          lang.language?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          lang.dialect?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+      ? languages.filter(lang => {
+          const q = searchQuery.toLowerCase();
+          return (
+            lang.name_ja.toLowerCase().includes(q) ||
+            getLanguageName(lang.name_ja, 'en').toLowerCase().includes(q) ||
+            (lang as any).name_en?.toLowerCase().includes(q) ||
+            (lang as any).name_native?.toLowerCase().includes(q) ||
+            lang.family.toLowerCase().includes(q) ||
+            getFamilyName(lang.family, 'en').toLowerCase().includes(q) ||
+            (lang.branch && (lang.branch.toLowerCase().includes(q) || getBranchName(lang.branch, 'en').toLowerCase().includes(q))) ||
+            (lang.group && (lang.group.toLowerCase().includes(q) || getGroupName(lang.group, 'en').toLowerCase().includes(q))) ||
+            (lang.subgroup && (lang.subgroup.toLowerCase().includes(q) || getSubgroupName(lang.subgroup, 'en').toLowerCase().includes(q))) ||
+            (lang.language && (lang.language.toLowerCase().includes(q) || getLanguageName(lang.language, 'en').toLowerCase().includes(q))) ||
+            (lang.dialect && lang.dialect.toLowerCase().includes(q)) ||
+            (lang.dialects && lang.dialects.some(d => 
+              d.name.toLowerCase().includes(q) || 
+              getDialectName(d.name, 'en').toLowerCase().includes(q) ||
+              (d.region && (d.region.toLowerCase().includes(q) || getRegionName(d.region, 'en').toLowerCase().includes(q)))
+            ))
+          );
+        })
       : languages;
 
     return [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'name':
-          return a.name_ja.localeCompare(b.name_ja);
+          const aName = getLanguageName(a.name_ja, i18n.language);
+          const bName = getLanguageName(b.name_ja, i18n.language);
+          return aName.localeCompare(bName, i18n.language === 'en' ? 'en' : 'ja');
         case 'speakers':
           return (b.total_speakers || 0) - (a.total_speakers || 0);
         case 'family':
-          return a.family.localeCompare(b.family);
+          const aFamily = getFamilyName(a.family, i18n.language);
+          const bFamily = getFamilyName(b.family, i18n.language);
+          return aFamily.localeCompare(bFamily, i18n.language === 'en' ? 'en' : 'ja');
         default:
           return 0;
       }
     });
   }, [languages, searchQuery, sortBy]);
 
-  // 国コード→日本語名
+  // 国コード→現在の言語の名前に変換
   const countryCodeToName = (code?: string): string => {
     if (!code) return '';
     try {
-      const dn = new Intl.DisplayNames(['ja'], { type: 'region' });
+      const locale = i18n.language === 'en' ? 'en' : 'ja';
+      const dn = new Intl.DisplayNames([locale], { type: 'region' });
       return (dn.of(code) as string) || code;
     } catch {
       return code || '';
@@ -126,7 +146,7 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
         };
         
         audio.onerror = () => {
-          setErrorItems(prev => new Map(prev).set(itemId, '音声の再生に失敗しました'));
+          setErrorItems(prev => new Map(prev).set(itemId, t('voice.playbackFailed')));
           setPlayingItems(prev => {
             const newSet = new Set(prev);
             newSet.delete(itemId);
@@ -137,10 +157,10 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
         await audio.play();
         setPlayingItems(prev => new Set(prev).add(itemId));
       } else {
-        setErrorItems(prev => new Map(prev).set(itemId, result.error || '音声の生成に失敗しました'));
+        setErrorItems(prev => new Map(prev).set(itemId, result.error || t('voice.generationFailed')));
       }
     } catch (error) {
-      setErrorItems(prev => new Map(prev).set(itemId, '音声の生成中にエラーが発生しました'));
+      setErrorItems(prev => new Map(prev).set(itemId, t('voice.generationError')));
     } finally {
       setLoadingItems(prev => {
         const newSet = new Set(prev);
@@ -183,7 +203,10 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
       mar: 'नमस्कार! आज आपली भेट होऊन आनंद झाला. आपले कसे चालले आहे?',
       pan: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਅੱਜ ਤੁਹਾਨੂੰ ਮਿਲ ਕੇ ਖੁਸ਼ੀ ਹੋਈ। ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ?'
     };
-    return greetMap[language.id] || `${language.name_ja}です。よろしくお願いします。`;
+    const fallbackText = i18n.language === 'en' 
+      ? `Hello, this is ${getLanguageName(language.name_ja, 'en')}. Nice to meet you.`
+      : `${language.name_ja}です。よろしくお願いします。`;
+    return greetMap[language.id] || fallbackText;
   };
 
   return (
@@ -191,21 +214,21 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">全言語一覧</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('voice.all.title')}</h3>
             <p className="text-gray-600">
-              すべての言語をアルファベット順で表示します
+              {t('voice.all.description')}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">並び順:</label>
+            <label className="text-sm text-gray-600">{t('voice.all.sortLabel')}</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'name' | 'speakers' | 'family')}
               className="px-3 py-1 border border-gray-300 rounded text-sm"
             >
-              <option value="name">名前順</option>
-              <option value="speakers">話者数順</option>
-              <option value="family">語族順</option>
+              <option value="name">{t('voice.all.sortByName')}</option>
+              <option value="speakers">{t('voice.all.sortBySpeakers')}</option>
+              <option value="family">{t('voice.all.sortByFamily')}</option>
             </select>
           </div>
         </div>
@@ -217,8 +240,8 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
-                  <h4 className="text-lg font-semibold text-gray-800">{language.name_ja}</h4>
-                  {(language as any).name_en && (
+                  <h4 className="text-lg font-semibold text-gray-800">{getLanguageName(language.name_ja, i18n.language)}</h4>
+                  {i18n.language === 'ja' && (language as any).name_en && (
                     <span className="text-sm text-gray-600">({(language as any).name_en})</span>
                   )}
                   {(language as any).name_native && (
@@ -227,16 +250,16 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
                 </div>
                 
                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                  <span>{language.family}</span>
-                  {language.branch && <span>{language.branch}</span>}
-                  {language.group && <span>{language.group}</span>}
-                  {language.subgroup && <span>{language.subgroup}</span>}
-                  {language.language && <span>{language.language}</span>}
+                  <span>{getFamilyName(language.family, i18n.language)}</span>
+                  {language.branch && <span>{getBranchName(language.branch, i18n.language)}</span>}
+                  {language.group && <span>{getGroupName(language.group, i18n.language)}</span>}
+                  {language.subgroup && <span>{getSubgroupName(language.subgroup, i18n.language)}</span>}
+                  {language.language && <span>{getLanguageName(language.language, i18n.language)}</span>}
                 </div>
                 
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   {language.total_speakers && (
-                    <span>👥 {language.total_speakers.toLocaleString()}人</span>
+                    <span>👥 {language.total_speakers.toLocaleString()}{t('common.speakers')}</span>
                   )}
                   <span className="truncate max-w-[65%]">{getOfficialCountryNames(language.id) || '—'}</span>
                 </div>
@@ -253,9 +276,9 @@ const AllLanguagesTab: React.FC<AllLanguagesTabProps> = ({ languages, searchQuer
                         
                         return (
                           <div key={index} className="flex items-center gap-2 bg-gray-50 rounded px-2 py-1 shrink-0">
-                            <span className="text-sm text-gray-700">{dialect.name}</span>
+                            <span className="text-sm text-gray-700">{getDialectName(dialect.name, i18n.language)}</span>
                             {dialect.region && (
-                              <span className="text-xs text-gray-500">({dialect.region})</span>
+                              <span className="text-xs text-gray-500">({getRegionName(dialect.region, i18n.language)})</span>
                             )}
                             <button
                               onClick={() => playAudio(language.id, dialect.name)}

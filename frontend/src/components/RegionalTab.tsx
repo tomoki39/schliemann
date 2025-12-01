@@ -1,6 +1,10 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Language } from '../types/Language';
 import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { getLanguageName, getFamilyName, getDialectName } from '../utils/languageNames';
+import { getRegionName } from '../utils/countryNames';
 
 interface RegionalTabProps {
   languages: Language[];
@@ -37,6 +41,7 @@ interface Region {
 }
 
 const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => {
+  const { t } = useTranslation();
   const [playingItems, setPlayingItems] = useState<Set<string>>(new Set());
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
   const [errorItems, setErrorItems] = useState<Map<string, string>>(new Map());
@@ -50,11 +55,12 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
     return String.fromCodePoint(upper.charCodeAt(0) + base) + String.fromCodePoint(upper.charCodeAt(1) + base);
   };
 
-  // 国コード→日本語名
+  // 国コード→現在の言語の名前に変換
   const countryCodeToName = (code?: string): string => {
     if (!code) return '';
     try {
-      const dn = new Intl.DisplayNames(['ja'], { type: 'region' });
+      const locale = i18n.language === 'en' ? 'en' : 'ja';
+      const dn = new Intl.DisplayNames([locale], { type: 'region' });
       return (dn.of(code) as string) || code;
     } catch {
       return code;
@@ -83,12 +89,12 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
 
   const regions: Region[] = useMemo(() => {
     const result: Record<string, Region> = {
-      asia: { id: 'asia', name: 'アジア', icon: '🌏', languages: [] },
-      europe: { id: 'europe', name: 'ヨーロッパ', icon: '🇪🇺', languages: [] },
-      africa: { id: 'africa', name: 'アフリカ', icon: '🌍', languages: [] },
-      americas: { id: 'americas', name: 'アメリカ', icon: '🌎', languages: [] },
-      oceania: { id: 'oceania', name: 'オセアニア', icon: '🦘', languages: [] },
-      other: { id: 'other', name: 'その他', icon: '🗺️', languages: [] }
+      asia: { id: 'asia', name: t('voice.regions.asia'), icon: '🌏', languages: [] },
+      europe: { id: 'europe', name: t('voice.regions.europe'), icon: '🇪🇺', languages: [] },
+      africa: { id: 'africa', name: t('voice.regions.africa'), icon: '🌍', languages: [] },
+      americas: { id: 'americas', name: t('voice.regions.americas'), icon: '🌎', languages: [] },
+      oceania: { id: 'oceania', name: t('voice.regions.oceania'), icon: '🦘', languages: [] },
+      other: { id: 'other', name: t('voice.regions.other'), icon: '🗺️', languages: [] }
     };
 
     const seenByBucket: Record<string, Set<string>> = { asia: new Set(), europe: new Set(), africa: new Set(), americas: new Set(), oceania: new Set(), other: new Set() };
@@ -102,18 +108,18 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
         seenByBucket[bucket].add(normalizedName);
         const entry: RegionalLanguage = {
           id: l.id,
-          name: l.language || l.name_ja,
+          name: getLanguageName(l.language || l.name_ja, i18n.language),
           nameJa: l.name_ja,
           nameEn: undefined,
           nameNative: undefined,
           flag: countryCodeToFlag(firstCountry),
           country: firstCountry || '—',
           speakers: l.total_speakers || 0,
-          family: l.family,
+          family: getFamilyName(l.family, i18n.language),
           dialects: (() => {
             const items = (l.dialects || []).map((d, i) => ({ id: d.conversion_model || String(i), name: d.name, region: d.region || '', sample_text: (d as any).sample_text }));
             if (items.length > 0) return items;
-            return [{ id: 'standard', name: '標準', region: '' }];
+            return [{ id: 'standard', name: t('voice.standard'), region: '' }];
           })(),
           isPlaying: false,
           isLoading: false
@@ -190,7 +196,7 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
         };
         
         audio.onerror = () => {
-          setErrorItems(prev => new Map(prev).set(itemId, '音声の再生に失敗しました'));
+          setErrorItems(prev => new Map(prev).set(itemId, t('voice.playbackFailed')));
           setPlayingItems(prev => {
             const newSet = new Set(prev);
             newSet.delete(itemId);
@@ -201,10 +207,10 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
         await audio.play();
         setPlayingItems(prev => new Set(prev).add(itemId));
       } else {
-        setErrorItems(prev => new Map(prev).set(itemId, result.error || '音声の生成に失敗しました'));
+        setErrorItems(prev => new Map(prev).set(itemId, result.error || t('voice.generationFailed')));
       }
     } catch (error) {
-      setErrorItems(prev => new Map(prev).set(itemId, '音声の生成中にエラーが発生しました'));
+      setErrorItems(prev => new Map(prev).set(itemId, t('voice.generationError')));
     } finally {
       setLoadingItems(prev => {
         const newSet = new Set(prev);
@@ -238,26 +244,33 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
     
     return regions.map(region => ({
       ...region,
-      languages: region.languages.filter(lang => 
-        lang.nameJa.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.nameEn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.nameNative?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.family.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.dialects.some(dialect => 
-          dialect.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          dialect.region.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      )
+      languages: region.languages.filter(lang => {
+        const q = searchQuery.toLowerCase();
+        return (
+          lang.nameJa.toLowerCase().includes(q) ||
+          getLanguageName(lang.nameJa, 'en').toLowerCase().includes(q) ||
+          lang.nameEn?.toLowerCase().includes(q) ||
+          lang.nameNative?.toLowerCase().includes(q) ||
+          lang.country.toLowerCase().includes(q) ||
+          lang.family.toLowerCase().includes(q) ||
+          getFamilyName(lang.family, 'en').toLowerCase().includes(q) ||
+          lang.dialects.some(dialect => 
+            dialect.name.toLowerCase().includes(q) ||
+            getDialectName(dialect.name, 'en').toLowerCase().includes(q) ||
+            dialect.region.toLowerCase().includes(q) ||
+            getRegionName(dialect.region, 'en').toLowerCase().includes(q)
+          )
+        );
+      })
     })).filter(region => region.languages.length > 0);
-  }, [regions, searchQuery]);
+  }, [regions, searchQuery, i18n.language, t]);
 
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mb-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">地域別言語</h3>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('voice.regional.title')}</h3>
         <p className="text-gray-600">
-          各地域で話者人口1000万人以上の言語を表示します
+          {t('voice.regional.description')}
         </p>
       </div>
 
@@ -270,7 +283,7 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
                 <span className="text-3xl">{region.icon}</span>
                 <div>
                   <h4 className="text-xl font-semibold text-gray-800">{region.name}</h4>
-                  <p className="text-sm text-gray-600">{region.languages.length}言語</p>
+                  <p className="text-sm text-gray-600">{region.languages.length}{t('voice.family.languageCount')}</p>
                 </div>
               </div>
             </div>
@@ -285,8 +298,10 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
                       <div className="flex items-center gap-2">
                         <span className="text-xl">{language.flag}</span>
                         <div>
-                          <h5 className="font-semibold text-gray-800">{language.nameJa}</h5>
-                          <p className="text-sm text-gray-600">{language.nameEn}</p>
+                          <h5 className="font-semibold text-gray-800">{getLanguageName(language.nameJa, i18n.language)}</h5>
+                          {i18n.language === 'ja' && language.nameEn && (
+                            <p className="text-sm text-gray-600">{language.nameEn}</p>
+                          )}
                         </div>
                       </div>
                       {/* 親レベルの再生ボタンは削除（方言側で再生） */}
@@ -296,10 +311,10 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
                     <div className="text-sm text-gray-600 mb-3">
                       <div className="flex items-center justify-between">
                         <span className="truncate max-w-[65%]">{getOfficialCountryNames(language.id) || '—'}</span>
-                        <span>👥 {language.speakers.toLocaleString()}人</span>
+                        <span>👥 {language.speakers.toLocaleString()}{t('common.speakers')}</span>
                       </div>
                       <div className="mt-1">
-                        <span className="text-xs bg-gray-200 px-2 py-1 rounded">{language.family}</span>
+                        <span className="text-xs bg-gray-200 px-2 py-1 rounded">{getFamilyName(language.family, i18n.language)}</span>
                       </div>
                     </div>
 
@@ -315,9 +330,9 @@ const RegionalTab: React.FC<RegionalTabProps> = ({ languages, searchQuery }) => 
                           <div key={dialect.id} className="flex items-center justify-between p-2 bg-white rounded hover:bg-gray-50">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-gray-800">{dialect.name}</span>
+                                <span className="text-sm font-medium text-gray-800">{getDialectName(dialect.name, i18n.language)}</span>
                                 {dialect.region && (
-                                  <span className="text-xs text-gray-500">({dialect.region})</span>
+                                  <span className="text-xs text-gray-500">({getRegionName(dialect.region, i18n.language)})</span>
                                 )}
                               </div>
                               {error && (

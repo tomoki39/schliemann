@@ -4,6 +4,9 @@ import { Language } from '../types/Language';
 import countryOfficialLanguages from '../data/country_official_languages.json';
 import languageCodeMapping from '../data/language_code_mapping.json';
 import { useGoogleMapsApiKey } from '../hooks/useGoogleMapsApiKey';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { getFamilyName, getBranchName, getGroupName, getSubgroupName, getLanguageName, getDialectName } from '../utils/languageNames';
 
 interface GoogleMapViewProps {
   languages: Language[];
@@ -269,6 +272,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
   languageFilter,
   dialectFilter
 }) => {
+  const { t } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const dataLoadedRef = useRef(false);
@@ -354,58 +358,51 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     
     if (!familyFilter) {
       // 言語ファミリーが全ての時はFamilyを表示
-      title = '語族 (Family)';
+      title = i18n.language === 'en' ? 'Family' : '語族 (Family)';
       // 実際のデータから語族を動的に抽出
-      keys = Array.from(new Set(
-        languages.map(l => l.family)
-      )).sort();
+      const uniqueFamilies = Array.from(new Set(languages.map(l => l.family)));
+      keys = uniqueFamilies.map(f => getFamilyName(f, i18n.language)).sort();
     } else if (!hasBranches) {
       // Branchの概念が適用されない言語ファミリーの場合は、言語名を表示
-      title = '言語 (Languages)';
+      title = i18n.language === 'en' ? 'Languages' : '言語 (Languages)';
       const filteredLanguages = languages.filter(l => l.family === familyFilter);
-      keys = filteredLanguages.map(l => l.name_ja).sort();
+      keys = filteredLanguages.map(l => getLanguageName(l.name_ja, i18n.language)).sort();
     } else if (!branchFilter) {
       // 言語ファミリーが選ばれている時はBranchを表示
-      title = '語派 (Branch)';
+      title = i18n.language === 'en' ? 'Branch' : '語派 (Branch)';
       const filteredLanguages = languages.filter(l => l.family === familyFilter);
-      keys = Array.from(new Set(
-        filteredLanguages.map(l => l.branch || '未分類')
-      )).sort();
+      const uniqueBranches = Array.from(new Set(filteredLanguages.map(l => l.branch).filter(Boolean)));
+      keys = uniqueBranches.map(b => getBranchName(b!, i18n.language)).sort();
     } else if (!groupFilter) {
       // 語派が選ばれている時は語群を表示
-      title = '語群 (Group)';
+      title = i18n.language === 'en' ? 'Group' : '語群 (Group)';
       const filteredLanguages = languages.filter(l => l.family === familyFilter && l.branch === branchFilter);
-      keys = Array.from(new Set(
-        filteredLanguages.map(l => l.group || '未分類')
-      )).sort();
+      const uniqueGroups = Array.from(new Set(filteredLanguages.map(l => l.group).filter(Boolean)));
+      keys = uniqueGroups.map(g => getGroupName(g!, i18n.language)).sort();
     } else if (!subgroupFilter) {
       // 語群が選ばれている時は語支を表示
-      title = '語支 (Subgroup)';
+      title = i18n.language === 'en' ? 'Subgroup' : '語支 (Subgroup)';
       const filteredLanguages = languages.filter(l => l.family === familyFilter && l.branch === branchFilter && l.group === groupFilter);
-      keys = Array.from(new Set(
-        filteredLanguages.map(l => l.subgroup || '未分類')
-      )).sort();
+      const uniqueSubgroups = Array.from(new Set(filteredLanguages.map(l => l.subgroup).filter(Boolean)));
+      keys = uniqueSubgroups.map(s => getSubgroupName(s!, i18n.language)).sort();
     } else if (!languageFilter) {
       // 語支が選ばれている時は言語を表示
-      title = '言語 (Language)';
+      title = i18n.language === 'en' ? 'Language' : '言語 (Language)';
       const filteredLanguages = languages.filter(l => l.family === familyFilter && l.branch === branchFilter && l.group === groupFilter && l.subgroup === subgroupFilter);
-      keys = Array.from(new Set(
-        filteredLanguages.map(l => l.language || l.name_ja)
-      )).sort();
+      const uniqueLanguages = Array.from(new Set(filteredLanguages.map(l => l.language || l.name_ja)));
+      keys = uniqueLanguages.map(l => getLanguageName(l, i18n.language)).sort();
     } else if (!dialectFilter) {
       // 言語が選ばれている時は方言を表示
-      title = '方言 (Dialect)';
+      title = i18n.language === 'en' ? 'Dialect' : '方言 (Dialect)';
       const filteredLanguages = languages.filter(l => l.family === familyFilter && l.branch === branchFilter && l.group === groupFilter && l.subgroup === subgroupFilter && l.language === languageFilter);
-      keys = Array.from(new Set(
-        filteredLanguages.flatMap(l => l.dialects || []).map(dialect => dialect.name)
-      )).sort();
+      const uniqueDialects = Array.from(new Set(filteredLanguages.flatMap(l => l.dialects || []).map(dialect => dialect.name)));
+      keys = uniqueDialects.map(d => getDialectName(d, i18n.language)).sort();
     } else {
       // 全て選択されている場合は方言を表示
-      title = '方言 (Dialect)';
+      title = i18n.language === 'en' ? 'Dialect' : '方言 (Dialect)';
       const filteredLanguages = languages.filter(l => l.family === familyFilter && l.branch === branchFilter && l.group === groupFilter && l.subgroup === subgroupFilter && l.language === languageFilter);
-      keys = Array.from(new Set(
-        filteredLanguages.flatMap(l => l.dialects || []).map(dialect => dialect.name)
-      )).sort();
+      const uniqueDialects = Array.from(new Set(filteredLanguages.flatMap(l => l.dialects || []).map(dialect => dialect.name)));
+      keys = uniqueDialects.map(d => getDialectName(d, i18n.language)).sort();
     }
     
     // その他/未分類は末尾へ移動
@@ -425,7 +422,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     
     
     const moreButton = showMore ? `<div style="font-size:10px;color:#666;margin-top:4px;cursor:pointer;text-align:center;padding:2px;border:1px solid #ddd;border-radius:3px;" onclick="this.parentElement.querySelector('.hidden-items').style.display='block';this.style.display='none';">
-      +${hiddenCount}件を表示
+      +${hiddenCount}${t('common.showMore')}
     </div>` : '';
     
     // 色分け結果をキャッシュして最適化
@@ -445,7 +442,7 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
       <input 
         id="${searchId}" 
         type="text" 
-        placeholder="検索..." 
+        placeholder="${t('common.search')}" 
         style="width:100%;padding:2px 4px;font-size:10px;border:1px solid #ccc;border-radius:2px;margin-bottom:4px;"
         onkeyup="
           const searchTerm = this.value.toLowerCase();
@@ -478,11 +475,11 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     
     // 階層パンくずリスト
     const breadcrumb = [];
-    if (familyFilter) breadcrumb.push(familyFilter);
-    if (branchFilter) breadcrumb.push(branchFilter);
-    if (groupFilter) breadcrumb.push(groupFilter);
-    if (subgroupFilter) breadcrumb.push(subgroupFilter);
-    if (languageFilter) breadcrumb.push(languageFilter);
+    if (familyFilter) breadcrumb.push(getFamilyName(familyFilter, i18n.language));
+    if (branchFilter) breadcrumb.push(getBranchName(branchFilter, i18n.language));
+    if (groupFilter) breadcrumb.push(getGroupName(groupFilter, i18n.language));
+    if (subgroupFilter) breadcrumb.push(getSubgroupName(subgroupFilter, i18n.language));
+    if (languageFilter) breadcrumb.push(getLanguageName(languageFilter, i18n.language));
     
     const breadcrumbHtml = breadcrumb.length > 0 ? `
       <div style="font-size:9px;color:#666;margin-bottom:4px;padding:2px 4px;background:#f5f5f5;border-radius:2px;">
@@ -491,9 +488,10 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     ` : '';
     
     // 統計情報
+    const itemText = i18n.language === 'en' ? 'items' : '件';
     const statsHtml = keys.length > 0 ? `
       <div style="font-size:9px;color:#888;margin-bottom:4px;text-align:right;">
-        ${visibleKeys.length}${showMore ? `/${keys.length}` : ''}件
+        ${visibleKeys.length}${showMore ? `/${keys.length}` : ''}${itemText}
       </div>
     ` : '';
     
@@ -504,12 +502,12 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
       ${statsHtml}
       ${searchInput}
       <div style="max-height:200px;overflow-y:auto;overflow-x:hidden;">
-        ${rowsWithClass || '<div style="color:#666;font-size:10px;">該当なし</div>'}
+        ${rowsWithClass || `<div style="color:#666;font-size:10px;">${i18n.language === 'en' ? 'No items' : '該当なし'}</div>`}
         ${hiddenSectionWithClass}
       </div>
       ${moreButton}
     `;
-  }, [languages, familyFilter, branchFilter, groupFilter, subgroupFilter, languageFilter, dialectFilter]);
+  }, [languages, familyFilter, branchFilter, groupFilter, subgroupFilter, languageFilter, dialectFilter, i18n.language, t]);
   
   // フィルタが変更された時に地図のスタイルを更新
   useEffect(() => {
@@ -1000,7 +998,8 @@ const MapComponent: React.FC<GoogleMapViewProps> = ({
     legend.style.overflow = 'hidden';
     legend.style.position = 'relative';
     legend.style.zIndex = '1000';
-    legend.innerHTML = '<div style="font-weight:600;margin-bottom:4px;font-size:12px;">語族 (Family)</div><div style="color:#666;font-size:10px;">読み込み中...</div>';
+    const loadingText = i18n.language === 'en' ? 'Loading...' : '読み込み中...';
+    legend.innerHTML = `<div style="font-weight:600;margin-bottom:4px;font-size:12px;">${i18n.language === 'en' ? 'Family' : '語族 (Family)'}</div><div style="color:#666;font-size:10px;">${loadingText}</div>`;
     
     // レスポンシブ対応: 画面サイズに応じて凡例の位置を調整
     const adjustLegendPosition = () => {

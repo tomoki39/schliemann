@@ -4,6 +4,9 @@ import PopularLanguagesTab from './PopularLanguagesTab';
 import RegionalTab from './RegionalTab';
 import LanguageFamilyTab from './LanguageFamilyTab';
 import AllLanguagesTab from './AllLanguagesTab';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { getFamilyName, getBranchName, getGroupName, getSubgroupName, getLanguageName } from '../utils/languageNames';
 
 interface VoiceExperienceTabProps {
   languages: Language[];
@@ -12,6 +15,7 @@ interface VoiceExperienceTabProps {
 type TabType = 'popular' | 'regional' | 'family' | 'all';
 
 const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('popular');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -22,19 +26,22 @@ const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) =>
     const query = searchQuery.toLowerCase();
     return languages.filter(lang => {
       // 多言語検索: 日本語名、英語名、現地語名、国名で検索
+      const locale = i18n.language === 'en' ? 'en' : 'ja';
       return (
         lang.name_ja.toLowerCase().includes(query) ||
+        getLanguageName(lang.name_ja, 'en').toLowerCase().includes(query) ||
         (lang as any).name_en?.toLowerCase().includes(query) ||
         (lang as any).name_native?.toLowerCase().includes(query) ||
         lang.family.toLowerCase().includes(query) ||
-        lang.branch?.toLowerCase().includes(query) ||
-        lang.group?.toLowerCase().includes(query) ||
-        lang.subgroup?.toLowerCase().includes(query) ||
-        lang.language?.toLowerCase().includes(query) ||
-        lang.dialect?.toLowerCase().includes(query) ||
+        getFamilyName(lang.family, 'en').toLowerCase().includes(query) ||
+        (lang.branch && (lang.branch.toLowerCase().includes(query) || getBranchName(lang.branch, 'en').toLowerCase().includes(query))) ||
+        (lang.group && (lang.group.toLowerCase().includes(query) || getGroupName(lang.group, 'en').toLowerCase().includes(query))) ||
+        (lang.subgroup && (lang.subgroup.toLowerCase().includes(query) || getSubgroupName(lang.subgroup, 'en').toLowerCase().includes(query))) ||
+        (lang.language && (lang.language.toLowerCase().includes(query) || getLanguageName(lang.language, 'en').toLowerCase().includes(query))) ||
+        (lang.dialect && lang.dialect.toLowerCase().includes(query)) ||
         lang.countries?.some(country => {
           try {
-            const countryName = new Intl.DisplayNames(['ja'], { type: 'region' }).of(country);
+            const countryName = new Intl.DisplayNames([locale], { type: 'region' }).of(country);
             return countryName?.toLowerCase().includes(query);
           } catch {
             return country.toLowerCase().includes(query);
@@ -45,10 +52,10 @@ const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) =>
   }, [languages, searchQuery]);
 
   const tabs = [
-    { id: 'popular', label: '主要言語' },
-    { id: 'regional', label: '地域別' },
-    { id: 'family', label: '語族別' },
-    { id: 'all', label: '全言語一覧' }
+    { id: 'popular', label: t('voice.tabs.popular') },
+    { id: 'regional', label: t('voice.tabs.regional') },
+    { id: 'family', label: t('voice.tabs.family') },
+    { id: 'all', label: t('voice.tabs.all') }
   ] as const;
 
   const renderActiveTab = () => {
@@ -76,14 +83,14 @@ const VoiceExperienceTab: React.FC<VoiceExperienceTabProps> = ({ languages }) =>
       {/* ヘッダー */}
       <div className="px-3 py-1.5 border-b bg-gray-50">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-base font-bold text-gray-800">音声体験</h2>
+          <h2 className="text-base font-bold text-gray-800">{t('voice.title')}</h2>
         </div>
         
         {/* 検索バー */}
         <div className="relative">
           <input
             type="text"
-            placeholder="言語名、国名、語族名で検索... (例: フランス語, French, français)"
+            placeholder={t('voice.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-2.5 py-1 pl-6 pr-3 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs"

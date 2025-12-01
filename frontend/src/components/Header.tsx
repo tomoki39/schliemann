@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Language } from '../types/Language';
+import i18n from '../i18n';
+import { getLanguageName, getFamilyName, getBranchName, getGroupName, getSubgroupName } from '../utils/languageNames';
 
 interface HeaderProps {
   searchQuery: string;
@@ -30,40 +32,60 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
     for (const lang of languages) {
       if (count >= maxSuggestions) break;
       
-      // 言語名で検索
-      if (lang.name_ja.toLowerCase().includes(q)) {
-        suggestions.add(lang.name_ja);
+      // 言語名で検索（日本語と英語の両方で検索）
+      const langNameJa = lang.name_ja.toLowerCase();
+      const langNameEn = getLanguageName(lang.name_ja, 'en').toLowerCase();
+      if (langNameJa.includes(q) || langNameEn.includes(q)) {
+        suggestions.add(getLanguageName(lang.name_ja, i18n.language));
         count++;
       }
       
       // 語族で検索
-      if (count < maxSuggestions && lang.family.toLowerCase().includes(q)) {
-        suggestions.add(lang.family);
+      const familyJa = lang.family.toLowerCase();
+      const familyEn = getFamilyName(lang.family, 'en').toLowerCase();
+      if (count < maxSuggestions && (familyJa.includes(q) || familyEn.includes(q))) {
+        suggestions.add(getFamilyName(lang.family, i18n.language));
         count++;
       }
       
       // 語派で検索
-      if (count < maxSuggestions && lang.branch?.toLowerCase().includes(q)) {
-        suggestions.add(lang.branch);
-        count++;
+      if (lang.branch) {
+        const branchJa = lang.branch.toLowerCase();
+        const branchEn = getBranchName(lang.branch, 'en').toLowerCase();
+        if (count < maxSuggestions && (branchJa.includes(q) || branchEn.includes(q))) {
+          suggestions.add(getBranchName(lang.branch, i18n.language));
+          count++;
+        }
       }
       
       // 語群で検索
-      if (count < maxSuggestions && lang.group?.toLowerCase().includes(q)) {
-        suggestions.add(lang.group);
-        count++;
+      if (lang.group) {
+        const groupJa = lang.group.toLowerCase();
+        const groupEn = getGroupName(lang.group, 'en').toLowerCase();
+        if (count < maxSuggestions && (groupJa.includes(q) || groupEn.includes(q))) {
+          suggestions.add(getGroupName(lang.group, i18n.language));
+          count++;
+        }
       }
       
       // 語支で検索
-      if (count < maxSuggestions && lang.subgroup?.toLowerCase().includes(q)) {
-        suggestions.add(lang.subgroup);
-        count++;
+      if (lang.subgroup) {
+        const subgroupJa = lang.subgroup.toLowerCase();
+        const subgroupEn = getSubgroupName(lang.subgroup, 'en').toLowerCase();
+        if (count < maxSuggestions && (subgroupJa.includes(q) || subgroupEn.includes(q))) {
+          suggestions.add(getSubgroupName(lang.subgroup, i18n.language));
+          count++;
+        }
       }
       
       // 言語で検索
-      if (count < maxSuggestions && lang.language?.toLowerCase().includes(q)) {
-        suggestions.add(lang.language);
-        count++;
+      if (lang.language) {
+        const languageJa = lang.language.toLowerCase();
+        const languageEn = getLanguageName(lang.language, 'en').toLowerCase();
+        if (count < maxSuggestions && (languageJa.includes(q) || languageEn.includes(q))) {
+          suggestions.add(getLanguageName(lang.language, i18n.language));
+          count++;
+        }
       }
       
       // 方言で検索
@@ -76,7 +98,8 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
       if (count < maxSuggestions && lang.countries) {
         for (const country of lang.countries.slice(0, 2)) { // 最初の2国のみ
           try {
-            const countryName = new Intl.DisplayNames(['ja'], { type: 'region' }).of(country);
+            const locale = i18n.language === 'en' ? 'en' : 'ja';
+            const countryName = new Intl.DisplayNames([locale], { type: 'region' }).of(country);
             if (countryName?.toLowerCase().includes(q)) {
               suggestions.add(countryName);
               count++;
@@ -94,7 +117,7 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
     }
     
     return Array.from(suggestions).slice(0, maxSuggestions);
-  }, [languages, searchQuery]);
+  }, [languages, searchQuery, i18n.language]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -159,19 +182,19 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
               onClick={() => onChangeTab('map')}
               className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === 'map' ? 'bg-white text-blue-700' : 'text-white hover:bg-blue-500/50'}`}
             >
-              地図表示
+              {t('nav.tabs.map')}
             </button>
             <button
               onClick={() => onChangeTab('voice')}
               className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === 'voice' ? 'bg-white text-blue-700' : 'text-white hover:bg-blue-500/50'}`}
             >
-              音声体験
+              {t('nav.tabs.voice')}
             </button>
             <button
               onClick={() => onChangeTab('insights')}
               className={`px-3 py-1 text-xs font-medium transition-colors ${activeTab === 'insights' ? 'bg-white text-blue-700' : 'text-white hover:bg-blue-500/50'}`}
             >
-              言語インサイト
+              {t('nav.tabs.insights')}
             </button>
           </div>
           <button
@@ -195,23 +218,27 @@ const Header: React.FC<HeaderProps> = ({ searchQuery, onSearchChange, onToggleSi
             </div>
             <button
               onClick={() => {
-                // 日本語選択時の処理
+                i18n.changeLanguage('ja');
                 setIsMenuOpen(false);
               }}
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${
+                i18n.language === 'ja' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+              }`}
             >
               <span className="mr-2">🇯🇵</span>
-              日本語
+              {t('common.japanese')}
             </button>
             <button
               onClick={() => {
-                // 英語選択時の処理
+                i18n.changeLanguage('en');
                 setIsMenuOpen(false);
               }}
-              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center ${
+                i18n.language === 'en' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+              }`}
             >
               <span className="mr-2">🇺🇸</span>
-              English
+              {t('common.english')}
             </button>
           </div>
         </div>

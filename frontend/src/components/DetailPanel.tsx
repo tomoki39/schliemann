@@ -4,6 +4,8 @@ import { Language } from '../types/Language';
 import BookmarkButton from './BookmarkButton';
 import AudioPlayer from './AudioPlayer';
 import DialectPlayer from './DialectPlayer';
+import i18n from '../i18n';
+import { getLanguageName, getFamilyName, getBranchName, getGroupName, getSubgroupName } from '../utils/languageNames';
 // import { convertTextToDialect } from '../utils/dialectConverter';
 
 interface DetailPanelProps {
@@ -42,7 +44,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       <div className="p-4 space-y-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-2xl font-semibold">{language.name_ja}</h3>
+            <h3 className="text-2xl font-semibold">{getLanguageName(language.name_ja, i18n.language)}</h3>
             <p className="text-gray-600">ID: {language.id}</p>
           </div>
           <BookmarkButton
@@ -55,25 +57,25 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         <div>
           <h4 className="font-medium">{t('detail.lineage')}</h4>
           <p className="text-sm text-gray-800">
-            {language.family}
-            {language.branch ? ` > ${language.branch}` : ''}
-            {language.group ? ` > ${language.group}` : ''}
-            {language.subgroup ? ` > ${language.subgroup}` : ''}
-            {language.language ? ` > ${language.language}` : ''}
+            {getFamilyName(language.family, i18n.language)}
+            {language.branch ? ` > ${getBranchName(language.branch, i18n.language)}` : ''}
+            {language.group ? ` > ${getGroupName(language.group, i18n.language)}` : ''}
+            {language.subgroup ? ` > ${getSubgroupName(language.subgroup, i18n.language)}` : ''}
+            {language.language ? ` > ${getLanguageName(language.language, i18n.language)}` : ''}
           </p>
         </div>
 
         {language.audio && (
           <div>
-            <h4 className="font-medium mb-2">音声サンプル</h4>
+            <h4 className="font-medium mb-2">{t('detail.audioSample')}</h4>
             <AudioPlayer
-              languageName={language.name_ja}
+              languageName={getLanguageName(language.name_ja, i18n.language)}
               text={language.audio.text}
               className="w-full"
             />
             {language.audio.source && (
               <p className="text-xs text-gray-500 mt-1">
-                出典: {language.audio.source}
+                {t('detail.source')}: {language.audio.source}
               </p>
             )}
           </div>
@@ -82,12 +84,12 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         {language.dialects && language.dialects.length > 0 && (
           <div>
             <div className="flex justify-between items-center mb-2">
-              <h4 className="font-medium">方言</h4>
+              <h4 className="font-medium">{t('detail.dialects')}</h4>
               <button
                 onClick={() => setShowCustomInput(!showCustomInput)}
                 className="text-xs text-blue-600 hover:text-blue-800 underline"
               >
-                {showCustomInput ? 'カスタム入力を閉じる' : 'カスタムテキストを入力'}
+                {showCustomInput ? t('detail.customInputClose') : t('detail.customInputOpen')}
               </button>
             </div>
 
@@ -97,13 +99,13 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 <textarea
                   value={customText}
                   onChange={(e) => setCustomText(e.target.value)}
-                  placeholder="ここにテキストを入力してください..."
+                  placeholder={t('detail.customInputPlaceholder')}
                   className="w-full p-2 text-sm border rounded resize-none mb-2"
                   rows={3}
                 />
                 {customText && (
                   <div className="text-xs text-gray-600 mb-2">
-                    変換結果プレビュー:
+                    {t('detail.conversionPreview')}
                   </div>
                 )}
               </div>
@@ -126,15 +128,22 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         {language.total_speakers && (
           <div>
             <h4 className="font-medium">{t('detail.speakers')}</h4>
-            <p>{language.total_speakers.toLocaleString()}人</p>
+            <p>{language.total_speakers.toLocaleString()}{t('common.speakers')}</p>
           </div>
         )}
         
         {language.countries && language.countries.length > 0 && (
           <div>
-            <h4 className="font-medium">公用国</h4>
+            <h4 className="font-medium">{t('detail.officialCountries')}</h4>
             <p className="text-sm text-gray-800">
-              {language.countries.join(', ')}
+              {language.countries.map(code => {
+                try {
+                  const locale = i18n.language === 'en' ? 'en' : 'ja';
+                  return new Intl.DisplayNames([locale], { type: 'region' }).of(code) || code;
+                } catch {
+                  return code;
+                }
+              }).join(i18n.language === 'en' ? ', ' : '、')}
             </p>
           </div>
         )}

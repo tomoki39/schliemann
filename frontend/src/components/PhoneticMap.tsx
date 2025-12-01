@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Language } from '../types/Language';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { getLanguageName, getFamilyName } from '../utils/languageNames';
 
 interface PhoneticMapProps {
   languages: Language[];
@@ -7,6 +10,7 @@ interface PhoneticMapProps {
 }
 
 const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }) => {
+  const { t } = useTranslation();
   const [mapType, setMapType] = useState<'family' | 'tones' | 'syllable' | 'vowels' | 'consonants'>('family');
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
 
@@ -71,23 +75,23 @@ const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }
       case 'family':
         return (
           <div className="space-y-2">
-            <h4 className="font-medium">語族別色分け</h4>
+            <h4 className="font-medium">{t('map.legend.family')}</h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                <span>インド・ヨーロッパ</span>
+                <span>{getFamilyName('インド・ヨーロッパ', i18n.language)}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-500 rounded"></div>
-                <span>シナ・チベット</span>
+                <span>{getFamilyName('シナ・チベット', i18n.language)}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-500 rounded"></div>
-                <span>アフロ・アジア</span>
+                <span>{getFamilyName('アフロ・アジア', i18n.language)}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                <span>ウラル</span>
+                <span>{getFamilyName('ウラル', i18n.language)}</span>
               </div>
             </div>
           </div>
@@ -96,15 +100,15 @@ const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }
       case 'tones':
         return (
           <div className="space-y-2">
-            <h4 className="font-medium">声調の有無</h4>
+            <h4 className="font-medium">{t('map.legend.tones')}</h4>
             <div className="space-y-1 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-500 rounded"></div>
-                <span>声調あり</span>
+                <span>{t('map.legend.tones.yes')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                <span>声調なし</span>
+                <span>{t('map.legend.tones.no')}</span>
               </div>
             </div>
           </div>
@@ -113,19 +117,19 @@ const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }
       case 'syllable':
         return (
           <div className="space-y-2">
-            <h4 className="font-medium">音節構造</h4>
+            <h4 className="font-medium">{t('map.legend.syllable')}</h4>
             <div className="space-y-1 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-500 rounded"></div>
-                <span>CV(C) - 単純</span>
+                <span>{t('map.legend.syllable.simple')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                <span>(C)(C)V - 中程度</span>
+                <span>{t('map.legend.syllable.moderate')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-orange-500 rounded"></div>
-                <span>(C)(C)(C)V - 複雑</span>
+                <span>{t('map.legend.syllable.complex')}</span>
               </div>
             </div>
           </div>
@@ -134,27 +138,27 @@ const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }
       case 'vowels':
         return (
           <div className="space-y-2">
-            <h4 className="font-medium">母音数</h4>
+            <h4 className="font-medium">{t('map.legend.vowels')}</h4>
             <div className="space-y-1 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-500 rounded"></div>
-                <span>1-5個</span>
+                <span>{t('map.legend.count.1_5')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-orange-500 rounded"></div>
-                <span>6-10個</span>
+                <span>{t('map.legend.count.6_10')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                <span>11-15個</span>
+                <span>{t('map.legend.count.11_15')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-500 rounded"></div>
-                <span>16-20個</span>
+                <span>{t('map.legend.count.16_20')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                <span>21個以上</span>
+                <span>{t('map.legend.count.21_plus')}</span>
               </div>
             </div>
           </div>
@@ -163,27 +167,27 @@ const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }
       case 'consonants':
         return (
           <div className="space-y-2">
-            <h4 className="font-medium">子音数</h4>
+            <h4 className="font-medium">{t('map.legend.consonants')}</h4>
             <div className="space-y-1 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-red-500 rounded"></div>
-                <span>1-10個</span>
+                <span>{t('map.legend.count.1_10')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-orange-500 rounded"></div>
-                <span>11-20個</span>
+                <span>{t('map.legend.count.11_20')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-                <span>21-30個</span>
+                <span>{t('map.legend.count.21_30')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-green-500 rounded"></div>
-                <span>31-40個</span>
+                <span>{t('map.legend.count.31_40')}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                <span>41個以上</span>
+                <span>{t('map.legend.count.41_plus')}</span>
               </div>
             </div>
           </div>
@@ -201,14 +205,14 @@ const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }
   return (
     <div className="bg-white border rounded-lg p-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">音韻マップ</h3>
+        <h3 className="text-lg font-semibold">{t('map.title')}</h3>
         <div className="flex space-x-2">
           {[
-            { key: 'family', label: '語族', icon: '🌍' },
-            { key: 'tones', label: '声調', icon: '🎵' },
-            { key: 'syllable', label: '音節', icon: '🔤' },
-            { key: 'vowels', label: '母音', icon: '🔊' },
-            { key: 'consonants', label: '子音', icon: '📢' }
+            { key: 'family', label: t('map.mode.family'), icon: '🌍' },
+            { key: 'tones', label: t('map.mode.tones'), icon: '🎵' },
+            { key: 'syllable', label: t('map.mode.syllable'), icon: '🔤' },
+            { key: 'vowels', label: t('map.mode.vowels'), icon: '🔊' },
+            { key: 'consonants', label: t('map.mode.consonants'), icon: '📢' }
           ].map(({ key, label, icon }) => (
             <button
               key={key}
@@ -239,7 +243,7 @@ const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }
                   onLanguageSelect(language);
                 }}
               >
-                <div className="font-medium truncate">{language.name_ja}</div>
+                <div className="font-medium truncate">{getLanguageName(language.name_ja, i18n.language)}</div>
                 <div className="text-xs opacity-75">
                   {language.total_speakers ? 
                     `${(language.total_speakers / 1000000).toFixed(0)}M` : 
@@ -258,20 +262,20 @@ const PhoneticMap: React.FC<PhoneticMapProps> = ({ languages, onLanguageSelect }
           
           {selectedLanguage && (
             <div className="mt-4 bg-white border rounded p-3">
-              <h4 className="font-medium mb-2">{selectedLanguage.name_ja}</h4>
+              <h4 className="font-medium mb-2">{getLanguageName(selectedLanguage.name_ja, i18n.language)}</h4>
               <div className="text-sm space-y-1">
-                <div><span className="font-medium">語族:</span> {selectedLanguage.family}</div>
+                <div><span className="font-medium">{t('map.detail.family')}</span> {getFamilyName(selectedLanguage.family, i18n.language)}</div>
                 {selectedLanguage.phonetics?.consonants && (
-                  <div><span className="font-medium">子音:</span> {selectedLanguage.phonetics.consonants.length}個</div>
+                  <div><span className="font-medium">{t('map.detail.consonants')}</span> {selectedLanguage.phonetics.consonants.length}{t('filter.count.suffix')}</div>
                 )}
                 {selectedLanguage.phonetics?.vowels && (
-                  <div><span className="font-medium">母音:</span> {selectedLanguage.phonetics.vowels.length}個</div>
+                  <div><span className="font-medium">{t('map.detail.vowels')}</span> {selectedLanguage.phonetics.vowels.length}{t('filter.count.suffix')}</div>
                 )}
                 {selectedLanguage.phonetics?.tones && selectedLanguage.phonetics.tones.length > 0 && (
-                  <div><span className="font-medium">声調:</span> {selectedLanguage.phonetics.tones.length}個</div>
+                  <div><span className="font-medium">{t('map.detail.tones')}</span> {selectedLanguage.phonetics.tones.length}{t('filter.count.suffix')}</div>
                 )}
                 {selectedLanguage.phonetics?.syllable_structure && (
-                  <div><span className="font-medium">音節構造:</span> {selectedLanguage.phonetics.syllable_structure}</div>
+                  <div><span className="font-medium">{t('map.detail.syllable')}</span> {selectedLanguage.phonetics.syllable_structure}</div>
                 )}
               </div>
             </div>

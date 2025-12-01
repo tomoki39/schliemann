@@ -7,12 +7,11 @@ interface LanguageFamilyTabProps {
   searchQuery: string;
 }
 
-const LanguageFamilyTab: React.FC<LanguageFamilyTabProps> = ({ languages, searchQuery }) => {
+const LanguageFamilyTab: React.FC<LanguageFamilyTabProps> = ({ languages }) => {
   return (
     <div className="h-full">
       <LanguageExplorer
         languages={languages}
-        onClose={() => {}} // タブ内では閉じる機能は不要
       />
     </div>
   );

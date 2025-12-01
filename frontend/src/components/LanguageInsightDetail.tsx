@@ -3,6 +3,10 @@ import { Language } from '../types/Language';
 import DialectPlayer from './DialectPlayer';
 import LanguageComparison from './LanguageComparison';
 import dialectPhonetics from '../data/dialect_phonetics.json';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { getLanguageName, getFamilyName, getBranchName, getGroupName, getDialectName, getDialectDescription } from '../utils/languageNames';
+import { getRegionName } from '../utils/countryNames';
 
 interface LanguageInsightDetailProps {
   language: Language;
@@ -11,50 +15,51 @@ interface LanguageInsightDetailProps {
 }
 
 const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language, onClose, allLanguages = [] }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'overview' | 'phonetics' | 'dialects' | 'history' | 'comparison'>('overview');
   const [showComparison, setShowComparison] = useState(false);
 
   const tabs = [
-    { id: 'overview', label: '概要', icon: '📋' },
-    { id: 'phonetics', label: '音韻', icon: '🔊' },
-    { id: 'dialects', label: '方言', icon: '🗺️' },
-    { id: 'history', label: '歴史', icon: '📚' },
-    { id: 'comparison', label: '比較', icon: '⚖️' }
+    { id: 'overview', label: t('insights.detail.tabs.overview'), icon: '📋' },
+    { id: 'phonetics', label: t('insights.detail.tabs.phonetics'), icon: '🔊' },
+    { id: 'dialects', label: t('insights.detail.tabs.dialects'), icon: '🗺️' },
+    { id: 'history', label: t('insights.detail.tabs.history'), icon: '📚' },
+    { id: 'comparison', label: t('insights.detail.tabs.comparison'), icon: '⚖️' }
   ];
 
   const renderOverview = () => (
     <div className="space-y-6">
       <div className="bg-blue-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">基本情報</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('insights.detail.basicInfo')}</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="font-medium">系統:</span> {language.family}
-            {language.branch && ` > ${language.branch}`}
-            {language.group && ` > ${language.group}`}
+            <span className="font-medium">{t('insights.detail.family')}</span> {getFamilyName(language.family, i18n.language)}
+            {language.branch && ` > ${getBranchName(language.branch, i18n.language)}`}
+            {language.group && ` > ${getGroupName(language.group, i18n.language)}`}
           </div>
           <div>
-            <span className="font-medium">話者数:</span> {language.total_speakers?.toLocaleString()}人
+            <span className="font-medium">{t('insights.detail.speakers')}</span> {language.total_speakers?.toLocaleString()}{t('common.speakers')}
           </div>
           <div>
-            <span className="font-medium">分布:</span> {language.countries?.slice(0, 3).join(', ')}
+            <span className="font-medium">{t('insights.detail.distribution')}</span> {language.countries?.slice(0, 3).map(c => getRegionName(c, i18n.language)).join(', ')}
           </div>
           <div>
-            <span className="font-medium">言語コード:</span> {language.id}
+            <span className="font-medium">{t('insights.detail.code')}</span> {language.id}
           </div>
         </div>
       </div>
 
       {language.audio && (
         <div>
-          <h3 className="text-lg font-semibold mb-3">代表サンプル</h3>
+          <h3 className="text-lg font-semibold mb-3">{t('insights.detail.representativeSample')}</h3>
           <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-sm text-gray-600 mb-2">{language.audio.text || ''}</p>
             <DialectPlayer
               dialect={{
-                name: '標準',
+                name: t('voice.standard'),
                 region: '',
                 sample_text: language.audio.text || '',
-                description: '標準的な発音',
+                description: t('voice.standard'),
                 conversion_model: 'standard',
                 custom_input_enabled: false,
                 id: 'standard'
@@ -66,17 +71,17 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
       )}
 
       <div>
-        <h3 className="text-lg font-semibold mb-3">言語学的特徴</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('insights.detail.linguisticFeatures')}</h3>
         <div className="bg-green-50 p-4 rounded-lg">
           <p className="text-sm">
-            {language.family?.includes('インド・ヨーロッパ') && '屈折語的特徴、子音群の複雑さ、語順の柔軟性が特徴的。'}
-            {language.family?.includes('シナ・チベット') && '声調言語、単音節語根、語順が意味を決定する重要な要素。'}
-            {language.family?.includes('アフロ・アジア') && '三子音語根、咽頭化音、強勢パターンが顕著。'}
-            {language.family?.includes('ウラル') && '母音調和、膠着語的特徴、格体系が発達。'}
-            {language.family?.includes('テュルク') && '母音調和、膠着語、SOV語順が基本。'}
+            {language.family?.includes('インド・ヨーロッパ') && t('insights.detail.features.indoEuropean')}
+            {language.family?.includes('シナ・チベット') && t('insights.detail.features.sinoTibetan')}
+            {language.family?.includes('アフロ・アジア') && t('insights.detail.features.afroAsiatic')}
+            {language.family?.includes('ウラル') && t('insights.detail.features.uralic')}
+            {language.family?.includes('テュルク') && t('insights.detail.features.turkic')}
             {!language.family?.includes('インド・ヨーロッパ') && !language.family?.includes('シナ・チベット') && 
              !language.family?.includes('アフロ・アジア') && !language.family?.includes('ウラル') && 
-             !language.family?.includes('テュルク') && '音韻・形態・語順の相互作用に注目すると系統差が見えやすい。'}
+             !language.family?.includes('テュルク') && t('insights.detail.features.default')}
           </p>
         </div>
       </div>
@@ -86,10 +91,10 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
   const renderPhonetics = () => (
     <div className="space-y-6">
       <div className="bg-purple-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">音韻体系</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('insights.detail.phonetics.system')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h4 className="font-medium mb-2">子音</h4>
+            <h4 className="font-medium mb-2">{t('insights.detail.phonetics.consonants')}</h4>
             <div className="text-sm bg-white p-3 rounded border">
               {language.phonetics?.consonants ? 
                 `/${language.phonetics.consonants.join(', ')}/` :
@@ -103,7 +108,7 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
             </div>
           </div>
           <div>
-            <h4 className="font-medium mb-2">母音</h4>
+            <h4 className="font-medium mb-2">{t('insights.detail.phonetics.vowels')}</h4>
             <div className="text-sm bg-white p-3 rounded border">
               {language.phonetics?.vowels ? 
                 `/${language.phonetics.vowels.join(', ')}/` :
@@ -120,7 +125,7 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
         
         {language.phonetics?.tones && language.phonetics.tones.length > 0 && (
           <div className="mt-4">
-            <h4 className="font-medium mb-2">声調</h4>
+            <h4 className="font-medium mb-2">{t('insights.detail.phonetics.tones')}</h4>
             <div className="text-sm bg-white p-3 rounded border">
               {language.phonetics.tones.join(', ')}
             </div>
@@ -129,7 +134,7 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
         
         {language.phonetics?.syllable_structure && (
           <div className="mt-4">
-            <h4 className="font-medium mb-2">音節構造</h4>
+            <h4 className="font-medium mb-2">{t('insights.detail.phonetics.syllableStructure')}</h4>
             <div className="text-sm bg-white p-3 rounded border">
               {language.phonetics.syllable_structure}
             </div>
@@ -138,7 +143,7 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
         
         {language.phonetics?.phonetic_notes && (
           <div className="mt-4">
-            <h4 className="font-medium mb-2">音韻特徴</h4>
+            <h4 className="font-medium mb-2">{t('insights.detail.phonetics.notes')}</h4>
             <div className="text-sm bg-white p-3 rounded border">
               {language.phonetics.phonetic_notes}
             </div>
@@ -147,41 +152,41 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
       </div>
 
       <div className="bg-yellow-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">音韻特徴</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('insights.detail.phonetics.notes')}</h3>
         <div className="space-y-2 text-sm">
           {language.family?.includes('シナ・チベット') && (
             <>
-              <div>• <strong>声調:</strong> 4-9声調（方言により異なる）</div>
-              <div>• <strong>音節構造:</strong> CV(C) - 単音節語根が基本</div>
-              <div>• <strong>子音群:</strong> 限定的、主に語頭に出現</div>
+              <div>{t('insights.detail.phonetics.tone.desc')}</div>
+              <div>{t('insights.detail.phonetics.syllable.desc')}</div>
+              <div>{t('insights.detail.phonetics.cluster.desc')}</div>
             </>
           )}
           {language.family?.includes('インド・ヨーロッパ') && (
             <>
-              <div>• <strong>子音群:</strong> 複雑な子音結合が可能</div>
-              <div>• <strong>音節構造:</strong> (C)(C)(C)V(C)(C)(C) - 複雑</div>
-              <div>• <strong>強勢:</strong> 語幹に固定または可変</div>
+              <div>{t('insights.detail.phonetics.cluster.ie')}</div>
+              <div>{t('insights.detail.phonetics.syllable.ie')}</div>
+              <div>{t('insights.detail.phonetics.stress.ie')}</div>
             </>
           )}
           {language.family?.includes('アフロ・アジア') && (
             <>
-              <div>• <strong>語根:</strong> 三子音語根が基本</div>
-              <div>• <strong>咽頭化音:</strong> 咽頭・喉頭音の存在</div>
-              <div>• <strong>母音調和:</strong> 限定的</div>
+              <div>{t('insights.detail.phonetics.root.aa')}</div>
+              <div>{t('insights.detail.phonetics.pharyngeal.aa')}</div>
+              <div>{t('insights.detail.phonetics.harmony.aa')}</div>
             </>
           )}
           {language.family?.includes('ウラル') && (
             <>
-              <div>• <strong>母音調和:</strong> 前舌・後舌の調和</div>
-              <div>• <strong>膠着語:</strong> 接尾辞による語形変化</div>
-              <div>• <strong>格体系:</strong> 豊富な格変化</div>
+              <div>{t('insights.detail.phonetics.harmony.ur')}</div>
+              <div>{t('insights.detail.phonetics.agglutination.ur')}</div>
+              <div>{t('insights.detail.phonetics.case.ur')}</div>
             </>
           )}
           {language.family?.includes('テュルク') && (
             <>
-              <div>• <strong>母音調和:</strong> 前舌・後舌の調和</div>
-              <div>• <strong>膠着語:</strong> 接尾辞による語形変化</div>
-              <div>• <strong>語順:</strong> SOVが基本</div>
+              <div>{t('insights.detail.phonetics.harmony.ur')}</div>
+              <div>{t('insights.detail.phonetics.agglutination.ur')}</div>
+              <div>{t('insights.detail.phonetics.sov.tu')}</div>
             </>
           )}
         </div>
@@ -192,7 +197,7 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
   const renderDialects = () => (
     <div className="space-y-6">
       <div className="bg-orange-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">方言分布</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('insights.detail.dialects.distribution')}</h3>
         <div className="text-sm">
           {language.dialects && language.dialects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -202,32 +207,32 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
                 
                 return (
                   <div key={index} className="bg-white p-3 rounded border">
-                    <div className="font-medium">{dialect.name}</div>
-                    <div className="text-gray-600 text-xs mb-2">{dialect.region}</div>
-                    <div className="text-xs text-gray-500 mb-2">{dialect.description}</div>
+                    <div className="font-medium">{getDialectName(dialect.name, i18n.language)}</div>
+                    <div className="text-gray-600 text-xs mb-2">{getRegionName(dialect.region || '', i18n.language)}</div>
+                    <div className="text-xs text-gray-500 mb-2">{getDialectDescription(dialect.description, i18n.language)}</div>
                     
                     {phoneticData?.phonetic_changes && (
                       <div className="mt-2 text-xs">
-                        <div className="font-medium text-purple-600 mb-1">音韻特徴:</div>
+                        <div className="font-medium text-purple-600 mb-1">{t('insights.detail.dialects.phoneticFeatures')}</div>
                         <div className="space-y-1">
                           {phoneticData.phonetic_changes.vowel_shifts?.length > 0 && (
                             <div>
-                              <span className="text-blue-600">母音変化:</span> {phoneticData.phonetic_changes.vowel_shifts.join(', ')}
+                              <span className="text-blue-600">{t('insights.detail.dialects.vowelShifts')}</span> {phoneticData.phonetic_changes.vowel_shifts.join(', ')}
                             </div>
                           )}
                           {phoneticData.phonetic_changes.consonant_changes?.length > 0 && (
                             <div>
-                              <span className="text-green-600">子音変化:</span> {phoneticData.phonetic_changes.consonant_changes.join(', ')}
+                              <span className="text-green-600">{t('insights.detail.dialects.consonantChanges')}</span> {phoneticData.phonetic_changes.consonant_changes.join(', ')}
                             </div>
                           )}
                           {phoneticData.phonetic_changes.accent_pattern && (
                             <div>
-                              <span className="text-orange-600">アクセント:</span> {phoneticData.phonetic_changes.accent_pattern}
+                              <span className="text-orange-600">{t('insights.detail.dialects.accent')}</span> {phoneticData.phonetic_changes.accent_pattern}
                             </div>
                           )}
                           {phoneticData.phonetic_changes.unique_features?.length > 0 && (
                             <div>
-                              <span className="text-red-600">特徴:</span> {phoneticData.phonetic_changes.unique_features.join(', ')}
+                              <span className="text-red-600">{t('insights.detail.dialects.features')}</span> {phoneticData.phonetic_changes.unique_features.join(', ')}
                             </div>
                           )}
                         </div>
@@ -235,7 +240,13 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
                     )}
                     
                     <DialectPlayer
-                      dialect={{...dialect, id: dialect.conversion_model || `dialect-${index}`}}
+                      dialect={{
+                        ...dialect, 
+                        id: dialect.conversion_model || `dialect-${index}`,
+                        name: getDialectName(dialect.name, i18n.language),
+                        region: getRegionName(dialect.region || '', i18n.language),
+                        description: getDialectDescription(dialect.description, i18n.language)
+                      }}
                       className="w-full"
                     />
                   </div>
@@ -243,30 +254,30 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
               })}
             </div>
           ) : (
-            <p className="text-gray-600">方言データがありません</p>
+            <p className="text-gray-600">{t('insights.detail.dialects.noData')}</p>
           )}
         </div>
       </div>
 
       <div className="bg-red-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">音韻変化</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('insights.detail.phoneticChanges.title')}</h3>
         <div className="text-sm space-y-2">
           {language.family?.includes('シナ・チベット') && (
             <>
-              <div>• <strong>声調変化:</strong> 北京語4声調 → 広東語6-9声調</div>
-              <div>• <strong>子音変化:</strong> 古音 *k → 現代音 /tɕ/ (北京語)</div>
-              <div>• <strong>母音変化:</strong> 中古音 → 現代音の母音推移</div>
+              <div>{t('insights.detail.history.sinoTibetan.middle')}</div>
+              <div>{t('insights.detail.history.sinoTibetan.earlyModern')}</div>
+              <div>{t('insights.detail.history.sinoTibetan.modern')}</div>
             </>
           )}
           {language.family?.includes('インド・ヨーロッパ') && (
             <>
-              <div>• <strong>子音推移:</strong> グリムの法則、ヴェルナーの法則</div>
-              <div>• <strong>母音変化:</strong> 大母音推移（英語）</div>
-              <div>• <strong>語彙変化:</strong> 借用語の音韻適応</div>
+              <div>{t('insights.detail.history.indoEuropean.germanic')}</div>
+              <div>{t('insights.detail.history.indoEuropean.modern')}</div>
+              <div>{t('insights.detail.history.indoEuropean.romance')}</div>
             </>
           )}
           {!language.family?.includes('シナ・チベット') && !language.family?.includes('インド・ヨーロッパ') && (
-            <div>• 系統特有の音韻変化パターンが観察される</div>
+            <div>{t('insights.detail.history.general.desc')}</div>
           )}
         </div>
       </div>
@@ -276,35 +287,35 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
   const renderHistory = () => (
     <div className="space-y-6">
       <div className="bg-indigo-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">歴史的音変化</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('insights.detail.history.title')}</h3>
         <div className="space-y-4">
           {language.family?.includes('シナ・チベット') && (
             <div className="bg-white p-4 rounded border">
-              <h4 className="font-medium mb-2">中国語の音変化</h4>
+              <h4 className="font-medium mb-2">{t('insights.detail.history.sinoTibetan.title')}</h4>
               <div className="text-sm space-y-1">
-                <div>• <strong>上古音 (紀元前11世紀):</strong> 複子音語頭、声調未分化</div>
-                <div>• <strong>中古音 (隋唐):</strong> 4声調確立、韻母体系完成</div>
-                <div>• <strong>近古音 (宋元):</strong> 入声消失、声調変化</div>
-                <div>• <strong>現代音 (明清以降):</strong> 現在の音韻体系</div>
+                <div>{t('insights.detail.history.sinoTibetan.old')}</div>
+                <div>{t('insights.detail.history.sinoTibetan.middle')}</div>
+                <div>{t('insights.detail.history.sinoTibetan.earlyModern')}</div>
+                <div>{t('insights.detail.history.sinoTibetan.modern')}</div>
               </div>
             </div>
           )}
           {language.family?.includes('インド・ヨーロッパ') && (
             <div className="bg-white p-4 rounded border">
-              <h4 className="font-medium mb-2">印欧語の音変化</h4>
+              <h4 className="font-medium mb-2">{t('insights.detail.history.indoEuropean.title')}</h4>
               <div className="text-sm space-y-1">
-                <div>• <strong>印欧祖語:</strong> 複雑な子音群、母音交替</div>
-                <div>• <strong>ゲルマン語派:</strong> グリムの法則、子音推移</div>
-                <div>• <strong>ロマンス語派:</strong> ラテン語からの音韻変化</div>
-                <div>• <strong>現代語:</strong> 各地域での独自発達</div>
+                <div>{t('insights.detail.history.indoEuropean.proto')}</div>
+                <div>{t('insights.detail.history.indoEuropean.germanic')}</div>
+                <div>{t('insights.detail.history.indoEuropean.romance')}</div>
+                <div>{t('insights.detail.history.indoEuropean.modern')}</div>
               </div>
             </div>
           )}
           {!language.family?.includes('シナ・チベット') && !language.family?.includes('インド・ヨーロッパ') && (
             <div className="bg-white p-4 rounded border">
-              <h4 className="font-medium mb-2">系統別音変化</h4>
+              <h4 className="font-medium mb-2">{t('insights.detail.history.general.title')}</h4>
               <div className="text-sm">
-                <p>各語族特有の音変化パターンが歴史的に観察される。</p>
+                <p>{t('insights.detail.history.general.desc')}</p>
               </div>
             </div>
           )}
@@ -316,14 +327,14 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
   const renderComparison = () => (
     <div className="space-y-6">
       <div className="bg-teal-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">言語比較</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('insights.detail.comparison.title')}</h3>
         <div className="text-sm">
-          <p className="mb-4">他の言語との比較機能です。音韻体系、語順、文法構造などの比較が可能です。</p>
+          <p className="mb-4">{t('insights.detail.comparison.desc')}</p>
           <button
             onClick={() => setShowComparison(true)}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
-            比較を開始
+            {t('insights.detail.comparison.start')}
           </button>
         </div>
       </div>
@@ -348,8 +359,8 @@ const LanguageInsightDetail: React.FC<LanguageInsightDetailProps> = ({ language,
           {/* Header */}
           <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-bold">{language.name_ja}</h2>
-              <p className="text-sm text-gray-600">{language.family}</p>
+              <h2 className="text-xl font-bold">{getLanguageName(language.name_ja, i18n.language)}</h2>
+              <p className="text-sm text-gray-600">{getFamilyName(language.family, i18n.language)}</p>
             </div>
             <button
               onClick={onClose}

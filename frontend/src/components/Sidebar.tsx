@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Language } from '../types/Language';
+import i18n from '../i18n';
+import { getLanguageName, getFamilyName, getBranchName, getGroupName, getSubgroupName, getDialectName } from '../utils/languageNames';
 
 interface SidebarProps {
   languages: Language[];
@@ -47,7 +49,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const formatCountry = (code: string) => {
     try {
-      return new Intl.DisplayNames(['ja'], { type: 'region' }).of(code) || code;
+      const locale = i18n.language === 'en' ? 'en' : 'ja';
+      return new Intl.DisplayNames([locale], { type: 'region' }).of(code) || code;
     } catch {
       return code;
     }
@@ -73,9 +76,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // 実際のデータから語族を動的に抽出
   const families = useMemo(() => {
-    return Array.from(new Set(
-      languages.map(l => l.family)
-    )).sort();
+    const uniqueFamilies = Array.from(new Set(languages.map(l => l.family)));
+    return uniqueFamilies.sort((a, b) => {
+      const aDisplay = getFamilyName(a, i18n.language);
+      const bDisplay = getFamilyName(b, i18n.language);
+      return aDisplay.localeCompare(bDisplay, i18n.language === 'en' ? 'en' : 'ja');
+    });
   }, [languages]);
   // Branchが使用されている言語ファミリーかどうかを判定
   const familiesWithBranches = new Set([
@@ -134,21 +140,21 @@ const Sidebar: React.FC<SidebarProps> = ({
       <h2 className="text-lg font-semibold mb-4">{t('sidebar.title')}</h2>
       
       <div className="mb-2">
-        <label className="block text-xs font-medium mb-1">語族 (Family)</label>
+        <label className="block text-xs font-medium mb-1">{t('filter.family')}</label>
         <select
           value={familyFilter}
           onChange={(e) => onFamilyFilterChange(e.target.value)}
           className="w-full p-1.5 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
-          <option value="">すべて</option>
+          <option value="">{t('filter.all')}</option>
           {families.map(family => (
-            <option key={family} value={family}>{family}</option>
+            <option key={family} value={family}>{getFamilyName(family, i18n.language)}</option>
           ))}
         </select>
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs font-medium mb-1">語派 (Branch)</label>
+        <label className="block text-xs font-medium mb-1">{t('filter.branch')}</label>
         <select
           value={branchFilter}
           onChange={(e) => onBranchFilterChange?.(e.target.value)}
@@ -159,15 +165,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           }`}
           disabled={!familyFilter || !branches.length}
         >
-          <option value="">すべて</option>
+          <option value="">{t('filter.all')}</option>
           {branches.map(branch => (
-            <option key={branch} value={branch}>{branch}</option>
+            <option key={branch} value={branch}>{getBranchName(branch, i18n.language)}</option>
           ))}
         </select>
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs font-medium mb-1">語群 (Group)</label>
+        <label className="block text-xs font-medium mb-1">{t('filter.group')}</label>
         <select
           value={groupFilter}
           onChange={(e) => onGroupFilterChange?.(e.target.value)}
@@ -178,15 +184,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           }`}
           disabled={!branchFilter || !groups.length}
         >
-          <option value="">すべて</option>
+          <option value="">{t('filter.all')}</option>
           {groups.map(group => (
-            <option key={group} value={group}>{group}</option>
+            <option key={group} value={group}>{getGroupName(group, i18n.language)}</option>
           ))}
         </select>
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs font-medium mb-1">語支 (Subgroup)</label>
+        <label className="block text-xs font-medium mb-1">{t('filter.subgroup')}</label>
         <select
           value={subgroupFilter}
           onChange={(e) => onSubgroupFilterChange?.(e.target.value)}
@@ -197,15 +203,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           }`}
           disabled={!groupFilter || !subgroups.length}
         >
-          <option value="">すべて</option>
+          <option value="">{t('filter.all')}</option>
           {subgroups.map(sub => (
-            <option key={sub} value={sub}>{sub}</option>
+            <option key={sub} value={sub}>{getSubgroupName(sub, i18n.language)}</option>
           ))}
         </select>
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs font-medium mb-1">言語 (Language)</label>
+        <label className="block text-xs font-medium mb-1">{t('filter.language')}</label>
         <select
           value={languageFilter}
           onChange={(e) => onLanguageFilterChange?.(e.target.value)}
@@ -216,15 +222,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           }`}
           disabled={!subgroupFilter || !languages_list.length}
         >
-          <option value="">すべて</option>
+          <option value="">{t('filter.all')}</option>
           {languages_list.map(lang => (
-            <option key={lang} value={lang}>{lang}</option>
+            <option key={lang} value={lang}>{getLanguageName(lang, i18n.language)}</option>
           ))}
         </select>
       </div>
 
       <div className="mb-2">
-        <label className="block text-xs font-medium mb-1">方言 (Dialect)</label>
+        <label className="block text-xs font-medium mb-1">{t('filter.dialect')}</label>
         <select
           value={dialectFilter || ''}
           onChange={(e) => onDialectFilterChange?.(e.target.value)}
@@ -235,9 +241,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           }`}
           disabled={!languageFilter || !dialects_list.length}
         >
-          <option value="">すべて</option>
+          <option value="">{t('filter.all')}</option>
           {dialects_list.map(dialect => (
-            <option key={dialect} value={dialect}>{dialect}</option>
+            <option key={dialect} value={dialect}>{getDialectName(dialect, i18n.language)}</option>
           ))}
         </select>
       </div>
@@ -256,20 +262,21 @@ const Sidebar: React.FC<SidebarProps> = ({
               className="cursor-pointer"
               onClick={() => onLanguageSelect(lang)}
             >
-              <div className="font-medium">{lang.name_ja}</div>
+              <div className="font-medium">{getLanguageName(lang.name_ja, i18n.language)}</div>
             <div className="text-sm opacity-75">
-              {lang.family}
-              {lang.branch ? ` / ${lang.branch}` : ''}
-              {lang.subgroup ? ` / ${lang.subgroup}` : ''}
+              {getFamilyName(lang.family, i18n.language)}
+              {lang.branch ? ` / ${getBranchName(lang.branch, i18n.language)}` : ''}
+              {lang.group ? ` / ${getGroupName(lang.group, i18n.language)}` : ''}
+              {lang.subgroup ? ` / ${getSubgroupName(lang.subgroup, i18n.language)}` : ''}
             </div>
             {lang.countries && (
-              <div className="text-xs opacity-60 truncate" title={lang.countries.map(formatCountry).join('、')}>
-                {lang.countries.map(formatCountry).join('、')}
+              <div className="text-xs opacity-60 truncate" title={lang.countries.map(formatCountry).join(i18n.language === 'en' ? ', ' : '、')}>
+                {lang.countries.map(formatCountry).join(i18n.language === 'en' ? ', ' : '、')}
               </div>
             )}
               {lang.total_speakers && (
                 <div className="text-xs opacity-60">
-                  {lang.total_speakers.toLocaleString()}人
+                  {lang.total_speakers.toLocaleString()}{t('common.speakers')}
                 </div>
               )}
             </div>
@@ -278,13 +285,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onSetLeft(lang)}
                 className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
               >
-                比較A
+                {t('compare.left')}
               </button>
               <button
                 onClick={() => onSetRight(lang)}
                 className="px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600"
               >
-                比較B
+                {t('compare.right')}
               </button>
             </div>
           </div>

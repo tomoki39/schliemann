@@ -1,6 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Language } from '../types/Language';
 import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { getLanguageName, getFamilyName, getDialectName } from '../utils/languageNames';
+import { getRegionName } from '../utils/countryNames';
 
 interface PopularLanguagesTabProps {
   languages: Language[];
@@ -29,6 +33,7 @@ interface LanguageCard {
 }
 
 const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, searchQuery }) => {
+  const { t } = useTranslation();
   const [playingItems, setPlayingItems] = useState<Set<string>>(new Set());
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
   const [errorItems, setErrorItems] = useState<Map<string, string>>(new Map());
@@ -47,14 +52,15 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
     const items = (lang.dialects || []).map((d, i) => ({ id: d.conversion_model || String(i), name: d.name, region: d.region || '', sample_text: (d as any).sample_text }));
     if (items.length > 0) return items;
     // フォールバック: 方言未定義の場合は標準を1件
-    return [{ id: 'standard', name: '標準', region: '' }];
+    return [{ id: 'standard', name: t('voice.standard'), region: '' }];
   };
 
-  // 国コードを日本語名へ
+  // 国コードを現在の言語の名前に変換
   const countryCodeToName = (code?: string): string => {
     if (!code) return '';
     try {
-      const dn = new Intl.DisplayNames(['ja'], { type: 'region' });
+      const locale = i18n.language === 'en' ? 'en' : 'ja';
+      const dn = new Intl.DisplayNames([locale], { type: 'region' });
       return (dn.of(code) as string) || code;
     } catch {
       return code;
@@ -164,7 +170,7 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
         };
         
         audio.onerror = () => {
-          setErrorItems(prev => new Map(prev).set(itemId, '音声の再生に失敗しました'));
+          setErrorItems(prev => new Map(prev).set(itemId, t('voice.playbackFailed')));
           setPlayingItems(prev => {
             const newSet = new Set(prev);
             newSet.delete(itemId);
@@ -175,10 +181,10 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
         await audio.play();
         setPlayingItems(prev => new Set(prev).add(itemId));
       } else {
-        setErrorItems(prev => new Map(prev).set(itemId, result.error || '音声の生成に失敗しました'));
+        setErrorItems(prev => new Map(prev).set(itemId, result.error || t('voice.generationFailed')));
       }
     } catch (error) {
-      setErrorItems(prev => new Map(prev).set(itemId, '音声の生成中にエラーが発生しました'));
+      setErrorItems(prev => new Map(prev).set(itemId, t('voice.generationError')));
     } finally {
       setLoadingItems(prev => {
         const newSet = new Set(prev);
@@ -217,29 +223,35 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
       vie: 'Xin chào! Rất vui được gặp bạn hôm nay. Bạn có khỏe không?',
       tha: 'สวัสดีครับ/ค่ะ ยินดีที่ได้พบวันนี้ คุณสบายดีไหมครับ/คะ?'
     };
-    return greetMap[language.id] || `${language.nameJa}です。よろしくお願いします。`;
+    const fallbackText = i18n.language === 'en' 
+      ? `Hello, this is ${getLanguageName(language.nameJa, 'en')}. Nice to meet you.`
+      : `${language.nameJa}です。よろしくお願いします。`;
+    return greetMap[language.id] || fallbackText;
   };
 
   // 検索でフィルタリング
-  const filteredLanguages = searchQuery 
-    ? majorLanguages.filter(lang => 
-        lang.nameJa.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.nameEn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.nameNative?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.region.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lang.dialects.some(dialect => 
-          dialect.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          dialect.region.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+  const filteredLanguages = useMemo(() => {
+    if (!searchQuery) return majorLanguages;
+    const q = searchQuery.toLowerCase();
+    return majorLanguages.filter(lang => 
+      lang.nameJa.toLowerCase().includes(q) ||
+      getLanguageName(lang.nameJa, 'en').toLowerCase().includes(q) ||
+      lang.nameEn?.toLowerCase().includes(q) ||
+      lang.nameNative?.toLowerCase().includes(q) ||
+      lang.region.toLowerCase().includes(q) ||
+      lang.dialects.some(dialect => 
+        dialect.name.toLowerCase().includes(q) ||
+        dialect.region.toLowerCase().includes(q)
       )
-    : majorLanguages;
+    );
+  }, [majorLanguages, searchQuery, i18n.language]);
 
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="mb-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">主要言語</h3>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('voice.popular.title')}</h3>
         <p className="text-gray-600">
-          話者人口TOP30の言語とその方言を探索しましょう
+          {t('voice.popular.description')}
         </p>
       </div>
 
@@ -252,21 +264,23 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{language.flag}</span>
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-800">{language.nameJa}</h4>
-                    <p className="text-sm text-gray-600">{language.nameEn}</p>
+                    <h4 className="text-lg font-semibold text-gray-800">{getLanguageName(language.nameJa, i18n.language)}</h4>
+                    {i18n.language === 'ja' && language.nameEn && (
+                      <p className="text-sm text-gray-600">{language.nameEn}</p>
+                    )}
                   </div>
                 </div>
                 {/* 親レベルの再生ボタンは削除（方言側で再生） */}
               </div>
               <div className="flex items-center justify-between text-sm text-gray-600">
                 <span className="truncate max-w-[65%]">{language.region}</span>
-                <span>👥 {language.speakers.toLocaleString()}人</span>
+                <span>👥 {language.speakers.toLocaleString()}{t('common.speakers')}</span>
               </div>
             </div>
 
             {/* 方言一覧 */}
             <div className="p-4">
-              <h5 className="text-sm font-medium text-gray-700 mb-3">方言・変種</h5>
+              <h5 className="text-sm font-medium text-gray-700 mb-3">{t('voice.dialectsVarieties')}</h5>
               <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                 {language.dialects.map((dialect) => {
                   const itemId = `${language.id}_${dialect.id}`;
@@ -278,9 +292,9 @@ const PopularLanguagesTab: React.FC<PopularLanguagesTabProps> = ({ languages, se
                     <div key={dialect.id} className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-800">{dialect.name}</span>
+                          <span className="text-sm font-medium text-gray-800">{getDialectName(dialect.name, i18n.language)}</span>
                           {dialect.region && (
-                            <span className="text-xs text-gray-500">({dialect.region})</span>
+                            <span className="text-xs text-gray-500">({getRegionName(dialect.region, i18n.language)})</span>
                           )}
                         </div>
                         {dialect.description && (

@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { enhancedVoiceService, EnhancedVoiceRequest } from '../services/enhancedVoiceService';
 import { Language } from '../types/Language';
 import { DEMO_CONFIG } from '../config/demo';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import { getFamilyName, getBranchName, getGroupName, getSubgroupName, getLanguageName, getDialectName } from '../utils/languageNames';
 
 interface LanguageExplorerProps {
   languages: Language[];
@@ -21,6 +24,7 @@ interface LanguageItem {
 }
 
 const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
+  const { t } = useTranslation();
   const [languageTree, setLanguageTree] = useState<LanguageItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [playingItems, setPlayingItems] = useState<Set<string>>(new Set());
@@ -38,7 +42,7 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
         if (!families.has(lang.family)) {
           families.set(lang.family, {
             id: `family_${lang.family}`,
-            name: lang.family,
+            name: getFamilyName(lang.family, i18n.language),
             level: 'family',
             children: [],
             languages: [],
@@ -51,70 +55,78 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
         const family = families.get(lang.family)!;
         family.languages.push(lang);
         
-        // 語派レベル
-        if (lang.branch) {
-          let branch = family.children.find(child => child.name === lang.branch);
-          if (!branch) {
-            branch = {
-              id: `branch_${lang.family}_${lang.branch}`,
-              name: lang.branch,
-              level: 'branch',
-              parentId: family.id,
-              children: [],
-              languages: [],
-              isExpanded: false,
-              isPlaying: false,
-              isLoading: false
-            };
-            family.children.push(branch);
-          }
-          branch.languages.push(lang);
-          
-          // 語群レベル
-          if (lang.group) {
-            let group = branch.children.find(child => child.name === lang.group);
-            if (!group) {
-              group = {
-                id: `group_${lang.family}_${lang.branch}_${lang.group}`,
-                name: lang.group,
-                level: 'group',
-                parentId: branch.id,
+          // 語派レベル
+          if (lang.branch) {
+            const branchNameEn = getBranchName(lang.branch, i18n.language);
+            let branch = family.children.find(child => {
+              // 元の日本語名で検索
+              const originalBranch = languages.find(l => l.family === lang.family && l.branch === lang.branch);
+              return originalBranch && child.name === branchNameEn;
+            });
+            if (!branch) {
+              branch = {
+                id: `branch_${lang.family}_${lang.branch}`,
+                name: branchNameEn,
+                level: 'branch',
+                parentId: family.id,
                 children: [],
                 languages: [],
                 isExpanded: false,
                 isPlaying: false,
                 isLoading: false
               };
-              branch.children.push(group);
+              family.children.push(branch);
             }
-            group.languages.push(lang);
+            branch.languages.push(lang);
             
-            // 語支レベル
-            if (lang.subgroup) {
-              let subgroup = group.children.find(child => child.name === lang.subgroup);
-              if (!subgroup) {
-                subgroup = {
-                  id: `subgroup_${lang.family}_${lang.branch}_${lang.group}_${lang.subgroup}`,
-                  name: lang.subgroup,
-                  level: 'subgroup',
-                  parentId: group.id,
+            // 語群レベル
+            if (lang.group) {
+              const groupNameEn = getGroupName(lang.group, i18n.language);
+              let group = branch.children.find(child => child.name === groupNameEn);
+              if (!group) {
+                group = {
+                  id: `group_${lang.family}_${lang.branch}_${lang.group}`,
+                  name: groupNameEn,
+                  level: 'group',
+                  parentId: branch.id,
                   children: [],
                   languages: [],
                   isExpanded: false,
                   isPlaying: false,
                   isLoading: false
                 };
-                group.children.push(subgroup);
+                branch.children.push(group);
               }
-              subgroup.languages.push(lang);
+              group.languages.push(lang);
+              
+              // 語支レベル
+              if (lang.subgroup) {
+                const subgroupNameEn = getSubgroupName(lang.subgroup, i18n.language);
+                let subgroup = group.children.find(child => child.name === subgroupNameEn);
+                if (!subgroup) {
+                  subgroup = {
+                    id: `subgroup_${lang.family}_${lang.branch}_${lang.group}_${lang.subgroup}`,
+                    name: subgroupNameEn,
+                    level: 'subgroup',
+                    parentId: group.id,
+                    children: [],
+                    languages: [],
+                    isExpanded: false,
+                    isPlaying: false,
+                    isLoading: false
+                  };
+                  group.children.push(subgroup);
+                }
+                subgroup.languages.push(lang);
               
               // 言語レベル
               if (lang.language) {
-                let language = subgroup.children.find(child => child.name === lang.language);
+                const languageNameEn = getLanguageName(lang.language, i18n.language);
+                let language = subgroup.children.find(child => child.name === languageNameEn);
                 if (!language) {
                   language = {
                     id: `language_${lang.family}_${lang.branch}_${lang.group}_${lang.subgroup}_${lang.language}`,
-                    name: lang.language,
+                    name: languageNameEn,
                     level: 'language',
                     parentId: subgroup.id,
                     children: [],
@@ -132,7 +144,7 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
                   lang.dialects.forEach((dialect, index) => {
                     const dialectItem: LanguageItem = {
                       id: `dialect_${lang.id}_${index}`,
-                      name: dialect.name,
+                      name: getDialectName(dialect.name, i18n.language),
                       level: 'dialect',
                       parentId: language.id,
                       children: [],
@@ -154,7 +166,7 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
     };
     
     setLanguageTree(buildLanguageTree());
-  }, [languages]);
+  }, [languages, i18n.language]);
 
   // アイテムの展開/折りたたみ
   const toggleExpanded = (itemId: string) => {
@@ -414,7 +426,7 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
           <span className="flex-1 text-sm font-medium">
             {item.name}
             <span className="ml-2 text-xs text-gray-500">
-              ({item.languages.length}言語)
+              ({item.languages.length}{t('voice.family.languageCount')})
             </span>
           </span>
           
@@ -428,7 +440,7 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
                 : 'bg-blue-500 text-white hover:bg-blue-600'
             } disabled:opacity-50`}
           >
-            {isLoading ? '生成中...' : isPlaying ? '停止' : '再生'}
+            {isLoading ? t('audio.loading') : isPlaying ? t('audio.stop') : t('audio.play')}
           </button>
         </div>
         
@@ -455,9 +467,9 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
       <div className="p-4 border-b bg-gray-50">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-bold text-gray-800">言語分類エクスプローラー</h2>
+            <h2 className="text-xl font-bold text-gray-800">{t('voice.family.title')}</h2>
             <p className="text-sm text-gray-600 mt-1">
-              言語の分類を階層的に表示し、音声を聞くことができます。複数選択して比較も可能です。
+              {t('voice.family.description')}
             </p>
           </div>
         </div>
@@ -471,29 +483,29 @@ const LanguageExplorer: React.FC<LanguageExplorerProps> = ({ languages }) => {
             disabled={selectedItems.size < 2}
             className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            選択した音声を順番に再生 ({selectedItems.size}個選択中)
+            {t('voice.family.playSelectedAudio')} ({selectedItems.size}{t('voice.family.selectedCount')})
           </button>
           <button
             onClick={() => setSelectedItems(new Set())}
             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
           >
-            選択をクリア
+            {t('voice.family.clearSelection')}
           </button>
           <button
             onClick={() => setAllExpanded(true)}
             className="px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
           >
-            すべて展開
+            {t('voice.family.expandAll')}
           </button>
           <button
             onClick={() => setAllExpanded(false)}
             className="px-3 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
           >
-            すべて折りたたみ
+            {t('voice.family.collapseAll')}
           </button>
         </div>
         <div className="mt-2 text-xs text-gray-600">
-          💡 任意の階層でチェックすると、その配下の言語・方言を順番に再生します
+          {t('voice.family.hint')}
         </div>
       </div>
       
