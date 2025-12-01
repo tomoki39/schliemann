@@ -8,13 +8,16 @@ npm install
 npm run dev
 ```
 
-## Google Maps API キーの設定
+## Google Maps / ElevenLabs API キーの設定
 
-1. [Google Cloud Console](https://console.cloud.google.com/google/maps-apis)でAPIキーを取得
-2. `.env.local`ファイルを作成：
-```bash
-VITE_GOOGLE_MAPS_API_KEY=your_actual_api_key_here
-```
+1. [Google Cloud Console](https://console.cloud.google.com/google/maps-apis)で Google Maps API キーを取得
+2. [ElevenLabs](https://elevenlabs.io/) で API キーを取得（ElevenLabs を使う場合）
+3. バックエンド（Flask）で以下の環境変数を設定：
+   ```bash
+   export GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+   export ELEVENLABS_API_KEY=your_elevenlabs_api_key  # 省略可
+   ```
+   Docker Compose / Heroku などを利用する場合は、各プラットフォームの方法で環境変数を登録してください。
 
 ## 機能
 - 言語一覧表示（サイドバー）

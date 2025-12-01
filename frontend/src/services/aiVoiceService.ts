@@ -14,6 +14,8 @@ export interface VoiceConversionRequest {
   referenceAudioUrl?: string;
 }
 
+import { resolveBackendBaseUrl } from './serviceConfig';
+
 export interface VoiceConversionResponse {
   success: boolean;
   audioData?: ArrayBuffer;
@@ -22,12 +24,14 @@ export interface VoiceConversionResponse {
   duration?: number;
 }
 
+const DEFAULT_BASE_URL = resolveBackendBaseUrl();
+
 // AI音声変換サービスのクラス
 export class AIVoiceService {
   private baseUrl: string;
   private apiKey: string | null = null;
 
-  constructor(baseUrl: string = 'http://localhost:8000') {
+  constructor(baseUrl: string = DEFAULT_BASE_URL) {
     this.baseUrl = baseUrl;
   }
 

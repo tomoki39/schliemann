@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: /Users/tomoki/MyApps/schliemann
+      dockerfile: Dockerfile.backend
+    container_name: schliemann-backend
+    ports:
+      - "8000:8000"
+    command: python mock_server.py
+
+  frontend:
+    build:
+      context: /Users/tomoki/MyApps/schliemann
+      dockerfile: Dockerfile.frontend
+    container_name: schliemann-frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      VITE_BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+

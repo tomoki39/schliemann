@@ -28,32 +28,47 @@ export interface EnhancedVoiceResponse {
 }
 
 export class EnhancedVoiceService {
-  private elevenLabsApiKey: string | null = null;
-  private isElevenLabsAvailable: boolean = false;
+  private isElevenLabsAvailable = false;
+  private availabilityChecked = false;
+  private availabilityPromise: Promise<boolean> | null = null;
 
   constructor() {
-    // 環境変数からAPIキーを取得
-    // Vite 環境を想定。型は any で吸収
-    const viteEnv: any = (import.meta as any).env || {};
-    this.elevenLabsApiKey = viteEnv.VITE_ELEVENLABS_API_KEY || null;
-    if (this.elevenLabsApiKey) {
-      elevenLabsService.setApiKey(this.elevenLabsApiKey);
-      this.isElevenLabsAvailable = true;
-    }
+    void this.ensureAvailabilityChecked();
   }
 
-  setElevenLabsApiKey(apiKey: string) {
-    this.elevenLabsApiKey = apiKey;
-    elevenLabsService.setApiKey(apiKey);
-    this.isElevenLabsAvailable = true;
+  private ensureAvailabilityChecked(): Promise<boolean> {
+    if (this.availabilityChecked) {
+      return Promise.resolve(this.isElevenLabsAvailable);
+    }
+
+    if (!this.availabilityPromise) {
+      this.availabilityPromise = elevenLabsService
+        .checkAvailability()
+        .then((enabled) => {
+          this.isElevenLabsAvailable = enabled;
+          this.availabilityChecked = true;
+          this.availabilityPromise = null;
+          return enabled;
+        })
+        .catch(() => {
+          this.isElevenLabsAvailable = false;
+          this.availabilityChecked = true;
+          this.availabilityPromise = null;
+          return false;
+        });
+    }
+
+    return this.availabilityPromise;
   }
 
   // 高品質音声生成
   async generateVoice(request: EnhancedVoiceRequest): Promise<EnhancedVoiceResponse> {
     const text = request.customText || request.text;
     
+    const elevenLabsAvailable = await this.ensureAvailabilityChecked();
+
     // 1. ElevenLabsが利用可能な場合は優先使用
-    if (this.isElevenLabsAvailable && request.useElevenLabs !== false) {
+    if (elevenLabsAvailable && request.useElevenLabs !== false) {
       try {
         return await this.generateWithElevenLabs(text, request);
       } catch (error) {
@@ -225,6 +240,7 @@ export class EnhancedVoiceService {
 
   // 利用可能な音声プロバイダーを取得
   getAvailableProviders(): string[] {
+    void this.ensureAvailabilityChecked();
     const providers = ['webspeech'];
     if (this.isElevenLabsAvailable) {
       providers.unshift('elevenlabs');

@@ -6,6 +6,23 @@
 
 Schliemann（シュリーマン）は、全世界の言語分布を都市・村落レベルで詳細に表示するインタラクティブなWebアプリケーションです。Google MapsとWikipediaを組み合わせたような、知識探索型のプラットフォームとして設計されています。
 
+## クイックスタート（Docker）
+
+プロジェクトを初めて触る人でも、以下の手順でページを表示できます。
+
+1. **必須ツールを準備**: Docker Desktop をインストールし、Docker Compose が利用可能な状態にする。
+2. **環境変数を用意**: バックエンド用の `GOOGLE_MAPS_API_KEY` と `ELEVENLABS_API_KEY` を設定する（例: `export GOOGLE_MAPS_API_KEY=...` / `export ELEVENLABS_API_KEY=...` や `docker compose` の環境変数として指定）。  
+   ※ フロントエンドにはキーを埋め込まないため、ブラウザから直接参照されません。
+3. **コンテナを起動**:
+   ```bash
+   cd /Users/tomoki/MyApps/schliemann
+   docker compose up --build
+   ```
+   初回は依存関係のインストールとビルドで数分かかる場合があります。
+4. **アプリにアクセス**: ブラウザで `http://localhost:3000` を開く。バックエンド API は `http://localhost:8000` で稼働します。
+
+停止する場合は `Ctrl + C` で終了し、不要なら `docker compose down` を実行します。
+
 ### 🌟 将来ビジョン
 Schliemannは言語学から始まり、将来的には**人類学、宗教学、地理学、社会学、歴史学**など、あらゆる人文・社会科学分野の知識を地理的コンテキストで統合し、人類の知識全体を探索できるプラットフォームを目指します。
 

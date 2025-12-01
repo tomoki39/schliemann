@@ -4,7 +4,7 @@ Schliemann AI音声変換APIのモックサーバー
 実際のAI音声変換サービスが利用できない場合のテスト用
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, abort
 from flask_cors import CORS
 import base64
 import io
@@ -18,9 +18,24 @@ import edge_tts
 import asyncio
 import tempfile
 import os
+import requests
 
-app = Flask(__name__)
+_default_front_dist = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
+)
+FRONT_DIST_PATH = os.getenv('FRONT_DIST_PATH', _default_front_dist)
+FRONT_DIST_PATH = os.path.abspath(FRONT_DIST_PATH)
+
+app = Flask(
+    __name__,
+    static_folder=FRONT_DIST_PATH,
+    static_url_path='/'
+)
 CORS(app)
+
+ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY')
+ELEVENLABS_BASE_URL = os.getenv('ELEVENLABS_BASE_URL', 'https://api.elevenlabs.io/v1')
+GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
 # 利用可能な方言のリスト
 AVAILABLE_DIALECTS = [
@@ -496,6 +511,164 @@ def voice_status():
         'max_text_length': 500,
         'supported_formats': ['wav']
     })
+
+
+def _is_elevenlabs_configured() -> bool:
+    return bool(ELEVENLABS_API_KEY)
+
+
+def _build_elevenlabs_headers() -> dict:
+    return {
+        'xi-api-key': ELEVENLABS_API_KEY,
+        'Content-Type': 'application/json'
+    }
+
+
+@app.route('/api/tts/elevenlabs/status', methods=['GET'])
+def elevenlabs_status():
+    """ElevenLabsの利用可否を返す"""
+    return jsonify({
+        'enabled': _is_elevenlabs_configured()
+    })
+
+
+@app.route('/api/tts/elevenlabs/voices', methods=['GET'])
+def elevenlabs_voices():
+    """ElevenLabsの音声一覧を取得"""
+    if not _is_elevenlabs_configured():
+        return jsonify({
+            'error': 'ElevenLabs API key not configured'
+        }), 503
+
+    try:
+        response = requests.get(
+            f'{ELEVENLABS_BASE_URL}/voices',
+            headers={'xi-api-key': ELEVENLABS_API_KEY},
+            timeout=30
+        )
+        if response.status_code >= 400:
+            return jsonify({
+                'error': response.text,
+                'status': response.status_code
+            }), response.status_code
+
+        data = response.json()
+        return jsonify(data)
+    except requests.RequestException as exc:
+        return jsonify({
+            'error': f'Failed to contact ElevenLabs: {exc}'
+        }), 502
+
+
+@app.route('/api/tts/elevenlabs', methods=['POST'])
+def elevenlabs_text_to_speech():
+    """ElevenLabsを介した音声生成をバックエンド経由で実行"""
+    if not _is_elevenlabs_configured():
+        return jsonify({
+            'success': False,
+            'error': 'ElevenLabs API key not configured'
+        }), 503
+
+    data = request.get_json() or {}
+    text = data.get('text')
+    voice_id = data.get('voice_id')
+    if not text or not voice_id:
+        return jsonify({
+            'success': False,
+            'error': 'voice_id and text are required'
+        }), 400
+
+    payload = {
+        'text': text,
+        'model_id': data.get('model_id', 'eleven_multilingual_v2'),
+        'voice_settings': data.get('voice_settings') or {
+            'stability': 0.5,
+            'similarity_boost': 0.5,
+            'style': 0.0,
+            'use_speaker_boost': True
+        }
+    }
+
+    optional_fields = [
+        'pronunciation_dictionary_locators',
+        'seed',
+        'previous_text',
+        'next_text',
+        'previous_request_ids',
+        'next_request_ids'
+    ]
+    for field in optional_fields:
+        if field in data and data[field] is not None:
+            payload[field] = data[field]
+
+    try:
+        response = requests.post(
+            f'{ELEVENLABS_BASE_URL}/text-to-speech/{voice_id}',
+            headers=_build_elevenlabs_headers(),
+            json=payload,
+            timeout=60
+        )
+    except requests.RequestException as exc:
+        return jsonify({
+            'success': False,
+            'error': f'Failed to contact ElevenLabs: {exc}'
+        }), 502
+
+    if response.status_code >= 400:
+        return jsonify({
+            'success': False,
+            'error': response.text,
+            'status': response.status_code
+        }), response.status_code
+
+    content_type = response.headers.get('content-type', 'audio/mpeg')
+    audio_base64 = base64.b64encode(response.content).decode('utf-8')
+
+    return jsonify({
+        'success': True,
+        'audio': audio_base64,
+        'content_type': content_type,
+        'request_id': response.headers.get('x-request-id')
+    })
+
+
+@app.route('/api/config/google-maps', methods=['GET'])
+def google_maps_config():
+    """Google Maps APIキーを提供"""
+    if not GOOGLE_MAPS_API_KEY:
+        return jsonify({
+            'error': 'Google Maps API key not configured'
+        }), 404
+
+    return jsonify({
+        'apiKey': GOOGLE_MAPS_API_KEY
+    })
+
+
+def _serve_index():
+    """フロントエンドのindex.htmlを返す"""
+    index_path = os.path.join(app.static_folder or '', 'index.html')
+    if index_path and os.path.exists(index_path):
+        return send_from_directory(app.static_folder, 'index.html')
+    return jsonify({
+        'message': 'Frontend build not found. Please build the frontend assets.'
+    }), 404
+
+
+@app.route('/', defaults={'path': ''}, methods=['GET'])
+@app.route('/<path:path>', methods=['GET'])
+def serve_frontend(path: str):
+    """シングルページアプリケーションのための静的ファイル配信"""
+    api_roots = {'health', 'dialects', 'voice'}
+    if path and path.split('/')[0] in api_roots:
+        abort(404)
+
+    if path and app.static_folder:
+        candidate = os.path.join(app.static_folder, path)
+        if os.path.isfile(candidate):
+            return send_from_directory(app.static_folder, path)
+
+    return _serve_index()
 
 if __name__ == '__main__':
     print("AI音声変換モックサーバーを起動中...")

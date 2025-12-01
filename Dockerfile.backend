@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies required by edge-tts (ffmpeg via libsndfile) and build tools
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libsndfile1 \
+        espeak-ng \
+        ffmpeg \
+        curl \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python requirements
+COPY backend/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
+
+# Copy application source
+COPY backend/ /app
+
+# Ensure UTF-8 output and disable Python buffering
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+EXPOSE 8000
+
+CMD ["python", "mock_server.py"]
+

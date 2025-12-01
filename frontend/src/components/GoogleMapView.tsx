@@ -3,6 +3,7 @@ import { Wrapper, Status } from '@googlemaps/react-wrapper';
 import { Language } from '../types/Language';
 import countryOfficialLanguages from '../data/country_official_languages.json';
 import languageCodeMapping from '../data/language_code_mapping.json';
+import { useGoogleMapsApiKey } from '../hooks/useGoogleMapsApiKey';
 
 interface GoogleMapViewProps {
   languages: Language[];
@@ -1092,16 +1093,22 @@ const render = (status: Status) => {
 };
 
 const GoogleMapView: React.FC<GoogleMapViewProps> = (props) => {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const { apiKey, loading, error } = useGoogleMapsApiKey();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-gray-600">地図を読み込み中...</div>
+      </div>
+    );
+  }
 
   if (!apiKey) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-red-600 text-center">
-          <div>Google Maps API キーが設定されていません</div>
-          <div className="text-sm mt-2">
-            .env ファイルに VITE_GOOGLE_MAPS_API_KEY を設定してください
-          </div>
+          <div>Google Maps API キーが利用できません</div>
+          {error && <div className="text-sm mt-2">{error}</div>}
         </div>
       </div>
     );

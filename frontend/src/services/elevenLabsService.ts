@@ -1,3 +1,5 @@
+import { resolveBackendBaseUrl } from './serviceConfig';
+
 // ElevenLabs API統合サービス
 export interface ElevenLabsVoice {
   voice_id: string;
@@ -39,97 +41,115 @@ export interface ElevenLabsRequest {
 export interface ElevenLabsResponse {
   audio: ArrayBuffer;
   content_type: string;
-  request_id: string;
+  request_id?: string;
+}
+
+const DEFAULT_BACKEND_BASE = resolveBackendBaseUrl();
+
+interface ElevenLabsProxyResponse {
+  success: boolean;
+  audio?: string;
+  content_type?: string;
+  request_id?: string;
+  error?: string;
+  status?: number;
 }
 
 export class ElevenLabsService {
-  private apiKey: string | null = null;
-  private baseUrl = 'https://api.elevenlabs.io/v1';
+  private baseUrl: string;
+  private availabilityCache: boolean | null = null;
+  private availabilityPromise: Promise<boolean> | null = null;
 
-  constructor(apiKey?: string) {
-    this.apiKey = apiKey || null;
+  constructor(baseUrl: string = DEFAULT_BACKEND_BASE) {
+    this.baseUrl = baseUrl;
   }
 
-  setApiKey(apiKey: string) {
-    this.apiKey = apiKey;
+  private get proxyBase(): string {
+    return `${this.baseUrl}/api/tts/elevenlabs`;
+  }
+
+  private decodeAudio(base64Audio: string): ArrayBuffer {
+    const binaryString = atob(base64Audio);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i += 1) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  async checkAvailability(): Promise<boolean> {
+    if (this.availabilityCache !== null) {
+      return this.availabilityCache;
+    }
+
+    if (!this.availabilityPromise) {
+      this.availabilityPromise = fetch(`${this.proxyBase}/status`)
+        .then(async (response) => {
+          if (!response.ok) {
+            return false;
+          }
+          const data = await response.json();
+          return Boolean(data?.enabled);
+        })
+        .catch(() => false)
+        .then((enabled) => {
+          this.availabilityCache = enabled;
+          return enabled;
+        })
+        .finally(() => {
+          this.availabilityPromise = null;
+        });
+    }
+
+    return this.availabilityPromise;
   }
 
   // 利用可能な音声の一覧を取得
   async getVoices(): Promise<ElevenLabsVoice[]> {
-    if (!this.apiKey) {
-      throw new Error('API key not set');
+    const response = await fetch(`${this.proxyBase}/voices`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Failed to fetch voices (${response.status})`);
     }
 
-    try {
-      const response = await fetch(`${this.baseUrl}/voices`, {
-        method: 'GET',
-        headers: {
-          'xi-api-key': this.apiKey,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch voices: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.voices || [];
-    } catch (error) {
-      console.error('Error fetching voices:', error);
-      throw error;
-    }
+    const data = await response.json();
+    return data.voices || [];
   }
 
   // テキストを音声に変換
   async textToSpeech(request: ElevenLabsRequest): Promise<ElevenLabsResponse> {
-    if (!this.apiKey) {
-      throw new Error('API key not set');
+    const response = await fetch(this.proxyBase, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    const data: ElevenLabsProxyResponse = await response.json().catch(() => ({
+      success: false,
+      error: 'Invalid response from ElevenLabs proxy',
+    }));
+
+    if (!response.ok || !data.success || !data.audio) {
+      throw new Error(
+        data.error ||
+        `Text-to-speech failed${data.status ? `: ${data.status}` : ''}`
+      );
     }
 
-    try {
-      const response = await fetch(`${this.baseUrl}/text-to-speech/${request.voice_id}`, {
-        method: 'POST',
-        headers: {
-          'xi-api-key': this.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: request.text,
-          model_id: request.model_id || 'eleven_multilingual_v2',
-          voice_settings: request.voice_settings || {
-            stability: 0.5,
-            similarity_boost: 0.5,
-            style: 0.0,
-            use_speaker_boost: true,
-          },
-          ...(request.pronunciation_dictionary_locators && {
-            pronunciation_dictionary_locators: request.pronunciation_dictionary_locators,
-          }),
-          ...(request.seed && { seed: request.seed }),
-          ...(request.previous_text && { previous_text: request.previous_text }),
-          ...(request.next_text && { next_text: request.next_text }),
-          ...(request.previous_request_ids && { previous_request_ids: request.previous_request_ids }),
-          ...(request.next_request_ids && { next_request_ids: request.next_request_ids }),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Text-to-speech failed: ${response.status} - ${errorText}`);
-      }
-
-      const audioBuffer = await response.arrayBuffer();
-      const contentType = response.headers.get('content-type') || 'audio/mpeg';
-
-      return {
-        audio: audioBuffer,
-        content_type: contentType,
-        request_id: response.headers.get('x-request-id') || '',
-      };
-    } catch (error) {
-      console.error('Error in text-to-speech:', error);
-      throw error;
-    }
+    const audioBuffer = this.decodeAudio(data.audio);
+    return {
+      audio: audioBuffer,
+      content_type: data.content_type || 'audio/mpeg',
+      request_id: data.request_id,
+    };
   }
 
   // 音声をBlob URLに変換
